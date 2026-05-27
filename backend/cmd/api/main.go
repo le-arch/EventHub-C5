@@ -13,8 +13,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
-	"github.com/Iknite-Space/sqlc-example-api/api"
-	"github.com/Iknite-Space/sqlc-example-api/db/repo"
+	"github.com/le-arch/EventHub-C5/internal/handlers"
+	"github.com/le-arch/EventHub-C5/internal/db/repo"
 )
 
 // DBConfig holds the database configuration. This struct is populated from the .env in the current directory.
@@ -78,7 +78,7 @@ func run() error {
 	querier := repo.New(db)
 
 	// We create a new http handler using the database querier.
-	handler := api.NewEventHubHandler(querier).WireHttpHandler()
+	handler := handlers.NewEventHubHandler(querier).WireHttpHandler()
 
 	// And finally we start the HTTP server on the configured port.
 	err = http.ListenAndServe(fmt.Sprintf(":%d", config.ListenPort), handler)

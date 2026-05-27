@@ -7,26 +7,79 @@ package repo
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO "users" (email, name)
-VALUES ($1, $2)
-RETURNING id, email, name, created_at
+INSERT INTO "users" (email, phone, password_hash, full_name)
+VALUES ($1, $2, $3, $4)
+RETURNING id, email, phone, password_hash, full_name, role, is_email_verified, created_at
 `
 
 type CreateUserParams struct {
-	Email string `json:"email"`
-	Name  string `json:"name"`
+	Email        string `json:"email"`
+	Phone        string `json:"phone"`
+	PasswordHash string `json:"password_hash"`
+	FullName     string `json:"full_name"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Email, arg.Name)
+	row := q.db.QueryRow(ctx, createUser,
+		arg.Email,
+		arg.Phone,
+		arg.PasswordHash,
+		arg.FullName,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
-		&i.Name,
+		&i.Phone,
+		&i.PasswordHash,
+		&i.FullName,
+		&i.Role,
+		&i.IsEmailVerified,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, email, phone, password_hash, full_name, role, is_email_verified, created_at FROM "users" WHERE email = $1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Phone,
+		&i.PasswordHash,
+		&i.FullName,
+		&i.Role,
+		&i.IsEmailVerified,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, email, phone, password_hash, full_name, role, is_email_verified, created_at FROM "users" WHERE id = $1
+`
+
+func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Phone,
+		&i.PasswordHash,
+		&i.FullName,
+		&i.Role,
+		&i.IsEmailVerified,
 		&i.CreatedAt,
 	)
 	return i, err

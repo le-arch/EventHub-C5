@@ -5,12 +5,17 @@
 package repo
 
 import (
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type User struct {
-	ID        string           `json:"id"`
-	Email     string           `json:"email"`
-	Name      string           `json:"name"`
-	CreatedAt pgtype.Timestamp `json:"created_at"`
+	ID              uuid.UUID        `json:"id"`
+	Email           string           `json:"email"`
+	Phone           string           `json:"phone"`
+	PasswordHash    string           `json:"password_hash"`
+	FullName        string           `json:"full_name"`
+	Role            *string          `json:"role"`
+	IsEmailVerified *bool            `json:"is_email_verified"`
+	CreatedAt       pgtype.Timestamp `json:"created_at"`
 }

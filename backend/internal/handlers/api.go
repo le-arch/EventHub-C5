@@ -1,13 +1,13 @@
-package api
+package handlers
 
 import (
 	"net/http"
 
-	"github.com/Iknite-Space/sqlc-example-api/db/repo"
+	"github.com/le-arch/EventHub-C5/internal/db/repo"
 	"github.com/gin-gonic/gin"
 )
 
-type EventHubHandler struct {
+ type EventHubHandler struct {
 	querier repo.Querier
 }
 
@@ -30,19 +30,4 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	return r
 }
 
-func (h *EventHubHandler) handleCreateUser(c *gin.Context) {
-	var req repo.CreateUserParams
-	err := c.ShouldBindBodyWithJSON(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
 
-	message, err := h.querier.CreateUser(c, req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, message)
-}
