@@ -1,7 +1,7 @@
 version: "2"
 sql:
 - schema: "./migrations"
-  queries: "./query"
+  queries: "./queries"
   engine: "postgresql"
   gen:
     go:
@@ -34,3 +34,4 @@ sql:
           go_type: "string"
         - db_type: "text"
           go_type: "string"
+        
