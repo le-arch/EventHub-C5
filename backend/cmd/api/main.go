@@ -24,7 +24,7 @@ type DBConfig struct {
 	DBHost      string `conf:"env:DB_HOST,required"`
 	DBPort      uint16 `conf:"env:DB_PORT,required"`
 	DBName      string `conf:"env:DB_Name,required"`
-	TLSDisabled bool   `conf:"env:DB_TLS_DISABLED"`
+	TLSDisabled bool   `conf:"env:DB_TLS_DISABLED"` 
 }
 
 // Config holds the application configuration. This struct is populated from the .env in the current directory.
@@ -96,7 +96,7 @@ func LoadConfig(cfg *Config) error {
 		if err != nil {
 			return fmt.Errorf("failed to load env file: %w", err)
 		}
-	}
+	} 
 
 	_, err := conf.Parse("", cfg)
 	if err != nil {
@@ -125,7 +125,11 @@ func getPostgresConnectionURL(config DBConfig) string {
 		Host:     fmt.Sprintf("%s:%d", config.DBHost, config.DBPort),
 		Path:     config.DBName,
 		RawQuery: queryValues.Encode(),
-	}
+		ForceQuery: true, 
 
+			}
+		fmt.Println(dbURL.String())
+		fmt.Println(config)
+		
 	return dbURL.String()
 }
