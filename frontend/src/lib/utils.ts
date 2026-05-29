@@ -14,7 +14,7 @@ export function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
-export function formatDate(date: sring | Date): string {
+export function formatDate(date: string | Date): string {
   return new Intl.DateTimeFormat('en-CM', {
     year: 'numeric',
     month: 'long',
