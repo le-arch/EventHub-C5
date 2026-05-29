@@ -11,6 +11,10 @@ CREATE TABLE IF NOT EXISTS users (
     full_name VARCHAR(255) NOT NULL,
     role VARCHAR(20) NOT NULL DEFAULT 'organizer',
     is_verified BOOLEAN DEFAULT FALSE,
+
+    otp_code VARCHAR(6),
+    otp_expires_at TIMESTAMP,
+    
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

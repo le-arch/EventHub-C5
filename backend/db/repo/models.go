@@ -98,6 +98,8 @@ type User struct {
 	FullName     string           `json:"full_name"`
 	Role         string           `json:"role"`
 	IsVerified   *bool            `json:"is_verified"`
+	OtpCode      *string          `json:"otp_code"`
+	OtpExpiresAt pgtype.Timestamp `json:"otp_expires_at"`
 	CreatedAt    pgtype.Timestamp `json:"created_at"`
 	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
 }
