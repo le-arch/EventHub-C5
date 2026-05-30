@@ -1,0 +1,78 @@
+services:
+  db:
+    image: postgres:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    networks:
+      - go-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    container_name: go-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: go-api:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - 8085:8085
+    networks:
+      - go-network
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    develop:
+      watch:
+        - path: .
+          action: rebuild
+      
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v2.55.0
+    volumes:
+      - ./Docker/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+    networks:
+      - go-network
+  
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:11.3.0
+    volumes:
+      - ./Docker/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - grafana-data:/var/lib/grafana
+    ports:
+      - 3000:3000
+    networks:
+      - go-network
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=password
+
+volumes:
+  grafana-data:
+  pgdata:
+
+networks:
+  go-network:
+    driver: bridge
