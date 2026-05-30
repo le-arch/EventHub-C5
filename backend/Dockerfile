@@ -27,7 +27,7 @@ FROM alpine:3.21 AS final
 # Copy the compiled binary from the builder stage
 COPY --from=builder /app /bin/app
 
-COPY ./internal/db/migrations ./internal/db/migrations
+COPY ./db/migrations ./db/migrations
 
 # Expose the application's port
 EXPOSE 8000
