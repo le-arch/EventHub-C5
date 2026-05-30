@@ -22,6 +22,12 @@ func (h *EventHubHandler) handleRegister(c *gin.Context) {
 		return
 	}
 
+	//check if the email already exists in the database to prevent duplicate registrations
+	_, err = h.querier.GetUserByEmail(c, req.Email)
+	if err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email already exists"})
+		return
+	}
     //hash the password before storing it in the database
 	var hashedPassword, e = auth.HashPassword(req.PasswordHash)
 	if e != nil {
