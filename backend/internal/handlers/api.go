@@ -3,27 +3,38 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/le-arch/EventHub-C5/internal/db/repo"
 	"github.com/gin-gonic/gin"
+	"github.com/le-arch/EventHub-C5/internal/db/repo"
+	"github.com/le-arch/EventHub-C5/internal/middleware"
 )
 
  type EventHubHandler struct {
 	querier repo.Querier
+	jwtSecret string
+	frontendOrigin string
+	gmailUser string
+	gmailPassword string
 }
 
-func NewEventHubHandler(querier repo.Querier) *EventHubHandler {
+func NewEventHubHandler(querier repo.Querier, jwtSecret, frontendOrigin, gmailUser, gmailPassword string) *EventHubHandler {
 	return &EventHubHandler{
 		querier: querier,
+		jwtSecret: jwtSecret,
+		frontendOrigin: frontendOrigin,
+		gmailUser: gmailUser,
+		gmailPassword: gmailPassword,
 	}
 }
 
 func (h *EventHubHandler) WireHttpHandler() http.Handler {
 
 	r := gin.Default()
-	r.Use(gin.CustomRecovery(func(c *gin.Context, _ any) {
-		c.String(http.StatusInternalServerError, "Internal Server Error: panic")
-		c.AbortWithStatus(http.StatusInternalServerError)
-	}))
+
+	// Apply CORS middleware to allow requests from the frontend origin
+	r.Use(middleware.CorsMiddleware(h.frontendOrigin))
+
+	
+	r.Use(middleware.RecoveryMiddleware())
 
 
 	r.POST("/api/v1/auth/register", h.handleRegister)
