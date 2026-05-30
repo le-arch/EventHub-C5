@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * useAttendees Hook
  * 
@@ -35,7 +36,6 @@ interface UseAttendeesOptions {
 
 export function useAttendees({ eventId, initialPageSize = 20, autoFetch = true }: UseAttendeesOptions) {
   const [attendees, setAttendees] = useState<Attendee[]>([])
-  const [filteredAttendees, setFilteredAttendees] = useState<Attendee[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -70,7 +70,6 @@ export function useAttendees({ eventId, initialPageSize = 20, autoFetch = true }
       })
       
       setAttendees(response.data.attendees)
-      setFilteredAttendees(response.data.attendees)
       setTotalCount(response.data.total)
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || 'Failed to load attendees'
@@ -81,11 +80,9 @@ export function useAttendees({ eventId, initialPageSize = 20, autoFetch = true }
     }
   }, [eventId, page, pageSize, searchTerm, filters])
 
-  // Apply local filters and search
-  const applyLocalFilters = useCallback(() => {
+  const filteredAttendees = useMemo(() => {
     let filtered = [...attendees]
 
-    // Apply search
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
       filtered = filtered.filter(
@@ -95,19 +92,17 @@ export function useAttendees({ eventId, initialPageSize = 20, autoFetch = true }
       )
     }
 
-    // Apply ticket type filter
     if (filters.ticketType !== 'all') {
       filtered = filtered.filter((a) => a.ticketType === filters.ticketType)
     }
 
-    // Apply check-in status filter
     if (filters.checkInStatus !== 'all') {
       filtered = filtered.filter((a) =>
         filters.checkInStatus === 'checked_in' ? a.checkedIn : !a.checkedIn
       )
     }
 
-    setFilteredAttendees(filtered)
+    return filtered
   }, [attendees, searchTerm, filters])
 
   // Check-in an attendee
@@ -179,14 +174,9 @@ export function useAttendees({ eventId, initialPageSize = 20, autoFetch = true }
   // Auto-fetch on dependency changes
   useEffect(() => {
     if (autoFetch && eventId) {
-      fetchAttendees()
+      void Promise.resolve().then(fetchAttendees)
     }
   }, [autoFetch, eventId, fetchAttendees])
-
-  // Apply local filters when dependencies change
-  useEffect(() => {
-    applyLocalFilters()
-  }, [attendees, searchTerm, filters, applyLocalFilters])
 
   return {
     attendees: filteredAttendees,

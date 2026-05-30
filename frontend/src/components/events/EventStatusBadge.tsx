@@ -10,6 +10,7 @@
 'use client'
 
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils';
 import { Eye, FileText, XCircle, CheckCircle, Clock } from 'lucide-react'
 
 interface EventStatusBadgeProps {

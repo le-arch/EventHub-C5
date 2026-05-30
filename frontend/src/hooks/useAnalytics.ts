@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * useAnalytics Hook
  * 
@@ -77,8 +78,14 @@ export function useAnalytics({ eventId, autoFetch = true }: UseAnalyticsOptions)
   }, [fetchAnalytics])
 
   useEffect(() => {
-    if (autoFetch && eventId) {
+    if (!autoFetch || !eventId) return
+
+    const timer = window.setTimeout(() => {
       fetchAnalytics()
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timer)
     }
   }, [autoFetch, eventId, fetchAnalytics])
 

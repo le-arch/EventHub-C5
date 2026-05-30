@@ -38,7 +38,7 @@ const eventSchema = z.object({
   venueName: z.string().min(3, 'Venue name is required'),
   venueAddress: z.string().optional(),
   city: z.string().min(2, 'City is required'),
-  startDate: z.date({ required_error: 'Start date is required' }),
+  startDate: z.date({ message: 'Start date is required' }),
   startTime: z.string().min(1, 'Start time is required'),
   endDate: z.date().optional(),
   endTime: z.string().optional(),
@@ -54,7 +54,7 @@ type EventFormData = z.infer<typeof eventSchema>
 type TicketTypeData = z.infer<typeof ticketTypeSchema>
 
 interface EventFormProps {
-  initialData?: Partial<EventFormData>
+  initialData?: Partial<EventFormData> & { coverImageUrl?: string }
   initialTickets?: TicketTypeData[]
   onSubmit: (data: EventFormData, tickets: TicketTypeData[]) => Promise<void>
   isSubmitting?: boolean
@@ -309,7 +309,7 @@ export function EventForm({
 
               {fields.length === 0 && (
                 <p className="text-center text-gray-500 py-4">
-                  Click "Add Ticket" to create ticket types
+                  Click &quot;Add Ticket&quot; to create ticket types
                 </p>
               )}
             </CardContent>

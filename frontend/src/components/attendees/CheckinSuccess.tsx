@@ -53,7 +53,7 @@ export function CheckinSuccess({
         <div className="p-4">
           <div className="flex items-start gap-3">
             {/* Success Icon */}
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                 <CheckCircle className="h-6 w-6 text-green-600" />
               </div>

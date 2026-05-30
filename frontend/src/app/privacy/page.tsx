@@ -194,7 +194,7 @@ export default function PrivacyPage() {
         <section className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <Shield className="h-6 w-6 text-primary" />
-            <h2 className="text-2xl font-semibold">Children's Privacy 👶</h2>
+            <h2 className="text-2xl font-semibold">Children&apos;s Privacy 👶</h2>
           </div>
           <Card>
             <CardContent className="pt-6">
@@ -217,7 +217,7 @@ export default function PrivacyPage() {
             <CardContent className="pt-6">
               <p className="text-gray-600">
                 We may update this Privacy Policy from time to time. We will notify you of any material changes 
-                by posting the new policy on this page and updating the "Last Updated" date. We encourage you to 
+                by posting the new policy on this page and updating the &quot;Last Updated&quot; date. We encourage you to 
                 review this policy periodically.
               </p>
             </CardContent>
@@ -237,8 +237,8 @@ export default function PrivacyPage() {
               </p>
               <div className="mt-3 space-y-1">
                 <p>📧 Email: <strong>privacy@eventhub.com</strong></p>
-                <p>📞 Phone: <strong>+237 600 000 000</strong></p>
-                <p>📍 Address: <strong>Douala, Cameroon</strong></p>
+                <p>📞 Phone: <strong>+237 670 142 124</strong></p>
+                <p>📍 Address: <strong>Buea, Cameroon</strong></p>
               </div>
             </CardContent>
           </Card>

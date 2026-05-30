@@ -10,7 +10,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+// import Image from 'next/image'
 import { Calendar, User, Clock, Search } from 'lucide-react'
 
 // shadcn/ui components

@@ -13,6 +13,7 @@
 import { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import Image from 'next/image'
 
 interface EmptyStateProps {
   title: string
@@ -59,7 +60,7 @@ export function EmptyState({
     <div className={cn("text-center py-12", className)}>
       {/* Icon or Illustration */}
       {illustration ? (
-        <img
+        <Image
           src={illustration}
           alt={title}
           className={cn("mx-auto mb-6", sizes.iconSize)}

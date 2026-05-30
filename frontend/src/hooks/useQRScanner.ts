@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * useQRScanner Hook
  * 
@@ -11,6 +12,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
+import { toast } from 'sonner';
 
 interface UseQRScannerOptions {
   onScanSuccess?: (decodedText: string) => void

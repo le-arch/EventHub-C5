@@ -87,7 +87,7 @@ export default function ContactPage() {
           <div className="text-center mt-8">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Contact Us 📞</h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Have questions? We'd love to hear from you
+              Have questions? We&apos;d love to hear from you
             </p>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function ContactPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">📞 +237 600 000 000</p>
+                <p className="text-gray-600">📞 +237 670 142 124</p>
                 <p className="text-gray-600 mt-1">⏰ Mon-Fri, 9AM - 6PM</p>
               </CardContent>
             </Card>
@@ -131,8 +131,8 @@ export default function ContactPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">📍 Douala, Cameroon</p>
-                <p className="text-gray-600 mt-1">🏢 Bonanjo, Rue de l'Hôpital</p>
+                <p className="text-gray-600">📍 Buea, Cameroon</p>
+                <p className="text-gray-600 mt-1">🏢 Buea Town, Mountain Hub</p>
               </CardContent>
             </Card>
 
@@ -159,14 +159,14 @@ export default function ContactPage() {
               <CardHeader>
                 <CardTitle className="text-2xl">Send us a message 📧</CardTitle>
                 <CardDescription>
-                  Fill out the form below and we'll get back to you within 24 hours
+                  Fill out the form below and we&apos;ll get back to you within 24 hours
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {isSubmitted && (
                   <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
                     <CheckCircle className="h-5 w-5 text-green-600" />
-                    <p className="text-green-700">✅ Message sent successfully! We'll get back to you soon.</p>
+                    <p className="text-green-700">✅ Message sent successfully! We&apos;ll get back to you soon.</p>
                   </div>
                 )}
 
@@ -249,7 +249,7 @@ export default function ContactPage() {
                 </form>
 
                 <p className="text-xs text-gray-400 text-center mt-4">
-                  🔒 By submitting this form, you agree to our privacy policy. We'll never share your information.
+                  🔒 By submitting this form, you agree to our privacy policy. We&apos;ll never share your information.
                 </p>
               </CardContent>
             </Card>
@@ -265,7 +265,7 @@ export default function ContactPage() {
                 <CardTitle className="text-lg">How do I create an account?</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">Click the "Sign Up" button on the homepage, fill in your details, and verify your email address. ✨</p>
+                <p className="text-gray-600">Click the &quot;Sign Up&quot; button on the homepage, fill in your details, and verify your email address. ✨</p>
               </CardContent>
             </Card>
             <Card>

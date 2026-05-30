@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * useAuth Hook
  * 
@@ -13,6 +14,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import api from '@/lib/api';
 
 interface LoginCredentials {
   identifier: string

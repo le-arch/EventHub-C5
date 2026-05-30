@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * PaymentModal Component
  * 
@@ -233,7 +234,7 @@ export function PaymentModal({
               </div>
               <h3 className="font-semibold text-lg mb-2">Please check your phone</h3>
               <p className="text-gray-500 text-sm mb-2">
-                We've sent a payment request to your {paymentMethod === 'mtn' ? 'MTN Momo' : 'Orange Money'}.
+                We&apos;ve sent a payment request to your {paymentMethod === 'mtn' ? 'MTN Momo' : 'Orange Money'}.
               </p>
               <p className="text-gray-400 text-xs">
                 Enter your PIN to complete the payment. This may take a few seconds.

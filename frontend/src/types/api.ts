@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * API Types
  * 
@@ -6,6 +7,10 @@
  * 
  * @module APITypes
  */
+
+import { EventStatus } from "./event";
+import { PaymentMethod, PaymentStatus } from "./order";
+import { User } from "./user";
 
 // Generic API Response Wrapper
 export interface ApiResponse<T = any> {

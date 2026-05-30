@@ -184,7 +184,7 @@ export default function TermsPage() {
                 <li><strong>Transaction Fee:</strong> 3% on all paid tickets</li>
               </ul>
               <p className="text-gray-600 mt-2">
-                Fees are non-refundable unless required by law. EventHub reserves the right to modify pricing with 30 days' notice.
+                Fees are non-refundable unless required by law. EventHub reserves the right to modify pricing with 30 days&apos; notice.
               </p>
             </CardContent>
           </Card>
@@ -289,8 +289,8 @@ export default function TermsPage() {
               </p>
               <div className="mt-3 space-y-1">
                 <p>📧 Email: <strong>legal@eventhub.com</strong></p>
-                <p>📞 Phone: <strong>+237 600 000 000</strong></p>
-                <p>📍 Address: <strong>Douala, Cameroon</strong></p>
+                <p>📞 Phone: <strong>+237 670 142 124</strong></p>
+                <p>📍 Address: <strong>Buea, Cameroon</strong></p>
               </div>
             </CardContent>
           </Card>

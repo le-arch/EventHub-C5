@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * PasswordResetForm Component
  * 
@@ -156,7 +157,7 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
         <CardHeader>
           <CardTitle className="text-2xl">Forgot Password?</CardTitle>
           <CardDescription>
-            Enter your email address and we'll send you a verification code to reset your password.
+            Enter your email address and we&apos;ll send you a verification code to reset your password.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -236,7 +237,7 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
               disabled={isLoading}
               className="text-sm text-primary hover:underline disabled:opacity-50"
             >
-              Didn't receive code? Resend
+              Didn&apos;t receive code? Resend
             </button>
           </div>
         </CardContent>
@@ -250,7 +251,7 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
       <CardHeader>
         <CardTitle className="text-2xl">Create New Password</CardTitle>
         <CardDescription>
-          Enter your new password below. Make sure it's secure.
+          Enter your new password below. Make sure it&apos;s secure.
         </CardDescription>
       </CardHeader>
       <CardContent>

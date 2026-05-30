@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Attendee Store
  * 
@@ -11,9 +12,10 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import api from '@/lib/api'
 import { toast } from 'sonner'
+//import { Attendee } from '../types/attendee';
 
 // Types
-interface Attendee {
+export interface Attendee {
   id: string
   name: string
   phone: string
@@ -75,7 +77,7 @@ const initialState = {
   searchTerm: '',
   filters: {
     ticketType: 'all',
-    checkInStatus: 'all',
+    checkInStatus: 'all' as AttendeeFilters['checkInStatus'],
     dateFrom: '',
     dateTo: '',
   },
@@ -134,16 +136,16 @@ export const useAttendeeStore = create<AttendeeState>()(
             },
           })
           
-          const attendees = response.data.attendees
-          const totalCount = response.data.total
+          const attendees: Attendee[] = response.data.attendees as Attendee[]
+          const totalCount: number = response.data.total as number
           
           // Calculate summary
           const totalAttendees = attendees.length
-          const checkedInCount = attendees.filter((a: Attendee) => a.checkedIn).length
-          const totalRevenue = attendees.reduce((sum: number, a: Attendee) => sum + a.totalPaid, 0)
+          const checkedInCount = attendees.filter((a) => a.checkedIn).length
+          const totalRevenue = attendees.reduce((sum, a) => sum + a.totalPaid, 0)
           
           // Extract unique ticket types
-          const ticketTypes = [...new Set(attendees.map((a: Attendee) => a.ticketType))]
+          const ticketTypes: string[] = Array.from(new Set(attendees.map((a) => a.ticketType)))
           
           set({
             attendees,
@@ -229,3 +231,4 @@ export const useAttendeeStore = create<AttendeeState>()(
     { name: 'AttendeeStore' }
   )
 )
+

@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * CheckinScanner Component
  * 
  * QR code scanner for checking in attendees at the event.
- * Uses react-qr-scanner library for webcam access.
+ * Uses @yudiel/react-qr-scanner library for webcam access.
  * Features auto-detection, success/error feedback, and manual entry fallback.
  * 
  * @module CheckinScanner
@@ -10,9 +11,9 @@
 
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import QrScanner from '@yudiel/react-qr-scanner'
-import { Camera, X, AlertCircle, CheckCircle } from 'lucide-react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { QrScanner } from '@yudiel/react-qr-scanner'
+import { Camera, AlertCircle, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -51,16 +52,12 @@ export function CheckinScanner({
   const [manualTicketId, setManualTicketId] = useState('')
   const [cameraPermission, setCameraPermission] = useState<boolean | null>(null)
   const [lastScanned, setLastScanned] = useState<string | null>(null)
-  const scannerRef = useRef<any>(null)
 
   /**
-   * Request camera permission on mount
+   * Request camera permission and update state
+   * Using useCallback to memoize the function
    */
-  useEffect(() => {
-    checkCameraPermission()
-  }, [])
-
-  const checkCameraPermission = async () => {
+  const checkCameraPermission = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true })
       stream.getTracks().forEach(track => track.stop())
@@ -68,21 +65,26 @@ export function CheckinScanner({
     } catch (error) {
       setCameraPermission(false)
     }
-  }
+  }, [])
+
+  // Initialize camera permission check on mount
+  useEffect(() => {
+    checkCameraPermission()
+  }, [checkCameraPermission])
 
   /**
-   * Handle QR code scan
+   * Handle QR code scan result
    */
-  const handleScan = async (data: { text: string } | null) => {
-    if (!data || !data.text || isProcessing) return
+  const handleScan = useCallback(async (result: string) => {
+    if (!result || isProcessing) return
     
     // Prevent duplicate scans
-    if (lastScanned === data.text) return
-    setLastScanned(data.text)
+    if (lastScanned === result) return
+    setLastScanned(result)
     
     // Simulate API call - replace with actual API call
     try {
-      // const response = await api.post('/checkin', { qr_hash: data.text })
+      // const response = await api.post('/checkin', { qr_hash: result })
       // onCheckinSuccess(response.data)
       
       // Mock success for demonstration
@@ -98,22 +100,22 @@ export function CheckinScanner({
     
     // Reset last scanned after 2 seconds
     setTimeout(() => setLastScanned(null), 2000)
-  }
+  }, [isProcessing, lastScanned, onCheckinSuccess, onCheckinError])
 
   /**
    * Handle scan error
    */
-  const handleError = (error: any) => {
+  const handleError = useCallback((error: any) => {
     console.error('QR Scanner error:', error)
-    if (error.name === 'NotAllowedError') {
+    if (error?.name === 'NotAllowedError' || error?.message?.includes('permission')) {
       setCameraPermission(false)
     }
-  }
+  }, [])
 
   /**
    * Handle manual ticket entry
    */
-  const handleManualCheckin = async () => {
+  const handleManualCheckin = useCallback(async () => {
     if (!manualTicketId) return
     
     try {
@@ -131,7 +133,14 @@ export function CheckinScanner({
     } catch (error: any) {
       onCheckinError?.(error.response?.data?.error || "Invalid ticket ID")
     }
-  }
+  }, [manualTicketId, onCheckinSuccess, onCheckinError])
+
+  /**
+   * Retry camera permission
+   */
+  const retryCameraPermission = useCallback(() => {
+    checkCameraPermission()
+  }, [checkCameraPermission])
 
   return (
     <div className="space-y-4">
@@ -139,13 +148,19 @@ export function CheckinScanner({
       {cameraPermission === false && (
         <Card className="p-6 text-center bg-amber-50 border-amber-200">
           <AlertCircle className="h-12 w-12 text-amber-600 mx-auto mb-3" />
-          <h3 className="font-semibold text-amber-800 mb-2">Camera Access Required</h3>
+          <h3 className="font-semibold text-amber-800 mb-2">📷 Camera Access Required</h3>
           <p className="text-sm text-amber-700 mb-4">
             Please allow camera access to scan QR codes. You can also use manual entry.
           </p>
-          <Button variant="outline" onClick={() => setShowManualEntry(true)}>
-            Use Manual Entry
-          </Button>
+          <div className="flex gap-3 justify-center">
+            <Button variant="outline" onClick={() => setShowManualEntry(true)}>
+              📝 Manual Entry
+            </Button>
+            <Button onClick={retryCameraPermission}>
+              <Camera className="h-4 w-4 mr-2" />
+              Try Again 🔄
+            </Button>
+          </div>
         </Card>
       )}
 
@@ -154,21 +169,22 @@ export function CheckinScanner({
         <div className="relative">
           <div className="aspect-square max-w-md mx-auto bg-black rounded-lg overflow-hidden">
             <QrScanner
-              delay={300}
+              onDecode={handleScan}
               onError={handleError}
-              onScan={handleScan}
-              style={{ width: '100%', height: '100%' }}
-              facingMode="environment"
+              constraints={{
+                facingMode: "environment",
+              }}
+              className="w-full h-full"
             />
           </div>
           
           {/* Scanner Overlay Guide */}
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
             <div className="w-64 h-64 border-2 border-primary rounded-lg shadow-lg">
-              <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary" />
-              <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary" />
-              <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary" />
-              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary" />
+              <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-lg" />
+              <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-lg" />
+              <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-lg" />
+              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-lg" />
             </div>
           </div>
           
@@ -181,12 +197,12 @@ export function CheckinScanner({
       {/* Controls */}
       <div className="flex justify-center gap-3">
         <Button variant="outline" onClick={() => setShowManualEntry(true)}>
-          Manual Ticket Entry
+          📝 Manual Ticket Entry
         </Button>
         {cameraPermission === false && (
-          <Button onClick={checkCameraPermission}>
+          <Button onClick={retryCameraPermission}>
             <Camera className="h-4 w-4 mr-2" />
-            Try Again
+            Try Again 🔄
           </Button>
         )}
       </div>
@@ -195,7 +211,7 @@ export function CheckinScanner({
       <Dialog open={showManualEntry} onOpenChange={setShowManualEntry}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Manual Ticket Entry</DialogTitle>
+            <DialogTitle>📝 Manual Ticket Entry</DialogTitle>
             <DialogDescription>
               Enter the ticket ID or QR code value manually
             </DialogDescription>
@@ -214,10 +230,20 @@ export function CheckinScanner({
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowManualEntry(false)}>
-              Cancel
+              Cancel ❌
             </Button>
             <Button onClick={handleManualCheckin} disabled={!manualTicketId || isProcessing}>
-              {isProcessing ? 'Checking in...' : 'Check In'}
+              {isProcessing ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Checking in...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Check In ✅
+                </span>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

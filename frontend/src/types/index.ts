@@ -65,7 +65,6 @@ export type {
   PaymentMethod,
   Order,
   OrderDetails,
-  OrderItem,
   CreateOrderRequest,
   OrderListResponse,
   OrderSummary,

@@ -9,30 +9,30 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useSyncExternalStore } from 'react'
 
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false)
+  const getSnapshot = () => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return false
+    }
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
+    return window.matchMedia(query).matches
+  }
+
+  const subscribe = (notify: () => void) => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return () => {}
+    }
 
     const media = window.matchMedia(query)
-    
-    // Initial check
-    setMatches(media.matches)
+    const listener = () => notify()
 
-    // Add listener
-    const listener = (event: MediaQueryListEvent) => {
-      setMatches(event.matches)
-    }
-    
     media.addEventListener('change', listener)
-    
     return () => media.removeEventListener('change', listener)
-  }, [query])
+  }
 
-  return matches
+  return useSyncExternalStore(subscribe, getSnapshot, () => false)
 }
 
 // Predefined media query hooks

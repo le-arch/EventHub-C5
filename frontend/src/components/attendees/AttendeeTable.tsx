@@ -83,8 +83,8 @@ export function AttendeeTable({ attendees, onCheckIn, onViewDetails, isLoading =
    * Sort attendees
    */
   const sortedAttendees = [...attendees].sort((a, b) => {
-    let aVal = a[sortField]
-    let bVal = b[sortField]
+    const aVal = a[sortField]
+    const bVal = b[sortField]
     
     if (typeof aVal === 'string') {
       return sortDirection === 'asc' 

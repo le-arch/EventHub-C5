@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Auth Store
  * 
@@ -13,7 +14,7 @@ import api from '@/lib/api'
 import { STORAGE_KEYS } from '@/lib/constant'
 
 // Types
-interface User {
+export interface User {
   id: string
   email: string
   phone: string

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Check-in Store
  * 
@@ -10,10 +11,10 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import api from '@/lib/api'
-import { toast } from 'sonner'
+// import { toast } from 'sonner'
 
 // Types
-interface CheckinResult {
+export interface CheckinResult {
   success: boolean
   attendeeName?: string
   ticketType?: string

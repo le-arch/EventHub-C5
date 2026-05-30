@@ -10,7 +10,7 @@
 
 import { Mail, Phone, MapPin, Target, Eye, Heart, Users, Award, Calendar, Ticket, QrCode, Smartphone } from 'lucide-react'
 import Link from 'next/link'
-import Image from 'next/image'
+// import Image from 'next/image'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
@@ -106,7 +106,7 @@ export default function AboutPage() {
               Attendees faced confusion, lost tickets, and long queues at entry. Something had to change.
             </p>
             <p>
-              That's why we built EventHub – an all-in-one platform that makes event management simple, 
+              That&apos;s why we built EventHub – an all-in-one platform that makes event management simple, 
               secure, and accessible to everyone in Cameroon.
             </p>
           </div>

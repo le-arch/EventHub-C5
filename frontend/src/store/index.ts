@@ -21,4 +21,4 @@ export type { Event, TicketType, CreateEventData } from './eventStore'
 export type { ModalState } from './uiStore'
 
 // Re-export constants from lib
-export { STORAGE_KEYS, HTTP_STATUS } from '@/src/lib/constants'
+export { STORAGE_KEYS, HTTP_STATUS } from '@/lib/constant'

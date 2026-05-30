@@ -10,7 +10,7 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 
 // Types
-interface ModalState {
+export interface ModalState {
   isOpen: boolean
   title: string
   description: string

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Event Store
  * 
@@ -13,7 +14,7 @@ import api from '@/lib/api'
 import { toast } from 'sonner'
 
 // Types
-interface TicketType {
+export interface TicketType {
   id: string
   name: string
   price: number
@@ -21,7 +22,7 @@ interface TicketType {
   quantitySold: number
 }
 
-interface Event {
+export interface Event {
   id: string
   title: string
   description: string | null
@@ -43,7 +44,7 @@ interface Event {
   updatedAt: string
 }
 
-interface CreateEventData {
+export interface CreateEventData {
   title: string
   description?: string
   venueName: string

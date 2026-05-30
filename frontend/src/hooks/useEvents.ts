@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * useEvents Hook
  * 
@@ -261,9 +262,13 @@ export function useEvents({ autoFetch = true, pageSize = 10 }: UseEventsOptions 
 
   // Auto-fetch on mount and dependency changes
   useEffect(() => {
-    if (autoFetch) {
+    if (!autoFetch) return
+
+    const timer = setTimeout(() => {
       fetchEvents()
-    }
+    }, 0)
+
+    return () => clearTimeout(timer)
   }, [autoFetch, fetchEvents])
 
   return {

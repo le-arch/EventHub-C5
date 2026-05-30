@@ -9,6 +9,7 @@
 
 'use client'
 
+import Image from 'next/image'
 import { Calendar, MapPin, Clock, Users, Ticket, Share2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -52,7 +53,7 @@ export function EventDetails({
       {/* Cover Image */}
       {event.coverImageUrl && (
         <div className="aspect-video rounded-xl overflow-hidden">
-          <img
+          <Image
             src={event.coverImageUrl}
             alt={event.title}
             className="w-full h-full object-cover"
