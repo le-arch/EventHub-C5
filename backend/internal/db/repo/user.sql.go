@@ -18,11 +18,11 @@ RETURNING id, email, phone, password_hash, full_name, role, is_email_verified, c
 `
 
 type CreateUserParams struct {
-	Email        string  `json:"email"`
-	Phone        string  `json:"phone"`
-	PasswordHash string  `json:"password_hash"`
-	FullName     string  `json:"full_name"`
-	Role         *string `json:"role"`
+	Email        string   `json:"email"`
+	Phone        string   `json:"phone"`
+	PasswordHash string   `json:"password_hash"`
+	FullName     string   `json:"full_name"`
+	Role         UserRole `json:"role"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
