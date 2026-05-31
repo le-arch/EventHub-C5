@@ -50,7 +50,7 @@ func (h *EventHubHandler) handleRegister(c *gin.Context) {
 	user, err := h.querier.CreateUser(c, repo.CreateUserParams{
 		Email: req.Email,
 		Phone: req.Phone,
-		Role: &req.Role,
+		Role: req.Role,
 		PasswordHash: hashedPassword,
 		FullName: req.FullName,
 	})
@@ -65,7 +65,7 @@ func (h *EventHubHandler) handleRegister(c *gin.Context) {
 		ID: user.ID.String(),
 		FullName: user.FullName,
 		Email: user.Email,
-		Role: *user.Role,
+		Role: user.Role,
 		IsEmailVerified: user.IsEmailVerified,
 		CreatedAt: user.CreatedAt.Time.Format("2006-01-02 15:04:05"),
 	}
