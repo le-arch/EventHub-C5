@@ -23,7 +23,7 @@ func (h *EventHubHandler) handleRegister(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	//validate email address using the utility function before proceeding with user creation
 	IsEmailValid := utils.IsValidEmail(req.Email)
 	if !IsEmailValid {
@@ -37,7 +37,7 @@ func (h *EventHubHandler) handleRegister(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Email already exists"})
 		return
 	}
-    //hash the password before storing it in the database
+	//hash the password before storing it in the database
 	var hashedPassword, e = auth.HashPassword(req.PasswordHash)
 	if e != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to hash password"})
@@ -49,11 +49,11 @@ func (h *EventHubHandler) handleRegister(c *gin.Context) {
 	}
 
 	PendingData := map[string]interface{}{
-		"full_name": req.FullName,
-		"email": req.Email,
-		"phone": req.Phone,
-		"role": req.Role,
-		"password_hash": hashedPassword,
+		"full_name":         req.FullName,
+		"email":             req.Email,
+		"phone":             req.Phone,
+		"role":              req.Role,
+		"password_hash":     hashedPassword,
 		"is_email_verified": false,
 	}
 
@@ -63,13 +63,12 @@ func (h *EventHubHandler) handleRegister(c *gin.Context) {
 		return
 	}
 
-
 	//send the response back to the client
-	c.JSON(http.StatusOK, gin.H{ "message": "verify your email to complete registration",})
+	c.JSON(http.StatusOK, gin.H{"message": "verify your email to complete registration"})
 }
 
 func (h *EventHubHandler) handleVerifyEmail(c *gin.Context) {
-var req models.VerifyEmailRequest
+	var req models.VerifyEmailRequest
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -94,57 +93,56 @@ var req models.VerifyEmailRequest
 
 	roleVal, ok := pendingMap["role"].(repo.UserRole)
 	if !ok {
-    c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid role type in pending data"})
-    return
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid role type in pending data"})
+		return
 	}
 
 	verified := true
 
 	//create the user in the database
 	user, err := h.querier.CreateUser(c, repo.CreateUserParams{
-		Email: pendingMap["email"].(string),
-		Phone: pendingMap["phone"].(string),
-		Role: roleVal,
-		PasswordHash: pendingMap["password_hash"].(string),
-		FullName: pendingMap["full_name"].(string),
+		Email:           pendingMap["email"].(string),
+		Phone:           pendingMap["phone"].(string),
+		Role:            roleVal,
+		PasswordHash:    pendingMap["password_hash"].(string),
+		FullName:        pendingMap["full_name"].(string),
 		IsEmailVerified: &verified,
 	})
 	//handle any errors that occur during user creation
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user: " + err.Error()})
 		return
-	} 
+	}
 
 	// Generate a JWT token for the newly registered user
 	token, err := auth.CreateToken(
-		user.ID.String(), 
-		user.Email, 
-		user.Phone, 
-		user.FullName, 
-		string(user.Role), 
+		user.ID.String(),
+		user.Email,
+		user.Phone,
+		user.FullName,
+		string(user.Role),
 		h.jwtSecret)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token: " + err.Error()})
 		return
 	}
 
-	h.otpHandler.InvalidateOTP(req.Email) // Invalidate the OTP after successful verification
+	h.otpHandler.InvalidateOTP(req.Email)          // Invalidate the OTP after successful verification
 	h.otpHandler.DeleteRegistrationData(req.Email) // Remove pending registration data after successful verification
-
 
 	//prepare the response without exposing sensitive information like password hash
 	response := utils.RegisterResponse{
-		ID: user.ID.String(),
-		FullName: user.FullName,
-		Email: user.Email,
-		Role: user.Role,
+		ID:              user.ID.String(),
+		FullName:        user.FullName,
+		Email:           user.Email,
+		Role:            user.Role,
 		IsEmailVerified: user.IsEmailVerified,
-		CreatedAt: user.CreatedAt.Time.Format("2006-01-02 15:04:05"),
+		CreatedAt:       user.CreatedAt.Time.Format("2006-01-02 15:04:05"),
 	}
 
 	// Generate a refresh token to enable auto login for the user after registration without needing to log in again immediately
 	refreshToken, err := auth.CreateRefreshToken(
-		user.ID.String(), 
+		user.ID.String(),
 		h.jwtSecret)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token: " + err.Error()})
@@ -152,12 +150,12 @@ var req models.VerifyEmailRequest
 	}
 
 	//send the response back to the client
-	c.JSON(http.StatusOK, gin.H{ 
-		"message": "User registered successfully",
-		"token": token,
+	c.JSON(http.StatusOK, gin.H{
+		"message":       "User registered successfully",
+		"token":         token,
 		"refresh_token": refreshToken,
-		"user": response,
-		})
+		"user":          response,
+	})
 }
 
 func (h *EventHubHandler) handleLogin(c *gin.Context) {
@@ -177,7 +175,7 @@ func (h *EventHubHandler) handleLogin(c *gin.Context) {
 	}
 
 	//verify the provided password against the stored password hash using the utility function
-	err = auth.VerifyPassword(user.PasswordHash, req.PasswordHash); 
+	err = auth.VerifyPassword(user.PasswordHash, req.PasswordHash)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
@@ -191,11 +189,11 @@ func (h *EventHubHandler) handleLogin(c *gin.Context) {
 
 	// Generate a JWT token for the authenticated user
 	token, err := auth.CreateToken(
-		user.ID.String(), 
-		user.Email, 
-		user.Phone, 
-		user.FullName, 
-		string(user.Role), 
+		user.ID.String(),
+		user.Email,
+		user.Phone,
+		user.FullName,
+		string(user.Role),
 		h.jwtSecret)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token: " + err.Error()})
@@ -204,7 +202,7 @@ func (h *EventHubHandler) handleLogin(c *gin.Context) {
 
 	// Generate a refresh token for the authenticated user that keeps them logged in for a longer period without needing to re-enter credentials
 	refreshToken, err := auth.CreateRefreshToken(
-		user.ID.String(), 
+		user.ID.String(),
 		h.jwtSecret)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token: " + err.Error()})
@@ -212,21 +210,21 @@ func (h *EventHubHandler) handleLogin(c *gin.Context) {
 	}
 
 	response := utils.LoginResponse{
-	Token: token,
-	RefreshToken: refreshToken,
-	User: utils.RegisterResponse{
-		ID: user.ID.String(),
-		FullName: user.FullName,
-		Email: user.Email,
-		Role: user.Role,
-		IsEmailVerified: user.IsEmailVerified,
-		CreatedAt: user.CreatedAt.Time.Format("2006-01-02 15:04:05"),
+		Token:        token,
+		RefreshToken: refreshToken,
+		User: utils.RegisterResponse{
+			ID:              user.ID.String(),
+			FullName:        user.FullName,
+			Email:           user.Email,
+			Role:            user.Role,
+			IsEmailVerified: user.IsEmailVerified,
+			CreatedAt:       user.CreatedAt.Time.Format("2006-01-02 15:04:05"),
 		},
 	}
 
-	c.JSON(http.StatusOK, gin.H{ 
+	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
-		"user": response,
+		"user":    response,
 	})
 }
 
@@ -262,11 +260,11 @@ func (h *EventHubHandler) handleRefreshToken(c *gin.Context) {
 
 	// Generate a new access token for the user using the same information as the original token, ensuring that the user can continue to access protected resources without needing to log in again
 	newToken, err := auth.CreateToken(
-		user.ID.String(), 
-		user.Email, 
-		user.Phone, 
-		user.FullName, 
-		string(user.Role), 
+		user.ID.String(),
+		user.Email,
+		user.Phone,
+		user.FullName,
+		string(user.Role),
 		h.jwtSecret)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token: " + err.Error()})
@@ -275,7 +273,7 @@ func (h *EventHubHandler) handleRefreshToken(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Token refreshed successfully",
-		"token": newToken,
+		"token":   newToken,
 	})
 }
 
@@ -302,7 +300,7 @@ func (h *EventHubHandler) handleLogout(c *gin.Context) {
 }
 
 func (h *EventHubHandler) handleForgotPassword(c *gin.Context) {
-	var req models.ForgotPasswordRequest
+	var req models.UserRequest
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -310,7 +308,7 @@ func (h *EventHubHandler) handleForgotPassword(c *gin.Context) {
 	}
 
 	//check if the email exists in the database to prevent sending OTP to non-existent email addresses
-	_,err = h.querier.GetUserByEmail(c, req.Email)
+	_, err = h.querier.GetUserByEmail(c, req.Email)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "if email exists, an otp has been sent already"})
 		return
@@ -358,7 +356,7 @@ func (h *EventHubHandler) handlePasswrordReset(c *gin.Context) {
 	// Update the user's password in the database with the new hashed password, ensuring that the user can log in with their new password securely
 	err = h.querier.UpdateUserPassword(c, repo.UpdateUserPasswordParams{
 		PasswordHash: hashedPassword,
-		Email: req.Email,
+		Email:        req.Email,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update password: " + err.Error()})
@@ -378,4 +376,35 @@ func (h *EventHubHandler) handleGetCurrentUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"user": claims})
+}
+
+func (h *EventHubHandler) handleResendOTP(c *gin.Context) {
+	var req models.UserRequest
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Check if there is a pending registration for the provided email address to ensure that a new OTP is only generated and sent if there is an existing registration process that requires email verification,
+	_, exists := h.otpHandler.GetRegistrationData(req.Email)
+	if !exists {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No pending registration found for this email"})
+		return
+	}
+
+	//Generate new otp (invalidates old one automatically by overwriting it)
+	newOTP, err := h.otpHandler.GenerateOTP(req.Email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate new OTP"})
+		return
+	}
+
+	err = email.SendOTP(h.gmailUser, h.gmailPassword, req.Email, newOTP)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send OTP email"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "A new OTP has been sent to your email"})
 }
