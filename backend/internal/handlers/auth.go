@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/le-arch/EventHub-C5/internal/auth"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
+	"github.com/le-arch/EventHub-C5/internal/email"
 	"github.com/le-arch/EventHub-C5/internal/models"
 	"github.com/le-arch/EventHub-C5/internal/utils"
 )
@@ -260,4 +261,77 @@ func (h *EventHubHandler) handleRefreshToken(c *gin.Context) {
 		"message": "Token refreshed successfully",
 		"token": newToken,
 	})
+}
+
+func (h *EventHubHandler) handleForgotPassword(c *gin.Context) {
+	var req models.ForgotPasswordRequest
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	//check if the email exists in the database to prevent sending OTP to non-existent email addresses
+	_,err = h.querier.GetUserByEmail(c, req.Email)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "if email exists, an otp has been sent already"})
+		return
+	}
+
+	// Generate a new OTP for the provided email address and send it to the user's email to allow them to reset their password securely without exposing any information about the existence of the email in the system
+	otpCode, err := h.otpHandler.GenerateOTP(req.Email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate OTP"})
+		return
+	}
+
+	// Send the generated OTP to the user's email address using the email utility function, ensuring that the user receives the OTP needed to reset their password securely
+	err = email.SendOTP(h.gmailUser, h.gmailPassword, req.Email, otpCode)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send OTP email"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Password reset otp sent successfully"})
+}
+
+func (h *EventHubHandler) handlePasswrordReset(c *gin.Context) {
+	var req models.ResetPasswordRequest
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Verify the provided OTP for password reset and ensure that it is valid and has not expired before allowing the user to reset their password securely
+	ok, err := h.otpHandler.VerifyResetOTP(req.Email, req.Otp)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired OTP"})
+		return
+	}
+
+	// Hash the new password provided by the user before storing it in the database to ensure that the user's password is stored securely and cannot be easily compromised
+	hashedPassword, err := auth.HashPassword(req.NewPasswordHash)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		return
+	}
+
+	// Update the user's password in the database with the new hashed password, ensuring that the user can log in with their new password securely
+	err = h.querier.UpdateUserPassword(c, repo.UpdateUserPasswordParams{
+		PasswordHash: hashedPassword,
+		Email: req.Email,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update password: " + err.Error()})
+		return
+	}
+
+	h.otpHandler.InvalidateResetOTP(req.Email) // Invalidate the OTP after successful password reset
+
+	c.JSON(http.StatusOK, gin.H{"message": "Password reset successful"})
 }

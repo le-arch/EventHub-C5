@@ -45,6 +45,7 @@ type OTPHandler struct {
 	config  *OTPConfig
 	storage map[string]*OTPRecord // email -> OTPRecord
 	pendingUsers map[string]interface{} // email -> user data for pending verification
+	resetStorage map[string]*OTPRecord // email -> OTPRecord for password reset
 	mu      sync.RWMutex
 }
 
@@ -57,6 +58,7 @@ func NewOTPHandler(config *OTPConfig) *OTPHandler {
 		config:  config,
 		storage: make(map[string]*OTPRecord),
 		pendingUsers: make(map[string]interface{}),
+		resetStorage: make(map[string]*OTPRecord),
 	}
 }
 
@@ -204,4 +206,66 @@ func (h *OTPHandler) StartCleanupRoutine(interval time.Duration) {
 			h.CleanupExpiredOTPs()
 		}
 	}()
+}
+
+func (h *OTPHandler) GenerateResetOTP(email string) (string, error) {
+	// Generate random numeric OTP
+	code, err := h.generateRandomCode()
+	if err != nil {
+		return "", err
+	}
+
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	h.resetStorage[email] = &OTPRecord{
+		Code:      code,
+		ExpiresAt: time.Now().Add(h.config.Expiry),
+		Attempts:  0,
+	}
+
+	return code, nil
+}
+
+func (h *OTPHandler) VerifyResetOTP(email, code string) (bool, error) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	record, exists := h.resetStorage[email]
+	if !exists {
+		return false, errors.New("OTP not found or expired")
+	}
+
+	// Check expiry
+	if time.Now().After(record.ExpiresAt) {
+		delete(h.resetStorage, email)
+		return false, errors.New("OTP has expired")
+	}
+	if record.VerifiedAt != nil {
+		return false, errors.New("OTP already used")
+	}
+
+	// Check attempts
+	if record.Attempts >= h.config.MaxAttempts {
+		delete(h.resetStorage, email)
+		return false, errors.New("too many failed attempts")
+	}
+
+	record.Attempts++
+
+	if record.Code != code {
+		return false, nil
+	}
+
+	// Mark as verified
+	now := time.Now()
+	record.VerifiedAt = &now
+
+	return true, nil
+}
+
+func (h *OTPHandler) InvalidateResetOTP(email string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	delete(h.resetStorage, email)
 }

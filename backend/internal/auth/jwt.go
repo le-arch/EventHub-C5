@@ -73,16 +73,19 @@ func VerifyToken(tokenString, secret string) (*Claims, error) {
 
 // CreateRefreshToken generates a new JWT refresh token with the provided user ID and secret key, setting a longer expiration time for the refresh token
 func CreateRefreshToken(userID, secret string) (string, error) {
+	// Create the claims for the refresh token with the user ID and set a longer expiration time
 	claims := jwt.RegisteredClaims{
 		Subject:   userID,
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(RefreshTokenDuration)),
 	}
 
+	// Create a new JWT token with the specified signing method and claims, then sign it using the provided secret key
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return t.SignedString([]byte(secret))
 }
 	
 func VerifyRefreshToken(tokenString, secret string) (*jwt.RegisteredClaims, error) {
+	// Parse the refresh token with the registered claims and validate the signing method and token validity
 	t, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, 
 		func(t *jwt.Token) (interface{}, error){
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -94,6 +97,7 @@ func VerifyRefreshToken(tokenString, secret string) (*jwt.RegisteredClaims, erro
 		return nil, err
 	}
 
+	// Extract the registered claims from the token and ensure that the token is valid before returning the claims
 	claims, ok := t.Claims.(*jwt.RegisteredClaims)
 	if !ok || !t.Valid {
 		return nil, errors.New("invalid token")

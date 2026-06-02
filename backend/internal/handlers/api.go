@@ -45,8 +45,8 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	r.POST("/api/v1/auth/login", h.handleLogin)
 	r.POST("/api/v1/auth/refresh", h.handleRefreshToken)
 	// r.POST("/api/v1/auth/logout", h.handleLogout)
-	// r.POST("/api/v1/auth/forgot-password", h.handleForgotPassword)
-	// r.POST("/api/v1/auth/reset-password", h.handlePasswrordReset)
+	r.POST("/api/v1/auth/forgot-password", h.handleForgotPassword)
+	r.POST("/api/v1/auth/reset-password", h.handlePasswrordReset)
 
 	// r.GET("/api/v1/auth/me", h.handleGetCurrentUser)
 	
