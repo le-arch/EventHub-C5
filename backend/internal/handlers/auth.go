@@ -228,6 +228,12 @@ func (h *EventHubHandler) handleRefreshToken(c *gin.Context) {
 		return
 	}
 
+	// Check if the provided refresh token has been revoked to prevent the use of invalidated tokens for generating new access tokens, ensuring that users can securely log out and invalidate their sessions when needed
+	if h.revocationStore.IsRevoked(req.RefreshToken) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token has been revoked"})
+		return
+	}
+
 	// Verify the provided refresh token and extract the claims to identify the user for whom the new access token should be generated
 	claims, err := auth.VerifyRefreshToken(req.RefreshToken, h.jwtSecret)
 	if err != nil {
@@ -260,6 +266,28 @@ func (h *EventHubHandler) handleRefreshToken(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Token refreshed successfully",
 		"token": newToken,
+	})
+}
+
+func (h *EventHubHandler) handleLogout(c *gin.Context) {
+	var req models.RefreshTokenRequest
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Verify the provided refresh token to ensure that it is valid and extract the claims to identify the user for whom the token should be revoked, allowing the user to log out securely by invalidating their refresh token and preventing it from being used to generate new access tokens in the future
+	claims, err := auth.VerifyRefreshToken(req.RefreshToken, h.jwtSecret)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+
+	// Revoke the refresh token by adding it to the revocation store, ensuring that it cannot be used to generate new access tokens in the future and effectively logging the user out of their session
+	h.revocationStore.Revoke(req.RefreshToken, claims.ExpiresAt.Time)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Logout successful",
 	})
 }
 
