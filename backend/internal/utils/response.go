@@ -12,3 +12,9 @@ type RegisterResponse struct {
 	IsEmailVerified *bool  `json:"is_email_verified"`
 	CreatedAt  string `json:"created_at"`
 }
+
+type LoginResponse struct {
+	Token string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
+	User RegisterResponse `json:"user"`
+}

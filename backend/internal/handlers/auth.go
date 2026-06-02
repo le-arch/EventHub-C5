@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/le-arch/EventHub-C5/internal/auth"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
 	"github.com/le-arch/EventHub-C5/internal/models"
@@ -146,4 +147,117 @@ var req models.VerifyEmailRequest
 		"token": token,
 		"user": response,
 		})
+}
+
+func (h *EventHubHandler) handleLogin(c *gin.Context) {
+	//bind the incoming JSON request to the LoginRequest struct
+	var req models.LoginRequest
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	//retrieve the user from the database using the provided email address
+	user, err := h.querier.GetUserByEmail(c, req.Email)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		return
+	}
+
+	//verify the provided password against the stored password hash using the utility function
+	err = auth.VerifyPassword(user.PasswordHash, req.PasswordHash); 
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		return
+	}
+
+	//check if the user's email is verified before allowing login
+	if user.IsEmailVerified == nil || !*user.IsEmailVerified {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Email not verified"})
+		return
+	}
+
+	// Generate a JWT token for the authenticated user
+	token, err := auth.CreateToken(
+		user.ID.String(), 
+		user.Email, 
+		user.Phone, 
+		user.FullName, 
+		string(user.Role), 
+		h.jwtSecret)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token: " + err.Error()})
+		return
+	}
+
+	// Generate a refresh token for the authenticated user that keeps them logged in for a longer period without needing to re-enter credentials
+	refreshToken, err := auth.CreateRefreshToken(
+		user.ID.String(), 
+		h.jwtSecret)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token: " + err.Error()})
+		return
+	}
+
+	response := utils.LoginResponse{
+	Token: token,
+	RefreshToken: refreshToken,
+	User: utils.RegisterResponse{
+		ID: user.ID.String(),
+		FullName: user.FullName,
+		Email: user.Email,
+		Role: user.Role,
+		IsEmailVerified: user.IsEmailVerified,
+		CreatedAt: user.CreatedAt.Time.Format("2006-01-02 15:04:05"),
+		},
+	}
+
+	c.JSON(http.StatusOK, gin.H{ 
+		"message": "Login successful",
+		"user": response,
+	})
+}
+
+func (h *EventHubHandler) handleRefreshToken(c *gin.Context) {
+	var req models.RefreshTokenRequest
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Verify the provided refresh token and extract the claims to identify the user for whom the new access token should be generated
+	claims, err := auth.VerifyRefreshToken(req.RefreshToken, h.jwtSecret)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid refresh token"})
+		return
+	}
+
+	// Extract the user ID from the claims and retrieve the corresponding user from the database to ensure that the user still exists and is valid before generating a new access token
+	userID := claims.Subject
+
+	user, err := h.querier.GetUserByID(c, uuid.MustParse(userID))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
+
+	// Generate a new access token for the user using the same information as the original token, ensuring that the user can continue to access protected resources without needing to log in again
+	newToken, err := auth.CreateToken(
+		user.ID.String(), 
+		user.Email, 
+		user.Phone, 
+		user.FullName, 
+		string(user.Role), 
+		h.jwtSecret)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Token refreshed successfully",
+		"token": newToken,
+	})
 }

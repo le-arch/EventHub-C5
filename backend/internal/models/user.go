@@ -16,3 +16,12 @@ type VerifyEmailRequest struct {
 	Email string `json:"email" binding:"required,email"`
 	Otp   string `json:"otp" binding:"required,len=6"`
 }
+
+type LoginRequest struct {
+	Email string `json:"email" binding:"required,email"`
+	PasswordHash string `json:"password_hash" binding:"required"`
+}
+
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
