@@ -139,8 +139,6 @@ type User struct {
 	Email           string           `json:"email"`
 	Phone           string           `json:"phone"`
 	PasswordHash    string           `json:"password_hash"`
-	OtpCode         *string          `json:"otp_code"`
-	OtpExpiresAt    pgtype.Timestamp `json:"otp_expires_at"`
 	FullName        string           `json:"full_name"`
 	Role            UserRole         `json:"role"`
 	IsEmailVerified *bool            `json:"is_email_verified"`

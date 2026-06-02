@@ -4,21 +4,24 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/le-arch/EventHub-C5/internal/auth"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
 	"github.com/le-arch/EventHub-C5/internal/middleware"
 )
 
  type EventHubHandler struct {
 	querier repo.Querier
+	otpHandler *auth.OTPHandler
 	jwtSecret string
 	frontendOrigin string
 	gmailUser string
 	gmailPassword string
 }
 
-func NewEventHubHandler(querier repo.Querier, jwtSecret, frontendOrigin, gmailUser, gmailPassword string) *EventHubHandler {
+func NewEventHubHandler(querier repo.Querier, otpHandler *auth.OTPHandler, jwtSecret, frontendOrigin, gmailUser, gmailPassword string) *EventHubHandler {
 	return &EventHubHandler{
 		querier: querier,
+		otpHandler: otpHandler,
 		jwtSecret: jwtSecret,
 		frontendOrigin: frontendOrigin,
 		gmailUser: gmailUser,
@@ -38,7 +41,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 
 
 	r.POST("/api/v1/auth/register", h.handleRegister)
-	// r.POST("/api/v1/auth/verify-otp", h.handleVerifyEmail)
+	r.POST("/api/v1/auth/verify-otp", h.handleVerifyEmail)
 	// r.POST("/api/v1/auth/login", h.handleLogin)
 	// r.POST("/api/v1/auth/refresh", h.handleRefreshToken)
 	// r.POST("/api/v1/auth/logout", h.handleLogout)

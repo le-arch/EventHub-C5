@@ -12,17 +12,18 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO "users" (email, phone, password_hash, full_name, role)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, email, phone, password_hash, otp_code, otp_expires_at, full_name, role, is_email_verified, created_at, updated_at
+INSERT INTO "users" (email, phone, password_hash, full_name, role, is_email_verified)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, email, phone, password_hash, full_name, role, is_email_verified, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	Email        string   `json:"email"`
-	Phone        string   `json:"phone"`
-	PasswordHash string   `json:"password_hash"`
-	FullName     string   `json:"full_name"`
-	Role         UserRole `json:"role"`
+	Email           string   `json:"email"`
+	Phone           string   `json:"phone"`
+	PasswordHash    string   `json:"password_hash"`
+	FullName        string   `json:"full_name"`
+	Role            UserRole `json:"role"`
+	IsEmailVerified *bool    `json:"is_email_verified"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -32,6 +33,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.PasswordHash,
 		arg.FullName,
 		arg.Role,
+		arg.IsEmailVerified,
 	)
 	var i User
 	err := row.Scan(
@@ -39,8 +41,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Email,
 		&i.Phone,
 		&i.PasswordHash,
-		&i.OtpCode,
-		&i.OtpExpiresAt,
 		&i.FullName,
 		&i.Role,
 		&i.IsEmailVerified,
@@ -51,7 +51,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, phone, password_hash, otp_code, otp_expires_at, full_name, role, is_email_verified, created_at, updated_at FROM "users" WHERE email = $1
+SELECT id, email, phone, password_hash, full_name, role, is_email_verified, created_at, updated_at FROM "users" WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -62,8 +62,6 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Email,
 		&i.Phone,
 		&i.PasswordHash,
-		&i.OtpCode,
-		&i.OtpExpiresAt,
 		&i.FullName,
 		&i.Role,
 		&i.IsEmailVerified,
@@ -74,7 +72,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, phone, password_hash, otp_code, otp_expires_at, full_name, role, is_email_verified, created_at, updated_at FROM "users" WHERE id = $1
+SELECT id, email, phone, password_hash, full_name, role, is_email_verified, created_at, updated_at FROM "users" WHERE id = $1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
@@ -85,8 +83,6 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.Email,
 		&i.Phone,
 		&i.PasswordHash,
-		&i.OtpCode,
-		&i.OtpExpiresAt,
 		&i.FullName,
 		&i.Role,
 		&i.IsEmailVerified,

@@ -44,6 +44,7 @@ type OTPRecord struct {
 type OTPHandler struct {
 	config  *OTPConfig
 	storage map[string]*OTPRecord // email -> OTPRecord
+	pendingUsers map[string]interface{} // email -> user data for pending verification
 	mu      sync.RWMutex
 }
 
@@ -55,7 +56,27 @@ func NewOTPHandler(config *OTPConfig) *OTPHandler {
 	return &OTPHandler{
 		config:  config,
 		storage: make(map[string]*OTPRecord),
+		pendingUsers: make(map[string]interface{}),
 	}
+}
+
+func (h *OTPHandler) StoreRegistrationData(email string, data interface{}) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.pendingUsers[email] = data
+}
+
+func (h *OTPHandler) GetRegistrationData(email string) (interface{}, bool) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	data, exists := h.pendingUsers[email]
+	return data, exists
+}
+
+func (h *OTPHandler) DeleteRegistrationData(email string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	delete(h.pendingUsers, email)
 }
 
 // GenerateOTP generates a new OTP for the given email

@@ -8,8 +8,6 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     phone VARCHAR(20) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    otp_code VARCHAR(6),
-    otp_expires_at TIMESTAMP,
     full_name VARCHAR(255) NOT NULL,
     role user_role NOT NULL DEFAULT 'organizer',
     is_email_verified BOOLEAN DEFAULT FALSE,
