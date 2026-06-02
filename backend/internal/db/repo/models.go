@@ -5,9 +5,134 @@
 package repo
 
 import (
+	"database/sql/driver"
+	"fmt"
+	"net/netip"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type UserRole string
+
+const (
+	UserRoleOrganizer UserRole = "organizer"
+	UserRoleAdmin     UserRole = "admin"
+)
+
+func (e *UserRole) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = UserRole(s)
+	case string:
+		*e = UserRole(s)
+	default:
+		return fmt.Errorf("unsupported scan type for UserRole: %T", src)
+	}
+	return nil
+}
+
+type NullUserRole struct {
+	UserRole UserRole `json:"user_role"`
+	Valid    bool     `json:"valid"` // Valid is true if UserRole is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullUserRole) Scan(value interface{}) error {
+	if value == nil {
+		ns.UserRole, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.UserRole.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullUserRole) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.UserRole), nil
+}
+
+type AdminLog struct {
+	ID         uuid.UUID        `json:"id"`
+	AdminID    uuid.UUID        `json:"admin_id"`
+	Action     *string          `json:"action"`
+	TargetType *string          `json:"target_type"`
+	TargetID   uuid.UUID        `json:"target_id"`
+	OldValues  []byte           `json:"old_values"`
+	NewValues  []byte           `json:"new_values"`
+	Details    []byte           `json:"details"`
+	IpAddress  *netip.Addr      `json:"ip_address"`
+	CreatedAt  pgtype.Timestamp `json:"created_at"`
+}
+
+type Event struct {
+	ID             uuid.UUID        `json:"id"`
+	OrganizerID    uuid.UUID        `json:"organizer_id"`
+	Title          string           `json:"title"`
+	Slug           string           `json:"slug"`
+	Description    string           `json:"description"`
+	Venue          string           `json:"venue"`
+	City           string           `json:"city"`
+	StartDate      pgtype.Date      `json:"start_date"`
+	EndDate        time.Time        `json:"end_date"`
+	StartTime      pgtype.Time      `json:"start_time"`
+	EndTime        pgtype.Time      `json:"end_time"`
+	CoverImageUrl  string           `json:"cover_image_url"`
+	Status         *string          `json:"status"`
+	SalesStartDate time.Time        `json:"sales_start_date"`
+	SalesEndDate   time.Time        `json:"sales_end_date"`
+	CreatedAt      pgtype.Timestamp `json:"created_at"`
+	UpdatedAt      pgtype.Timestamp `json:"updated_at"`
+}
+
+type Order struct {
+	ID                     uuid.UUID        `json:"id"`
+	EventID                uuid.UUID        `json:"event_id"`
+	TicketTypeID           uuid.UUID        `json:"ticket_type_id"`
+	AttendeeName           string           `json:"attendee_name"`
+	AttendeePhone          string           `json:"attendee_phone"`
+	AttendeeEmail          *string          `json:"attendee_email"`
+	Quantity               int32            `json:"quantity"`
+	UnitPrice              int32            `json:"unit_price"`
+	TotalAmount            int32            `json:"total_amount"`
+	PaymentStatus          *string          `json:"payment_status"`
+	PaymentMethod          *string          `json:"payment_method"`
+	TransactionID          *string          `json:"transaction_id"`
+	PaymentReceivedAt      pgtype.Timestamp `json:"payment_received_at"`
+	PaymentWebhookReceived *bool            `json:"payment_webhook_received"`
+	QrCodeHash             string           `json:"qr_code_hash"`
+	QrCodeImageUrl         string           `json:"qr_code_image_url"`
+	QrCodePlaintext        string           `json:"qr_code_plaintext"`
+	IsUsed                 *bool            `json:"is_used"`
+	UsedAt                 pgtype.Timestamp `json:"used_at"`
+	CheckedInBy            uuid.UUID        `json:"checked_in_by"`
+	DeviceInfo             string           `json:"device_info"`
+	IpAddress              *netip.Addr      `json:"ip_address"`
+	CreatedAt              pgtype.Timestamp `json:"created_at"`
+}
+
+type SystemConfig struct {
+	Key         string           `json:"key"`
+	Value       string           `json:"value"`
+	Description string           `json:"description"`
+	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+}
+
+type TicketType struct {
+	ID                uuid.UUID        `json:"id"`
+	EventID           uuid.UUID        `json:"event_id"`
+	Name              string           `json:"name"`
+	Description       string           `json:"description"`
+	Price             int32            `json:"price"`
+	QuantityAvailable int32            `json:"quantity_available"`
+	QuantitySold      int32            `json:"quantity_sold"`
+	IsActive          *bool            `json:"is_active"`
+	CreatedAt         pgtype.Timestamp `json:"created_at"`
+}
 
 type User struct {
 	ID              uuid.UUID        `json:"id"`
@@ -15,7 +140,20 @@ type User struct {
 	Phone           string           `json:"phone"`
 	PasswordHash    string           `json:"password_hash"`
 	FullName        string           `json:"full_name"`
-	Role            *string          `json:"role"`
+	Role            UserRole         `json:"role"`
 	IsEmailVerified *bool            `json:"is_email_verified"`
 	CreatedAt       pgtype.Timestamp `json:"created_at"`
+	UpdatedAt       pgtype.Timestamp `json:"updated_at"`
+}
+
+type WebhookLog struct {
+	ID             uuid.UUID        `json:"id"`
+	Gateway        string           `json:"gateway"`
+	Payload        []byte           `json:"payload"`
+	Headers        []byte           `json:"headers"`
+	SignatureValid *bool            `json:"signature_valid"`
+	Processed      *bool            `json:"processed"`
+	ProcessedAt    pgtype.Timestamp `json:"processed_at"`
+	ErrorMessage   string           `json:"error_message"`
+	ReceivedAt     pgtype.Timestamp `json:"received_at"`
 }

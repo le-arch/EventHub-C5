@@ -4,21 +4,26 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/le-arch/EventHub-C5/internal/auth"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
 	"github.com/le-arch/EventHub-C5/internal/middleware"
 )
 
  type EventHubHandler struct {
 	querier repo.Querier
+	otpHandler *auth.OTPHandler
+	revocationStore *auth.RevocationStore
 	jwtSecret string
 	frontendOrigin string
 	gmailUser string
 	gmailPassword string
 }
 
-func NewEventHubHandler(querier repo.Querier, jwtSecret, frontendOrigin, gmailUser, gmailPassword string) *EventHubHandler {
+func NewEventHubHandler(querier repo.Querier, otpHandler *auth.OTPHandler, revocationStore *auth.RevocationStore, jwtSecret, frontendOrigin, gmailUser, gmailPassword string) *EventHubHandler {
 	return &EventHubHandler{
 		querier: querier,
+		otpHandler: otpHandler,
+		revocationStore: revocationStore,
 		jwtSecret: jwtSecret,
 		frontendOrigin: frontendOrigin,
 		gmailUser: gmailUser,
@@ -38,25 +43,29 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 
 
 	r.POST("/api/v1/auth/register", h.handleRegister)
-	// r.POST("/api/v1/auth/verify-otp", h.handleVerifyEmail)
-	// r.POST("/api/v1/auth/login", h.handleLogin)
-	// r.POST("/api/v1/auth/refresh", h.handleRefreshToken)
-	// r.POST("/api/v1/auth/logout", h.handleLogout)
-	// r.POST("/api/v1/auth/forgot-password", h.handleForgotPassword)
-	// r.POST("/api/v1/auth/reset-password", h.handlePasswrordReset)
+	r.POST("/api/v1/auth/verify-otp", h.handleVerifyEmail)
+	r.POST("/api/v1/auth/login", h.handleLogin)
+	r.POST("/api/v1/auth/refresh", h.handleRefreshToken)
+	r.POST("/api/v1/auth/logout", h.handleLogout)
+	r.POST("/api/v1/auth/forgot-password", h.handleForgotPassword)
+	r.POST("/api/v1/auth/reset-password", h.handlePasswrordReset)
+	r.POST("/api/v1/auth/resend-otp", h.handleResendOTP)
 
-	// r.GET("/api/v1/auth/me", h.handleGetCurrentUser)
+	Protection := r.Group("/api/v1")
+	Protection.Use(auth.AuthMiddleware(h.jwtSecret))
+	{
+		Protection.GET("/auth/me", h.handleGetCurrentUser)
 	
-	// r.POST("/api/v1/events", h.handleCreateEvent)
-	// r.POST("/api/v1/events/:id/publish",h.HandlePublicEvent)
+	// Protection.POST("/events", h.handleCreateEvent)
+	// Protection.POST("/events/:id/publish",h.HandlePublicEvent)
 	
-	// r.GET("/api/v1/events", h.handleGetEvents)
-	// r.GET("/api/v1/events/:id", h.handleEventDetails)
+	// Protection.GET("/events", h.handleGetEvents)
+	// Protection.GET("/events/:id", h.handleEventDetails)
 
-	// r.PUT("/api/v1/events/:id", h.handleUpdateEvent)
+	// Protection.PUT("/events/:id", h.handleUpdateEvent)
 
-	// r.DELETE("/api/v1/events/:id", h.handleDeleteEvent)
-	
+	// Protection.DELETE("/events/:id", h.handleDeleteEvent)
+	}
 
 
 	return r

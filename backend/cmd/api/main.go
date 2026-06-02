@@ -8,13 +8,15 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/ardanlabs/conf/v3"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
-	"github.com/le-arch/EventHub-C5/internal/handlers"
+	"github.com/le-arch/EventHub-C5/internal/auth"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
+	"github.com/le-arch/EventHub-C5/internal/handlers"
 )
 
 // DBConfig holds the database configuration. This struct is populated from the .env in the current directory.
@@ -81,8 +83,13 @@ func run() error {
 
 	querier := repo.New(db)
 
+	otpHandler := auth.NewOTPHandler(nil)
+	revocationStore := auth.NewRevocationStore()
+
+	otpHandler.StartCleanupRoutine(10 * time.Minute)
+
 	// We create a new http handler using the database querier.
-	handler := handlers.NewEventHubHandler(querier, config.JWTSecret, config.FrontendOrigin, config.GmailUser, config.GmailPassword).WireHttpHandler()
+	handler := handlers.NewEventHubHandler(querier, otpHandler, revocationStore, config.JWTSecret, config.FrontendOrigin, config.GmailUser, config.GmailPassword).WireHttpHandler()
 
 	// And finally we start the HTTP server on the configured port.
 	err = http.ListenAndServe(fmt.Sprintf(":%d", config.ListenPort), handler)
