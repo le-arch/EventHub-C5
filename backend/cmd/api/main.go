@@ -8,13 +8,15 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/ardanlabs/conf/v3"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
-	"github.com/Iknite-Space/sqlc-example-api/api"
-	"github.com/Iknite-Space/sqlc-example-api/db/repo"
+	"github.com/le-arch/EventHub-C5/internal/auth"
+	"github.com/le-arch/EventHub-C5/internal/db/repo"
+	"github.com/le-arch/EventHub-C5/internal/handlers"
 )
 
 // DBConfig holds the database configuration. This struct is populated from the .env in the current directory.
@@ -31,6 +33,10 @@ type DBConfig struct {
 type Config struct {
 	ListenPort     uint16 `conf:"env:LISTEN_PORT,required"`
 	MigrationsPath string `conf:"env:MIGRATIONS_PATH,required"`
+	JWTSecret		string `conf:"env:JWT_SECRET,required"`
+	FrontendOrigin string `conf:"env:FRONTEND_ORIGIN,required"`
+	GmailUser      string `conf:"env:GMAIL_USER,required"`
+    GmailPassword  string `conf:"env:GMAIL_PASSWORD,required"`
 	DB             DBConfig
 }
 
@@ -77,8 +83,13 @@ func run() error {
 
 	querier := repo.New(db)
 
+	otpHandler := auth.NewOTPHandler(nil)
+	revocationStore := auth.NewRevocationStore()
+
+	otpHandler.StartCleanupRoutine(10 * time.Minute)
+
 	// We create a new http handler using the database querier.
-	handler := api.NewEventHubHandler(querier).WireHttpHandler()
+	handler := handlers.NewEventHubHandler(querier, otpHandler, revocationStore, config.JWTSecret, config.FrontendOrigin, config.GmailUser, config.GmailPassword).WireHttpHandler()
 
 	// And finally we start the HTTP server on the configured port.
 	err = http.ListenAndServe(fmt.Sprintf(":%d", config.ListenPort), handler)
