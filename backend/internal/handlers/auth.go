@@ -142,10 +142,20 @@ var req models.VerifyEmailRequest
 		CreatedAt: user.CreatedAt.Time.Format("2006-01-02 15:04:05"),
 	}
 
+	// Generate a refresh token to enable auto login for the user after registration without needing to log in again immediately
+	refreshToken, err := auth.CreateRefreshToken(
+		user.ID.String(), 
+		h.jwtSecret)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token: " + err.Error()})
+		return
+	}
+
 	//send the response back to the client
 	c.JSON(http.StatusOK, gin.H{ 
 		"message": "User registered successfully",
 		"token": token,
+		"refresh_token": refreshToken,
 		"user": response,
 		})
 }
@@ -307,7 +317,7 @@ func (h *EventHubHandler) handleForgotPassword(c *gin.Context) {
 	}
 
 	// Generate a new OTP for the provided email address and send it to the user's email to allow them to reset their password securely without exposing any information about the existence of the email in the system
-	otpCode, err := h.otpHandler.GenerateOTP(req.Email)
+	otpCode, err := h.otpHandler.GenerateResetOTP(req.Email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate OTP"})
 		return
@@ -333,17 +343,13 @@ func (h *EventHubHandler) handlePasswrordReset(c *gin.Context) {
 
 	// Verify the provided OTP for password reset and ensure that it is valid and has not expired before allowing the user to reset their password securely
 	ok, err := h.otpHandler.VerifyResetOTP(req.Email, req.Otp)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired OTP"})
+	if err != nil || !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid or expired OTP"})
 		return
 	}
 
 	// Hash the new password provided by the user before storing it in the database to ensure that the user's password is stored securely and cannot be easily compromised
-	hashedPassword, err := auth.HashPassword(req.NewPasswordHash)
+	hashedPassword, err := auth.HashPassword(req.PasswordHash)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 		return
@@ -362,4 +368,14 @@ func (h *EventHubHandler) handlePasswrordReset(c *gin.Context) {
 	h.otpHandler.InvalidateResetOTP(req.Email) // Invalidate the OTP after successful password reset
 
 	c.JSON(http.StatusOK, gin.H{"message": "Password reset successful"})
+}
+
+func (h *EventHubHandler) handleGetCurrentUser(c *gin.Context) {
+	claims, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"user": claims})
 }

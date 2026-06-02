@@ -16,7 +16,7 @@ clean:
 
 # restarts all stopped and running services. use only if services stopped unexpectedly or after a crash
 restart:
-	docker compose restart
+	docker compose restart && docker compose up
 
 # stop and remove all containers,networks, and volumes, then rebuild and start the services. use only if changes are made to the migration files, compose file, dockerfile or to the database configuration in the .env file
 reset:

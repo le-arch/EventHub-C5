@@ -50,18 +50,21 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	r.POST("/api/v1/auth/forgot-password", h.handleForgotPassword)
 	r.POST("/api/v1/auth/reset-password", h.handlePasswrordReset)
 
-	// r.GET("/api/v1/auth/me", h.handleGetCurrentUser)
+	Protection := r.Group("/api/v1")
+	Protection.Use(auth.AuthMiddleware(h.jwtSecret))
+	{
+		Protection.GET("/auth/me", h.handleGetCurrentUser)
 	
-	// r.POST("/api/v1/events", h.handleCreateEvent)
-	// r.POST("/api/v1/events/:id/publish",h.HandlePublicEvent)
+	// Protection.POST("/events", h.handleCreateEvent)
+	// Protection.POST("/events/:id/publish",h.HandlePublicEvent)
 	
-	// r.GET("/api/v1/events", h.handleGetEvents)
-	// r.GET("/api/v1/events/:id", h.handleEventDetails)
+	// Protection.GET("/events", h.handleGetEvents)
+	// Protection.GET("/events/:id", h.handleEventDetails)
 
-	// r.PUT("/api/v1/events/:id", h.handleUpdateEvent)
+	// Protection.PUT("/events/:id", h.handleUpdateEvent)
 
-	// r.DELETE("/api/v1/events/:id", h.handleDeleteEvent)
-	
+	// Protection.DELETE("/events/:id", h.handleDeleteEvent)
+	}
 
 
 	return r
