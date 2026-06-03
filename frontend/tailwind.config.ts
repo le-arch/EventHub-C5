@@ -51,7 +51,7 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Custom EventHub colors (Nova enhanced)
+        // Custom EventHub colors
         mtn: {
           DEFAULT: "#FFCC00",
           hover: "#E6B800",
@@ -69,7 +69,6 @@ const config: Config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-        // Nova extra large radius
         xl: "1rem",
         "2xl": "1.5rem",
       },
@@ -85,7 +84,6 @@ const config: Config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        // Nova animations
         "fade-in": {
           from: { opacity: "0" },
           to: { opacity: "1" },
@@ -113,7 +111,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  // plugins: [require("tailwindcss-animate")],
 }
 
 export default config
