@@ -15,3 +15,4 @@ func IsValidEmail(email string) bool {
 	}
 	return result.Syntax.Valid && result.HasMxRecords
 }
+
