@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
 	"github.com/le-arch/EventHub-C5/internal/models"
 	"github.com/le-arch/EventHub-C5/internal/utils"
@@ -87,4 +88,38 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
+func (h *EventHubHandler) handleGetPublicEvent(c *gin.Context) {
+    eventID := c.Param("id")
+    id, err := uuid.Parse(eventID)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+        return
+    }
+
+    event, err := h.querier.GetEventByIDPublic(c, id)
+    if err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "event not found or not published"})
+        return
+    }
+
+    response := utils.EventResponse{
+	Title: event.Title,
+	Slug: event.Slug,
+	Description: event.Description,
+	Venue: event.Venue,
+	City: event.City,
+	StartDate: utils.FormatDate(event.StartDate),
+	EndDate: utils.FormatDate(*event.EndDate),
+	StartTime: utils.FormatTime(event.StartTime),
+	EndTime: utils.FormatTime(event.EndTime),
+	CoverImageUrl: event.CoverImageUrl,
+	Status: event.Status,
+	SalesStartDate: utils.FormatDate(*event.SalesStartDate),
+	SalesEndDate: utils.FormatDate(*event.SalesEndDate),
+	CreatedAt: utils.FormatDateTime(event.CreatedAt),
+	} 
+
+    c.JSON(http.StatusOK, response)
 }

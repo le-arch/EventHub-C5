@@ -38,17 +38,33 @@ SET title = $2, slug = $3, description = $4, venue = $5, city = $6, start_date =
 WHERE id = $1
 RETURNING *;
 
--- name: updateEventStatus :one
+-- name: UpdateEventStatus :one
 UPDATE events
 SET status = $2, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING *;
 
--- name: updateEventCoverImage :one
+-- name: UpdateEventCoverImage :one
 UPDATE events
 SET cover_image_url = $2, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING *;
+
+-- name: GetEventByIDPublic :one
+SELECT 
+    id, organizer_id, title, slug, description, venue, city,
+    start_date, end_date, start_time, end_time, cover_image_url,
+    status, sales_start_date, sales_end_date, created_at, updated_at
+FROM events
+WHERE id = $1 AND status = 'published';
+
+-- name: GetEventBySlugPublic :one
+SELECT 
+    id, organizer_id, title, slug, description, venue, city,
+    start_date, end_date, start_time, end_time, cover_image_url,
+    status, sales_start_date, sales_end_date, created_at, updated_at
+FROM events
+WHERE slug = $1 AND status = 'published';
 
 -- name: DeleteEvent :exec
 DELETE FROM events

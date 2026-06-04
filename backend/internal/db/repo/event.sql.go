@@ -126,6 +126,74 @@ func (q *Queries) GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
 	return i, err
 }
 
+const getEventByIDPublic = `-- name: GetEventByIDPublic :one
+SELECT 
+    id, organizer_id, title, slug, description, venue, city,
+    start_date, end_date, start_time, end_time, cover_image_url,
+    status, sales_start_date, sales_end_date, created_at, updated_at
+FROM events
+WHERE id = $1 AND status = 'published'
+`
+
+func (q *Queries) GetEventByIDPublic(ctx context.Context, id uuid.UUID) (Event, error) {
+	row := q.db.QueryRow(ctx, getEventByIDPublic, id)
+	var i Event
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizerID,
+		&i.Title,
+		&i.Slug,
+		&i.Description,
+		&i.Venue,
+		&i.City,
+		&i.StartDate,
+		&i.EndDate,
+		&i.StartTime,
+		&i.EndTime,
+		&i.CoverImageUrl,
+		&i.Status,
+		&i.SalesStartDate,
+		&i.SalesEndDate,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getEventBySlugPublic = `-- name: GetEventBySlugPublic :one
+SELECT 
+    id, organizer_id, title, slug, description, venue, city,
+    start_date, end_date, start_time, end_time, cover_image_url,
+    status, sales_start_date, sales_end_date, created_at, updated_at
+FROM events
+WHERE slug = $1 AND status = 'published'
+`
+
+func (q *Queries) GetEventBySlugPublic(ctx context.Context, slug string) (Event, error) {
+	row := q.db.QueryRow(ctx, getEventBySlugPublic, slug)
+	var i Event
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizerID,
+		&i.Title,
+		&i.Slug,
+		&i.Description,
+		&i.Venue,
+		&i.City,
+		&i.StartDate,
+		&i.EndDate,
+		&i.StartTime,
+		&i.EndTime,
+		&i.CoverImageUrl,
+		&i.Status,
+		&i.SalesStartDate,
+		&i.SalesEndDate,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getEventsBySlug = `-- name: GetEventsBySlug :one
 SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, created_at, updated_at FROM events 
 WHERE slug = $1
@@ -396,19 +464,19 @@ func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event
 	return i, err
 }
 
-const updateEventCoverImage = `-- name: updateEventCoverImage :one
+const updateEventCoverImage = `-- name: UpdateEventCoverImage :one
 UPDATE events
 SET cover_image_url = $2, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, created_at, updated_at
 `
 
-type updateEventCoverImageParams struct {
+type UpdateEventCoverImageParams struct {
 	ID            uuid.UUID `json:"id"`
 	CoverImageUrl string    `json:"cover_image_url"`
 }
 
-func (q *Queries) updateEventCoverImage(ctx context.Context, arg updateEventCoverImageParams) (Event, error) {
+func (q *Queries) UpdateEventCoverImage(ctx context.Context, arg UpdateEventCoverImageParams) (Event, error) {
 	row := q.db.QueryRow(ctx, updateEventCoverImage, arg.ID, arg.CoverImageUrl)
 	var i Event
 	err := row.Scan(
@@ -433,19 +501,19 @@ func (q *Queries) updateEventCoverImage(ctx context.Context, arg updateEventCove
 	return i, err
 }
 
-const updateEventStatus = `-- name: updateEventStatus :one
+const updateEventStatus = `-- name: UpdateEventStatus :one
 UPDATE events
 SET status = $2, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, created_at, updated_at
 `
 
-type updateEventStatusParams struct {
+type UpdateEventStatusParams struct {
 	ID     uuid.UUID   `json:"id"`
 	Status EventStatus `json:"status"`
 }
 
-func (q *Queries) updateEventStatus(ctx context.Context, arg updateEventStatusParams) (Event, error) {
+func (q *Queries) UpdateEventStatus(ctx context.Context, arg UpdateEventStatusParams) (Event, error) {
 	row := q.db.QueryRow(ctx, updateEventStatus, arg.ID, arg.Status)
 	var i Event
 	err := row.Scan(

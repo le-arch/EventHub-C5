@@ -16,6 +16,8 @@ type Querier interface {
 	DeleteEvent(ctx context.Context, id uuid.UUID) error
 	DeleteEventsByOrganizer(ctx context.Context, organizerID uuid.UUID) error
 	GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
+	GetEventByIDPublic(ctx context.Context, id uuid.UUID) (Event, error)
+	GetEventBySlugPublic(ctx context.Context, slug string) (Event, error)
 	GetEventsBySlug(ctx context.Context, slug string) (Event, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
@@ -24,9 +26,9 @@ type Querier interface {
 	ListEventsByOrganizer(ctx context.Context, organizerID uuid.UUID) ([]Event, error)
 	ListEventsByStatus(ctx context.Context, status EventStatus) ([]Event, error)
 	UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event, error)
+	UpdateEventCoverImage(ctx context.Context, arg UpdateEventCoverImageParams) (Event, error)
+	UpdateEventStatus(ctx context.Context, arg UpdateEventStatusParams) (Event, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
-	updateEventCoverImage(ctx context.Context, arg updateEventCoverImageParams) (Event, error)
-	updateEventStatus(ctx context.Context, arg updateEventStatusParams) (Event, error)
 }
 
 var _ Querier = (*Queries)(nil)
