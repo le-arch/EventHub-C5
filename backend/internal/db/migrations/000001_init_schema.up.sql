@@ -1,4 +1,6 @@
 CREATE TYPE user_role AS ENUM ('organizer', 'admin');
+CREATE TYPE event_status AS ENUM ('draft', 'published', 'cancelled');
+
 -- Enable required UUID generation extensions
 CREATE EXTENSION "uuid-ossp";
 
@@ -29,7 +31,7 @@ CREATE TABLE events (
     start_time TIME NOT NULL,
     end_time TIME,
     cover_image_url TEXT,
-    status VARCHAR(20) DEFAULT 'draft',
+    status event_status NOT NULL DEFAULT 'draft',
     sales_start_date DATE,
     sales_end_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -14,24 +14,44 @@ sql:
       emit_exact_table_names: false
       emit_pointers_for_null_types: true
       overrides:
+        - db_type: "uuid"
+          go_type:
+            import: "github.com/google/uuid"
+            package: "uuid"
+            type: "UUID"
+        - db_type: "uuid"
+          nullable: true
+          go_type:
+            import: "github.com/google/uuid"
+            package: "uuid"
+            type: "UUID"
+            pointer: true
+        - db_type: "date"
+          go_type:
+            import: "time"
+            type: "Time"
         - db_type: "date"
           nullable: true
-          go_type: "time.Time"
+          go_type:
+            import: "time"
+            type: "Time"
+            pointer: true
+        - db_type: "timestamptz"
+          go_type:
+            import: "time"
+            type: "Time"
         - db_type: "timestamptz"
           nullable: true
-          go_type: "github.com/jackc/pgx/v5/pgtype.Timestamptz"
-        - db_type: "timestamptz"
-          nullable: false
-          go_type: "time.Time"
-        - db_type: "uuid"
-          nullable: true
-          go_type: "github.com/google/uuid.UUID"
-        - db_type: "uuid"
-          nullable: false
-          go_type: "github.com/google/uuid.UUID"
+          go_type:
+            import: "time"
+            type: "Time"
+            pointer: true
         - db_type: "text"
           nullable: true
           go_type: "string"
-        - db_type: "text"
+        - db_type: "pg_catalog.time"
+          go_type: "string"
+        - db_type: "pg_catalog.time"
+          nullable: true
           go_type: "string"
         

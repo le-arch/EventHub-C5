@@ -218,7 +218,7 @@ func (h *EventHubHandler) handleLogin(c *gin.Context) {
 			Email:           user.Email,
 			Role:            user.Role,
 			IsEmailVerified: user.IsEmailVerified,
-			CreatedAt:       user.CreatedAt.Time.Format("2006-01-02 15:04:05"),
+			CreatedAt:       utils.FormatDateTime(user.CreatedAt),
 		},
 	}
 

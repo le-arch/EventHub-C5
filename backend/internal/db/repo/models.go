@@ -10,9 +10,52 @@ import (
 	"net/netip"
 	"time"
 
-	"github.com/google/uuid"
+	uuid "github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type EventStatus string
+
+const (
+	EventStatusDraft     EventStatus = "draft"
+	EventStatusPublished EventStatus = "published"
+	EventStatusCancelled EventStatus = "cancelled"
+)
+
+func (e *EventStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = EventStatus(s)
+	case string:
+		*e = EventStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for EventStatus: %T", src)
+	}
+	return nil
+}
+
+type NullEventStatus struct {
+	EventStatus EventStatus `json:"event_status"`
+	Valid       bool        `json:"valid"` // Valid is true if EventStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullEventStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.EventStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.EventStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullEventStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.EventStatus), nil
+}
 
 type UserRole string
 
@@ -61,7 +104,7 @@ type AdminLog struct {
 	AdminID    uuid.UUID        `json:"admin_id"`
 	Action     *string          `json:"action"`
 	TargetType *string          `json:"target_type"`
-	TargetID   uuid.UUID        `json:"target_id"`
+	TargetID   *uuid.UUID       `json:"target_id"`
 	OldValues  []byte           `json:"old_values"`
 	NewValues  []byte           `json:"new_values"`
 	Details    []byte           `json:"details"`
@@ -77,14 +120,14 @@ type Event struct {
 	Description    string           `json:"description"`
 	Venue          string           `json:"venue"`
 	City           string           `json:"city"`
-	StartDate      pgtype.Date      `json:"start_date"`
-	EndDate        time.Time        `json:"end_date"`
-	StartTime      pgtype.Time      `json:"start_time"`
-	EndTime        pgtype.Time      `json:"end_time"`
+	StartDate      time.Time        `json:"start_date"`
+	EndDate        *time.Time       `json:"end_date"`
+	StartTime      string           `json:"start_time"`
+	EndTime        string           `json:"end_time"`
 	CoverImageUrl  string           `json:"cover_image_url"`
-	Status         *string          `json:"status"`
-	SalesStartDate time.Time        `json:"sales_start_date"`
-	SalesEndDate   time.Time        `json:"sales_end_date"`
+	Status         EventStatus      `json:"status"`
+	SalesStartDate *time.Time       `json:"sales_start_date"`
+	SalesEndDate   *time.Time       `json:"sales_end_date"`
 	CreatedAt      pgtype.Timestamp `json:"created_at"`
 	UpdatedAt      pgtype.Timestamp `json:"updated_at"`
 }
@@ -109,7 +152,7 @@ type Order struct {
 	QrCodePlaintext        string           `json:"qr_code_plaintext"`
 	IsUsed                 *bool            `json:"is_used"`
 	UsedAt                 pgtype.Timestamp `json:"used_at"`
-	CheckedInBy            uuid.UUID        `json:"checked_in_by"`
+	CheckedInBy            *uuid.UUID       `json:"checked_in_by"`
 	DeviceInfo             string           `json:"device_info"`
 	IpAddress              *netip.Addr      `json:"ip_address"`
 	CreatedAt              pgtype.Timestamp `json:"created_at"`
