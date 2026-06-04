@@ -46,6 +46,10 @@ import { Breadcrumb } from '@/components/common/Breadcrumb'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 
+
+import { createEventApi } from "@/lib/api";
+
+
 // Cameroon cities list
 const CAMEROON_CITIES = [
   'Douala', 'Yaoundé', 'Garoua', 'Bamenda', 'Maroua',
@@ -124,26 +128,38 @@ export default function CreateEventPage() {
   /**
    * Handle complete event creation
    */
+  
+  
   const onCreateEvent = async (data: { ticketTypes: TicketTypeForm[] }) => {
     if (!basicInfo) return
 
     setIsSubmitting(true)
     try {
-      const eventData = {
-        ...basicInfo,
-        ticketTypes: data.ticketTypes,
+      // Step A: Format data fields to match  Go validator 
+      const eventPayload = {
+        title: basicInfo.title,
+        description: basicInfo.description || "",
+        venue: basicInfo.venueName, // maps 'venueName' to  backend 'venue' variable
+        city: basicInfo.city,
+        // handling dynamic ticket lists, we use the first item price or default to 0
+        ticket_price: Number(data.ticketTypes[0]?.price || 0), 
       }
       
-      const response = await api.post('/events', eventData)
+      // Sending the formatted payload to the Go server using custom api utility tool
+      await createEventApi(eventPayload)
+      
       toast.success('✅ Event created successfully!')
-      router.push(`/organizer/events/${response.data.event.id}`)
+      router.push('/organizer/events') // Redirects back to the main events view table layout
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Failed to create event'
+      // If  Go validation rules fail, grab the error string and display a toast alert banner
+      const errorMessage = error.message || 'Failed to create event'
       toast.error(`❌ ${errorMessage}`)
     } finally {
       setIsSubmitting(false)
     }
   }
+
+
 
   // Step indicators
   const StepIndicator = () => (

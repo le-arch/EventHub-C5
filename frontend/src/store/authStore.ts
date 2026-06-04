@@ -25,10 +25,11 @@ export interface User {
 }
 
 interface RegisterData {
-  fullName: string
+  full_name: string
   email: string
   phone: string
-  password: string
+  password_hash: string
+  role?: string 
 }
 
 interface AuthState {
@@ -83,7 +84,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null })
         
         try {
-          const response = await api.post('/auth/login', { identifier, password })
+          const response = await api.post('/auth/login', { email: identifier, password_hash: password })
           const { access_token, refresh_token, user } = response.data
           
           // Store tokens

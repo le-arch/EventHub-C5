@@ -41,8 +41,7 @@ const registerSchema = z.object({
   
   phone: z.string()
     .min(1, 'Phone number is required')
-    .regex(/^237[0-9]{9}$/, 'Phone number must be 12 digits starting with 237 (e.g., 237612345678)'),
-  
+    .regex(/^(237)?6[0-9]{8}$/, 'Please enter a valid 9-digit phone number (e.g., 612345678)'),
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
@@ -85,14 +84,44 @@ export default function RegisterPage() {
    * On success: stores email for OTP verification and redirects
    * On error: displays error message
    */
+
+
+  // const onSubmit = async (data: RegisterFormValues) => {
+  //   try {
+  //     // Call registration API
+  //     await registerUser({
+  //       fullName: data.fullName,
+  //       email: data.email,
+  //       phone: data.phone,
+  //       password: data.password,
+  //     })
+      
+  //     // Store email for OTP verification page
+  //     localStorage.setItem('verify_email', data.email)
+      
+  //     toast.success('Account created! Please verify your email address.')
+  //     router.push('/verify-otp')
+  //   } catch (error: any) {
+  //     const errorMessage = error.response?.data?.error || 'Registration failed. Please try again.'
+  //     toast.error(errorMessage)
+  //   }
+  // } THis function replaced with the one down 
+
+
+
+
   const onSubmit = async (data: RegisterFormValues) => {
     try {
-      // Call registration API
+      // 1. Format the phone number to prepend '237' if the user didn't type it
+      const formattedPhone = data.phone.startsWith('237') ? data.phone : `237${data.phone}`;
+
+      // 2. Call registration API with matching backend keys
       await registerUser({
-        fullName: data.fullName,
+        full_name: data.fullName,       // 👈 Changed to match Go json struct
         email: data.email,
-        phone: data.phone,
-        password: data.password,
+        phone: formattedPhone,         // 👈 Uses the valid country code format
+        password_hash: data.password,  // 👈 Changed to match Go json struct
+        role: "organizer"              // 👈 Explicitly passing the role
       })
       
       // Store email for OTP verification page
@@ -105,6 +134,7 @@ export default function RegisterPage() {
       toast.error(errorMessage)
     }
   }
+
 
   return (
     <Card className="shadow-lg border-0">

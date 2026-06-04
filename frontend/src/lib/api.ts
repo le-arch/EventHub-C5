@@ -24,7 +24,7 @@ interface CustomRequestConfig extends InternalAxiosRequestConfig {
 
 // Create axios instance with default configuration
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8085/api/v1',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -149,3 +149,50 @@ export const apiClient = {
 }
 
 export default api
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Checklist layout matching what our Go backend validator expects
+export interface CreateEventPayload {
+  title: string;
+  description: string;
+  venue: string;
+  city: string;
+  ticket_price: number;
+}
+
+// This function takes the form data and sends it to our Go server link
+export async function createEventApi(payload: CreateEventPayload) {
+  // Step A: Point to our backend URL path
+  const url = "http://localhost:8085/events";
+
+  // Step B: Shoot the request out into the network
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload), // Converts our JavaScript data into a JSON text string
+  });
+
+  // Step C: If the backend returns a 400 Bad Request error, read the error text
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || "Failed to create event");
+  }
+
+  // Step D: Return the success message from our backend handler
+  return await response.json();
+}
