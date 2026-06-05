@@ -24,7 +24,7 @@ interface CustomRequestConfig extends InternalAxiosRequestConfig {
 
 // Create axios instance with default configuration
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8085/api/v1',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

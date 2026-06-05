@@ -41,7 +41,7 @@ const registerSchema = z.object({
   
   phone: z.string()
     .min(1, 'Phone number is required')
-    .regex(/^237[0-9]{9}$/, 'Phone number must be 12 digits starting with 237 (e.g., 237612345678)'),
+    .regex(/^[0-9]{9}$/, 'Phone number must be 9 digits starting with +237 (e.g., +237612345678)'),
   
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
@@ -158,7 +158,7 @@ export default function RegisterPage() {
               <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
             )}
             <p className="text-xs text-gray-400">
-              We'll send a verification code to this email
+              We&apos;ll send a verification code to this email
             </p>
           </div>
 

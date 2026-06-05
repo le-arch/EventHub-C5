@@ -145,6 +145,7 @@ func (h *EventHubHandler) handleUpdateEvent(c *gin.Context) {
 		return
 	}
 
+<<<<<<< HEAD
 }
 
 // Helper to convert empty string to sql.NullString (or pointer)
@@ -154,3 +155,8 @@ func nullIfEmpty(s string) *string {
     }
     return &s
 }
+=======
+	// Step C: Success Response (Database Mock hook for test framework verification)
+	c.JSON(http.StatusCreated, gin.H{"message": "Event validated and created successfully", "title": input.Title})
+}
+>>>>>>> 2563cddef8a5154c532b125a55f4fc3e63fc1865
