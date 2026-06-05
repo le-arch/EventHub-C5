@@ -35,7 +35,7 @@ const loginSchema = z.object({
       (value) => {
         // Check if input is email (contains @) or phone number (starts with 237 and has 12 digits)
         const isEmail = value.includes('@')
-        const isPhone = /^237[0-9]{9}$/.test(value)
+        const isPhone = /^[0-9]{9}$/.test(value)
         return isEmail || isPhone
       },
       { message: 'Enter a valid email or phone number (e.g., 237612345678)' }
@@ -104,7 +104,7 @@ export default function LoginPage() {
             <Input
               id="identifier"
               type="text"
-              placeholder="john@example.com or 237612345678"
+              placeholder="john@example.com or 612345678"
               {...register('identifier')}
               aria-invalid={!!errors.identifier}
               disabled={isLoading}
@@ -171,7 +171,7 @@ export default function LoginPage() {
 
           {/* Link to Registration Page */}
           <p className="text-center text-sm text-gray-600 mt-4">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/register" className="text-primary hover:underline font-medium">
               Sign up
             </Link>

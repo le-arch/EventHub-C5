@@ -16,16 +16,16 @@ import Link from 'next/link'
 import { Mail, CheckCircle, RefreshCw, ArrowLeft } from 'lucide-react'
 
 // shadcn/ui components
-import { Button } from '@/src/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 // Custom components
-import { OTPInput } from '@/src/components/auth/OTPInput'
+import { OTPInput } from '@/components/auth/OTPInput'
 
 // State management and utilities
-import { useAuthStore } from '@/src/store/authStore'
+import { useAuthStore } from '@/store/authStore'
 import { toast } from 'sonner'
-import api from '@/src/lib/api'
+import api from '@/lib/api'
 
 export default function VerifyOTPPage() {
   const router = useRouter()
@@ -153,7 +153,7 @@ export default function VerifyOTPPage() {
           {/* Resend Code Section */}
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Didn't receive the code?{' '}
+              Didn&apos;t receive the code?{' '}
               <button
                 onClick={handleResend}
                 disabled={resendCooldown > 0 || isResending}

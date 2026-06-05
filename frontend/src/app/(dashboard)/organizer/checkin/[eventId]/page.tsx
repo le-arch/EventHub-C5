@@ -2,6 +2,7 @@
  * Check-in Scanner Page
  * 
  * QR code scanner for checking in attendees at the event.
+ * Uses html5-qrcode for compatibility with React 19.
  * Features:
  * - Webcam-based QR scanning
  * - Real-time validation
@@ -15,14 +16,12 @@
 
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import QrScanner from 'react-qr-scanner'
 import { 
   CheckCircle, 
   XCircle, 
   Camera, 
-  AlertCircle, 
   ArrowLeft, 
   Users, 
   Calendar,
@@ -31,7 +30,6 @@ import {
   QrCode,
   Smartphone
 } from 'lucide-react'
-import Image from 'next/image'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
@@ -57,6 +55,7 @@ import {
 
 // Custom components
 import { Breadcrumb } from '@/components/common/Breadcrumb'
+import { useQRScanner } from '@/hooks/useQRScanner'
 
 // Utilities
 import api from '@/lib/api'
@@ -91,13 +90,76 @@ export default function CheckinPage() {
   const router = useRouter()
   const [event, setEvent] = useState<Event | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isScanning, setIsScanning] = useState(true)
   const [lastResult, setLastResult] = useState<CheckinResult | null>(null)
   const [recentCheckins, setRecentCheckins] = useState<RecentCheckin[]>([])
   const [showManualEntry, setShowManualEntry] = useState(false)
   const [manualTicketId, setManualTicketId] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [stats, setStats] = useState({ checkedIn: 0, total: 0, percentage: 0 })
+
+  // QR Scanner hook
+  const {
+    isScanning,
+    hasCamera,
+    error: scannerError,
+    startScanning,
+    stopScanning,
+    requestCameraPermission,
+    scannerId,
+  } = useQRScanner({
+    onScanSuccess: async (result) => {
+      if (isProcessing) return
+      
+      setIsProcessing(true)
+      try {
+        const response = await api.post('/checkin', { qr_hash: result })
+        
+        setLastResult({
+          success: true,
+          attendeeName: response.data.attendee_name,
+          ticketType: response.data.ticket_type,
+          checkedInAt: response.data.checked_in_at,
+        })
+        
+        // Add to recent checkins
+        setRecentCheckins(prev => [
+          {
+            attendeeName: response.data.attendee_name,
+            ticketType: response.data.ticket_type,
+            checkedInAt: response.data.checked_in_at,
+          },
+          ...prev.slice(0, 9),
+        ])
+        
+        // Update stats
+        setStats(prev => ({
+          ...prev,
+          checkedIn: prev.checkedIn + 1,
+          percentage: Math.round(((prev.checkedIn + 1) / prev.total) * 100),
+        }))
+        
+        toast.success(`✅ ${response.data.attendee_name} checked in successfully!`)
+        
+        // Clear result after 3 seconds
+        setTimeout(() => setLastResult(null), 3000)
+      } catch (error: any) {
+        const errorMessage = error.response?.data?.error || '❌ Invalid or already used ticket'
+        setLastResult({
+          success: false,
+          error: errorMessage,
+        })
+        toast.error(errorMessage)
+        setTimeout(() => setLastResult(null), 3000)
+      } finally {
+        setIsProcessing(false)
+      }
+    },
+    onScanError: (error) => {
+      console.error('Scan error:', error)
+    },
+    fps: 10,
+    qrbox: 250,
+  })
 
   // Fetch event details and stats
   useEffect(() => {
@@ -106,6 +168,16 @@ export default function CheckinPage() {
     const interval = setInterval(fetchEventAndStats, 30000)
     return () => clearInterval(interval)
   }, [params.eventId])
+
+  // Start scanning when component mounts and camera is available
+  useEffect(() => {
+    if (hasCamera && !isScanning) {
+      startScanning()
+    }
+    return () => {
+      stopScanning()
+    }
+  }, [hasCamera, isScanning, startScanning, stopScanning])
 
   const fetchEventAndStats = async () => {
     try {
@@ -132,58 +204,6 @@ export default function CheckinPage() {
   }
 
   /**
-   * Handle QR code scan
-   */
-  const handleScan = async (data: { text: string } | null) => {
-    if (!data || !data.text || isProcessing) return
-    
-    setIsProcessing(true)
-    try {
-      const response = await api.post('/checkin', { qr_hash: data.text })
-      const result = response.data
-      
-      setLastResult({
-        success: true,
-        attendeeName: result.data.attendee_name,
-        ticketType: result.data.ticket_type,
-        checkedInAt: result.data.checked_in_at,
-      })
-      
-      // Add to recent checkins
-      setRecentCheckins(prev => [
-        {
-          attendeeName: result.data.attendee_name,
-          ticketType: result.data.ticket_type,
-          checkedInAt: result.data.checked_in_at,
-        },
-        ...prev.slice(0, 9),
-      ])
-      
-      // Update stats
-      setStats(prev => ({
-        ...prev,
-        checkedIn: prev.checkedIn + 1,
-        percentage: Math.round(((prev.checkedIn + 1) / prev.total) * 100),
-      }))
-      
-      toast.success(`✅ ${result.data.attendee_name} checked in successfully!`)
-      
-      // Clear result after 3 seconds
-      setTimeout(() => setLastResult(null), 3000)
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.error || '❌ Invalid or already used ticket'
-      setLastResult({
-        success: false,
-        error: errorMessage,
-      })
-      toast.error(errorMessage)
-      setTimeout(() => setLastResult(null), 3000)
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
-  /**
    * Handle manual ticket ID entry
    */
   const handleManualCheckin = async () => {
@@ -195,9 +215,8 @@ export default function CheckinPage() {
     setIsProcessing(true)
     try {
       const response = await api.post('/checkin', { ticket_id: manualTicketId })
-      const result = response.data
       
-      toast.success(`✅ ${result.data.attendee_name} checked in manually!`)
+      toast.success(`✅ ${response.data.attendee_name} checked in manually!`)
       setShowManualEntry(false)
       setManualTicketId('')
       fetchEventAndStats()
@@ -206,14 +225,6 @@ export default function CheckinPage() {
     } finally {
       setIsProcessing(false)
     }
-  }
-
-  /**
-   * Handle scan error
-   */
-  const handleError = (error: any) => {
-    console.error('QR Scanner error:', error)
-    toast.error('📷 Camera access failed. Please check permissions.')
   }
 
   if (loading) {
@@ -318,7 +329,7 @@ export default function CheckinPage() {
         </div>
       </div>
 
-      {/* main Contenet Grid */}
+      {/* Main Content Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
         {/* QR Scanner - Main Area */}
         <div className="lg:col-span-2">
@@ -329,21 +340,45 @@ export default function CheckinPage() {
                 Scan QR Code
               </CardTitle>
               <CardDescription>
-                Position the attendee's QR code within the frame 📱
+                Position the attendee&apos;s QR code within the frame 📱
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isScanning ? (
+              {scannerError ? (
+                <div className="text-center py-12">
+                  <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">Camera Error 📷</p>
+                  <p className="text-sm text-red-500 mt-2">{scannerError}</p>
+                  <Button
+                    variant="outline"
+                    onClick={requestCameraPermission}
+                    className="mt-4"
+                  >
+                    Request Camera Permission
+                  </Button>
+                </div>
+              ) : hasCamera === false ? (
+                <div className="text-center py-12">
+                  <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">Camera not available 📷</p>
+                  <p className="text-sm text-gray-400 mt-2">
+                    Please allow camera access to scan QR codes.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={requestCameraPermission}
+                    className="mt-4"
+                  >
+                    Enable Camera
+                  </Button>
+                </div>
+              ) : (
                 <div className="relative">
-                  <div className="aspect-square max-w-md mx-auto bg-black rounded-lg overflow-hidden">
-                    <QrScanner
-                      delay={300}
-                      onError={handleError}
-                      onScan={handleScan}
-                      style={{ width: '100%', height: '100%' }}
-                    />
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div 
+                    id={scannerId} 
+                    className="aspect-square max-w-md mx-auto bg-black rounded-lg overflow-hidden"
+                  />
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                     <div className="w-64 h-64 border-2 border-primary rounded-lg shadow-lg">
                       {/* Corner brackets for scanning guide */}
                       <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-lg" />
@@ -353,19 +388,8 @@ export default function CheckinPage() {
                     </div>
                   </div>
                   {/* Scanning line animation */}
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 w-64 h-0.5 bg-primary animate-pulse" />
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">Camera is disabled 📷</p>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsScanning(true)}
-                    className="mt-4"
-                  >
-                    Enable Camera
-                  </Button>
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 w-64 h-0.5 bg-primary animate-pulse" 
+                       style={{ transform: 'translate(-50%, -50%)' }} />
                 </div>
               )}
 
@@ -488,7 +512,7 @@ export default function CheckinPage() {
                 onKeyDown={(e) => e.key === 'Enter' && handleManualCheckin()}
               />
               <p className="text-xs text-gray-400 mt-1">
-                You can find the ticket ID on the attendee's QR code or email
+                You can find the ticket ID on the attendee&apos;s QR code or email
               </p>
             </div>
           </div>
