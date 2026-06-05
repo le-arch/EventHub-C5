@@ -50,7 +50,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	r.POST("/api/v1/auth/forgot-password", h.handleForgotPassword)
 	r.POST("/api/v1/auth/reset-password", h.handlePasswrordReset)
 	r.POST("/api/v1/auth/resend-otp", h.handleResendOTP)
-
+	r.POST("/events", h.HandleCreateEvent)
 	Protection := r.Group("/api/v1")
 	Protection.Use(auth.AuthMiddleware(h.jwtSecret))
 	{
