@@ -1,0 +1,79 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+
+# Build outputs
+.next
+out
+build
+dist
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Testing
+coverage
+.nyc_output
+.cypress
+cypress
+*.test.js
+*.spec.js
+*.test.ts
+*.spec.ts
+*.test.tsx
+*.spec.tsx
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Docker
+Dockerfile
+Dockerfile.dev
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+README.md
+LICENSE
+*.md
+docs
+
+# Misc
+.tmp
+.cache
+.eslintcache
+.prettiercache
+
+# Next.js specific
+.next
+out
+.vercel
+
+# TypeScript
+tsconfig.tsbuildinfo
+
+# Prisma (if using)
+prisma/*.db
+prisma/*.db-journal

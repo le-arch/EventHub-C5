@@ -11,7 +11,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import QRCode from 'qrcode.react'
+import {QRCodeCanvas} from 'qrcode.react'
 import { Download, CheckCircle, Home, Ticket, Calendar, MapPin, Clock, Share2 } from 'lucide-react'
 
 // Components
@@ -83,7 +83,7 @@ export default function TicketPage() {
       document.body.removeChild(downloadLink)
       
       setDownloadCount(prev => prev + 1)
-      toast.success('QR code downloaded successfully!')
+      toast.success('✅ QR code downloaded successfully!')
     }
   }
 
@@ -103,7 +103,7 @@ export default function TicketPage() {
           text: `Here's my ticket for ${order.eventTitle}!`,
           files: [file],
         })
-        toast.success('Ticket shared successfully!')
+        toast.success('📤 Ticket shared successfully!')
       } else {
         downloadQRCode()
       }
@@ -137,7 +137,7 @@ export default function TicketPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
             <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
-          <h1 className="text-2xl font-bold mb-1">Payment Successful!</h1>
+          <h1 className="text-2xl font-bold mb-1">Payment Successful! 🎉</h1>
           <p className="text-gray-500">Thank you, {order.attendeeName}!</p>
         </div>
 
@@ -146,14 +146,14 @@ export default function TicketPage() {
           {/* Ticket Header */}
           <div className="bg-primary p-4 text-white text-center">
             <h2 className="font-bold text-lg">{order.eventTitle}</h2>
-            <p className="text-primary-foreground/80 text-sm">Event Ticket</p>
+            <p className="text-primary-foreground/80 text-sm">Event Ticket 🎟️</p>
           </div>
 
           {/* QR Code */}
           <CardContent className="pt-6 text-center">
             <div className="bg-white p-4 rounded-lg inline-block mx-auto border-2 border-dashed border-gray-200">
               <div ref={qrRef}>
-                <QRCode
+                <QRCodeCanvas
                   id="qr-code-canvas"
                   value={order.qrCodeData}
                   size={200}
@@ -165,7 +165,7 @@ export default function TicketPage() {
               </div>
             </div>
             <p className="text-xs text-gray-400 mt-3">
-              Scan this QR code at the event entrance
+              📱 Scan this QR code at the event entrance
             </p>
           </CardContent>
 
@@ -195,19 +195,19 @@ export default function TicketPage() {
           {/* Ticket Details */}
           <CardContent className="pt-4 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Attendee:</span>
+              <span className="text-gray-500">👤 Attendee:</span>
               <span className="font-medium">{order.attendeeName}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Ticket Type:</span>
+              <span className="text-gray-500">🎟️ Ticket Type:</span>
               <span className="font-medium">{order.ticketType}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Quantity:</span>
+              <span className="text-gray-500">🔢 Quantity:</span>
               <span className="font-medium">{order.quantity}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Total Paid:</span>
+              <span className="text-gray-500">💰 Total Paid:</span>
               <span className="font-bold text-primary">{formatCurrency(order.totalAmount)}</span>
             </div>
           </CardContent>
@@ -217,10 +217,10 @@ export default function TicketPage() {
           {/* Footer */}
           <CardContent className="pt-4 pb-6 text-center">
             <Badge variant="outline" className="text-xs">
-              Order ID: {order.id.slice(0, 8)}...
+              🆔 Order ID: {order.id.slice(0, 8)}...
             </Badge>
             <p className="text-xs text-gray-400 mt-2">
-              Purchased on {formatDate(order.createdAt)}
+              📅 Purchased on {formatDate(order.createdAt)}
             </p>
           </CardContent>
         </Card>
@@ -229,27 +229,27 @@ export default function TicketPage() {
         <div className="space-y-3">
           <Button onClick={downloadQRCode} className="w-full btn-press">
             <Download className="h-4 w-4 mr-2" />
-            Download QR Code (PNG)
+            Download QR Code (PNG) 📥
           </Button>
           
           {navigator.share && (
             <Button variant="outline" onClick={shareTicket} className="w-full">
               <Share2 className="h-4 w-4 mr-2" />
-              Share Ticket
+              Share Ticket 📤
             </Button>
           )}
           
           <Button variant="ghost" onClick={() => router.push('/')} className="w-full">
             <Home className="h-4 w-4 mr-2" />
-            Back to Home
+            Back to Home 🏠
           </Button>
         </div>
 
         {/* Instructions */}
-        <div className="mt-6 text-center text-xs text-gray-400">
-          <p>• Save this QR code to your phone gallery</p>
-          <p>• Present this QR code at the event entrance</p>
-          <p>• One-time use only - QR code expires after scanning</p>
+        <div className="mt-6 text-center text-xs text-gray-400 space-y-1">
+          <p>💾 Save this QR code to your phone gallery</p>
+          <p>📱 Present this QR code at the event entrance</p>
+          <p>⚠️ One-time use only - QR code expires after scanning</p>
         </div>
       </div>
     </div>

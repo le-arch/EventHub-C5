@@ -11,7 +11,7 @@
 export const config = {
   // API Configuration
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1',
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8085/api/v1',
     timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000', 10),
   },
   

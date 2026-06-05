@@ -33,6 +33,8 @@ import {
   Ticket,
   CalendarDays,
   DollarSign,
+  CheckCircle,
+  FileText,
 } from 'lucide-react'
 
 // shadcn/ui components
