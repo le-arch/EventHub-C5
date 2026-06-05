@@ -73,3 +73,23 @@ WHERE id = $1;
 -- name: DeleteEventsByOrganizer :exec
 DELETE FROM events
 WHERE organizer_id = $1;
+
+-- name: PartialEventUpdate :one
+UPDATE events
+SET
+    title = COALESCE(sqlc.narg(title), title),
+    slug = COALESCE(sqlc.narg(slug), slug),
+    description = COALESCE(sqlc.narg(description), description),
+    venue = COALESCE(sqlc.narg(venue), venue),
+    city = COALESCE(sqlc.narg(city), city),
+    start_date = COALESCE(sqlc.narg(start_date), start_date),
+    end_date = COALESCE(sqlc.narg(end_date), end_date),
+    start_time = COALESCE(sqlc.narg(start_time), start_time),
+    end_time = COALESCE(sqlc.narg(end_time), end_time),
+    cover_image_url = COALESCE(sqlc.narg(cover_image_url), cover_image_url),
+    status = COALESCE(sqlc.narg(status), status),
+    sales_start_date = COALESCE(sqlc.narg(sales_start_date), sales_start_date),
+    sales_end_date = COALESCE(sqlc.narg(sales_end_date), sales_end_date),
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND organizer_id = $2
+RETURNING *;

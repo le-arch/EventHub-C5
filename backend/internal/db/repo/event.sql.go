@@ -400,6 +400,86 @@ func (q *Queries) ListEventsByStatus(ctx context.Context, status EventStatus) ([
 	return items, nil
 }
 
+const partialEventUpdate = `-- name: PartialEventUpdate :one
+UPDATE events
+SET
+    title = COALESCE($3, title),
+    slug = COALESCE($4, slug),
+    description = COALESCE($5, description),
+    venue = COALESCE($6, venue),
+    city = COALESCE($7, city),
+    start_date = COALESCE($8, start_date),
+    end_date = COALESCE($9, end_date),
+    start_time = COALESCE($10, start_time),
+    end_time = COALESCE($11, end_time),
+    cover_image_url = COALESCE($12, cover_image_url),
+    status = COALESCE($13, status),
+    sales_start_date = COALESCE($14, sales_start_date),
+    sales_end_date = COALESCE($15, sales_end_date),
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND organizer_id = $2
+RETURNING id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, created_at, updated_at
+`
+
+type PartialEventUpdateParams struct {
+	ID             uuid.UUID    `json:"id"`
+	OrganizerID    uuid.UUID    `json:"organizer_id"`
+	Title          *string      `json:"title"`
+	Slug           *string      `json:"slug"`
+	Description    string       `json:"description"`
+	Venue          string       `json:"venue"`
+	City           *string      `json:"city"`
+	StartDate      *time.Time   `json:"start_date"`
+	EndDate        *time.Time   `json:"end_date"`
+	StartTime      string       `json:"start_time"`
+	EndTime        string       `json:"end_time"`
+	CoverImageUrl  string       `json:"cover_image_url"`
+	Status         *EventStatus `json:"status"`
+	SalesStartDate *time.Time   `json:"sales_start_date"`
+	SalesEndDate   *time.Time   `json:"sales_end_date"`
+}
+
+func (q *Queries) PartialEventUpdate(ctx context.Context, arg PartialEventUpdateParams) (Event, error) {
+	row := q.db.QueryRow(ctx, partialEventUpdate,
+		arg.ID,
+		arg.OrganizerID,
+		arg.Title,
+		arg.Slug,
+		arg.Description,
+		arg.Venue,
+		arg.City,
+		arg.StartDate,
+		arg.EndDate,
+		arg.StartTime,
+		arg.EndTime,
+		arg.CoverImageUrl,
+		arg.Status,
+		arg.SalesStartDate,
+		arg.SalesEndDate,
+	)
+	var i Event
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizerID,
+		&i.Title,
+		&i.Slug,
+		&i.Description,
+		&i.Venue,
+		&i.City,
+		&i.StartDate,
+		&i.EndDate,
+		&i.StartTime,
+		&i.EndTime,
+		&i.CoverImageUrl,
+		&i.Status,
+		&i.SalesStartDate,
+		&i.SalesEndDate,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateEvent = `-- name: UpdateEvent :one
 UPDATE events
 SET title = $2, slug = $3, description = $4, venue = $5, city = $6, start_date = $7, end_date = $8, start_time = $9, end_time = $10, cover_image_url = $11, status = $12, sales_start_date = $13, sales_end_date = $14, updated_at = CURRENT_TIMESTAMP

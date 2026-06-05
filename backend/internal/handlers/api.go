@@ -58,7 +58,10 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 		Protection.GET("/auth/me", h.handleGetCurrentUser)
 	
 	Protection.POST("/events", h.handleCreateEvent)
+
 	// Protection.POST("/events/:id/publish",h.HandlePublicEvent)
+
+	// Protection.PATCH("/evens/:id", handleUpdateEvent)
 	
 	// Protection.GET("/events", h.handleGetEvents)
 	// Protection.GET("/events/:id", h.handleEventDetails)

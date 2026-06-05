@@ -123,3 +123,34 @@ func (h *EventHubHandler) handleGetPublicEvent(c *gin.Context) {
 
     c.JSON(http.StatusOK, response)
 }
+
+func (h *EventHubHandler) handleUpdateEvent(c *gin.Context) {
+	// claims, exists := c.Get("user")
+	// id := c.Param("id")
+	// if !exists {
+	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+	// }
+	// userClaims := claims.(*auth.Claims)
+	// origanizerID := userClaims.ID
+
+	// eventID, err := uuid.Parse(id)
+	// if err != nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+	// 	return
+	// }
+
+	var req models.UpdateEventRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+}
+
+// Helper to convert empty string to sql.NullString (or pointer)
+func nullIfEmpty(s string) *string {
+    if s == "" {
+        return nil
+    }
+    return &s
+}

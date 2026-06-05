@@ -25,6 +25,7 @@ type Querier interface {
 	ListEventsByCity(ctx context.Context, city string) ([]Event, error)
 	ListEventsByOrganizer(ctx context.Context, organizerID uuid.UUID) ([]Event, error)
 	ListEventsByStatus(ctx context.Context, status EventStatus) ([]Event, error)
+	PartialEventUpdate(ctx context.Context, arg PartialEventUpdateParams) (Event, error)
 	UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event, error)
 	UpdateEventCoverImage(ctx context.Context, arg UpdateEventCoverImageParams) (Event, error)
 	UpdateEventStatus(ctx context.Context, arg UpdateEventStatusParams) (Event, error)
