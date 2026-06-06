@@ -116,7 +116,7 @@ func (h *EventHubHandler) handleVerifyEmail(c *gin.Context) {
 
 	// Generate a JWT token for the newly registered user
 	token, err := auth.CreateToken(
-		user.ID.String(),
+		user.ID,
 		user.Email,
 		user.Phone,
 		user.FullName,
@@ -189,7 +189,7 @@ func (h *EventHubHandler) handleLogin(c *gin.Context) {
 
 	// Generate a JWT token for the authenticated user
 	token, err := auth.CreateToken(
-		user.ID.String(),
+		user.ID,
 		user.Email,
 		user.Phone,
 		user.FullName,
@@ -260,7 +260,7 @@ func (h *EventHubHandler) handleRefreshToken(c *gin.Context) {
 
 	// Generate a new access token for the user using the same information as the original token, ensuring that the user can continue to access protected resources without needing to log in again
 	newToken, err := auth.CreateToken(
-		user.ID.String(),
+		user.ID,
 		user.Email,
 		user.Phone,
 		user.FullName,

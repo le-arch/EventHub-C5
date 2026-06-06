@@ -113,23 +113,24 @@ type AdminLog struct {
 }
 
 type Event struct {
-	ID             uuid.UUID        `json:"id"`
-	OrganizerID    uuid.UUID        `json:"organizer_id"`
-	Title          string           `json:"title"`
-	Slug           string           `json:"slug"`
-	Description    string           `json:"description"`
-	Venue          string           `json:"venue"`
-	City           string           `json:"city"`
-	StartDate      time.Time        `json:"start_date"`
-	EndDate        *time.Time       `json:"end_date"`
-	StartTime      string           `json:"start_time"`
-	EndTime        string           `json:"end_time"`
-	CoverImageUrl  string           `json:"cover_image_url"`
-	Status         EventStatus      `json:"status"`
-	SalesStartDate *time.Time       `json:"sales_start_date"`
-	SalesEndDate   *time.Time       `json:"sales_end_date"`
-	CreatedAt      pgtype.Timestamp `json:"created_at"`
-	UpdatedAt      pgtype.Timestamp `json:"updated_at"`
+	ID             uuid.UUID                  `json:"id"`
+	OrganizerID    uuid.UUID                  `json:"organizer_id"`
+	Title          string                     `json:"title"`
+	Slug           string                     `json:"slug"`
+	Description    string                     `json:"description"`
+	Venue          string                     `json:"venue"`
+	City           string                     `json:"city"`
+	StartDate      time.Time                  `json:"start_date"`
+	EndDate        *time.Time                 `json:"end_date"`
+	StartTime      *string                    `json:"start_time"`
+	EndTime        *string                    `json:"end_time"`
+	CoverImageUrl  string                     `json:"cover_image_url"`
+	Status         EventStatus                `json:"status"`
+	SalesStartDate *time.Time                 `json:"sales_start_date"`
+	SalesEndDate   *time.Time                 `json:"sales_end_date"`
+	CapacityRange  *pgtype.Range[pgtype.Int4] `json:"capacity_range"`
+	CreatedAt      pgtype.Timestamp           `json:"created_at"`
+	UpdatedAt      pgtype.Timestamp           `json:"updated_at"`
 }
 
 type Order struct {

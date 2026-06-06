@@ -1,6 +1,6 @@
 -- name: CreateEvent :one
-INSERT INTO events (organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+INSERT INTO events (organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date,capacity_range)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 RETURNING *;
 
 -- name: GetEventByID :one
@@ -54,7 +54,7 @@ RETURNING *;
 SELECT 
     id, organizer_id, title, slug, description, venue, city,
     start_date, end_date, start_time, end_time, cover_image_url,
-    status, sales_start_date, sales_end_date, created_at, updated_at
+    status, sales_start_date, sales_end_date,capacity_range, created_at, updated_at
 FROM events
 WHERE id = $1 AND status = 'published';
 
@@ -90,6 +90,7 @@ SET
     status = COALESCE(sqlc.narg(status), status),
     sales_start_date = COALESCE(sqlc.narg(sales_start_date), sales_start_date),
     sales_end_date = COALESCE(sqlc.narg(sales_end_date), sales_end_date),
+    capacity_range = COALESCE(sqlc.narg(capacity_range), capacity_range),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND organizer_id = $2
 RETURNING *;

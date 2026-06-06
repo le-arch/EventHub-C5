@@ -10,29 +10,31 @@ import (
 	"time"
 
 	uuid "github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createEvent = `-- name: CreateEvent :one
-INSERT INTO events (organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-RETURNING id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, created_at, updated_at
+INSERT INTO events (organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date,capacity_range)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+RETURNING id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at
 `
 
 type CreateEventParams struct {
-	OrganizerID    uuid.UUID   `json:"organizer_id"`
-	Title          string      `json:"title"`
-	Slug           string      `json:"slug"`
-	Description    string      `json:"description"`
-	Venue          string      `json:"venue"`
-	City           string      `json:"city"`
-	StartDate      time.Time   `json:"start_date"`
-	EndDate        *time.Time  `json:"end_date"`
-	StartTime      string      `json:"start_time"`
-	EndTime        string      `json:"end_time"`
-	CoverImageUrl  string      `json:"cover_image_url"`
-	Status         EventStatus `json:"status"`
-	SalesStartDate *time.Time  `json:"sales_start_date"`
-	SalesEndDate   *time.Time  `json:"sales_end_date"`
+	OrganizerID    uuid.UUID                  `json:"organizer_id"`
+	Title          string                     `json:"title"`
+	Slug           string                     `json:"slug"`
+	Description    string                     `json:"description"`
+	Venue          string                     `json:"venue"`
+	City           string                     `json:"city"`
+	StartDate      time.Time                  `json:"start_date"`
+	EndDate        *time.Time                 `json:"end_date"`
+	StartTime      *string                    `json:"start_time"`
+	EndTime        *string                    `json:"end_time"`
+	CoverImageUrl  string                     `json:"cover_image_url"`
+	Status         EventStatus                `json:"status"`
+	SalesStartDate *time.Time                 `json:"sales_start_date"`
+	SalesEndDate   *time.Time                 `json:"sales_end_date"`
+	CapacityRange  *pgtype.Range[pgtype.Int4] `json:"capacity_range"`
 }
 
 func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error) {
@@ -51,6 +53,7 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event
 		arg.Status,
 		arg.SalesStartDate,
 		arg.SalesEndDate,
+		arg.CapacityRange,
 	)
 	var i Event
 	err := row.Scan(
@@ -69,6 +72,7 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event
 		&i.Status,
 		&i.SalesStartDate,
 		&i.SalesEndDate,
+		&i.CapacityRange,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -96,7 +100,7 @@ func (q *Queries) DeleteEventsByOrganizer(ctx context.Context, organizerID uuid.
 }
 
 const getEventByID = `-- name: GetEventByID :one
-SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, created_at, updated_at FROM events 
+SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at FROM events 
 WHERE id = $1
 LIMIT 1
 `
@@ -120,6 +124,7 @@ func (q *Queries) GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
 		&i.Status,
 		&i.SalesStartDate,
 		&i.SalesEndDate,
+		&i.CapacityRange,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -130,7 +135,7 @@ const getEventByIDPublic = `-- name: GetEventByIDPublic :one
 SELECT 
     id, organizer_id, title, slug, description, venue, city,
     start_date, end_date, start_time, end_time, cover_image_url,
-    status, sales_start_date, sales_end_date, created_at, updated_at
+    status, sales_start_date, sales_end_date,capacity_range, created_at, updated_at
 FROM events
 WHERE id = $1 AND status = 'published'
 `
@@ -154,6 +159,7 @@ func (q *Queries) GetEventByIDPublic(ctx context.Context, id uuid.UUID) (Event, 
 		&i.Status,
 		&i.SalesStartDate,
 		&i.SalesEndDate,
+		&i.CapacityRange,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -169,9 +175,29 @@ FROM events
 WHERE slug = $1 AND status = 'published'
 `
 
-func (q *Queries) GetEventBySlugPublic(ctx context.Context, slug string) (Event, error) {
+type GetEventBySlugPublicRow struct {
+	ID             uuid.UUID        `json:"id"`
+	OrganizerID    uuid.UUID        `json:"organizer_id"`
+	Title          string           `json:"title"`
+	Slug           string           `json:"slug"`
+	Description    string           `json:"description"`
+	Venue          string           `json:"venue"`
+	City           string           `json:"city"`
+	StartDate      time.Time        `json:"start_date"`
+	EndDate        *time.Time       `json:"end_date"`
+	StartTime      *string          `json:"start_time"`
+	EndTime        *string          `json:"end_time"`
+	CoverImageUrl  string           `json:"cover_image_url"`
+	Status         EventStatus      `json:"status"`
+	SalesStartDate *time.Time       `json:"sales_start_date"`
+	SalesEndDate   *time.Time       `json:"sales_end_date"`
+	CreatedAt      pgtype.Timestamp `json:"created_at"`
+	UpdatedAt      pgtype.Timestamp `json:"updated_at"`
+}
+
+func (q *Queries) GetEventBySlugPublic(ctx context.Context, slug string) (GetEventBySlugPublicRow, error) {
 	row := q.db.QueryRow(ctx, getEventBySlugPublic, slug)
-	var i Event
+	var i GetEventBySlugPublicRow
 	err := row.Scan(
 		&i.ID,
 		&i.OrganizerID,
@@ -195,7 +221,7 @@ func (q *Queries) GetEventBySlugPublic(ctx context.Context, slug string) (Event,
 }
 
 const getEventsBySlug = `-- name: GetEventsBySlug :one
-SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, created_at, updated_at FROM events 
+SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at FROM events 
 WHERE slug = $1
 LIMIT 1
 `
@@ -219,6 +245,7 @@ func (q *Queries) GetEventsBySlug(ctx context.Context, slug string) (Event, erro
 		&i.Status,
 		&i.SalesStartDate,
 		&i.SalesEndDate,
+		&i.CapacityRange,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -226,7 +253,7 @@ func (q *Queries) GetEventsBySlug(ctx context.Context, slug string) (Event, erro
 }
 
 const listEvents = `-- name: ListEvents :many
-SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, created_at, updated_at FROM events 
+SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at FROM events 
 ORDER BY start_date ASC, start_time ASC
 `
 
@@ -255,6 +282,7 @@ func (q *Queries) ListEvents(ctx context.Context) ([]Event, error) {
 			&i.Status,
 			&i.SalesStartDate,
 			&i.SalesEndDate,
+			&i.CapacityRange,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -269,7 +297,7 @@ func (q *Queries) ListEvents(ctx context.Context) ([]Event, error) {
 }
 
 const listEventsByCity = `-- name: ListEventsByCity :many
-SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, created_at, updated_at FROM events 
+SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at FROM events 
 WHERE city ILIKE $1
 ORDER BY start_date ASC, start_time ASC
 `
@@ -299,6 +327,7 @@ func (q *Queries) ListEventsByCity(ctx context.Context, city string) ([]Event, e
 			&i.Status,
 			&i.SalesStartDate,
 			&i.SalesEndDate,
+			&i.CapacityRange,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -313,7 +342,7 @@ func (q *Queries) ListEventsByCity(ctx context.Context, city string) ([]Event, e
 }
 
 const listEventsByOrganizer = `-- name: ListEventsByOrganizer :many
-SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, created_at, updated_at FROM events 
+SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at FROM events 
 WHERE organizer_id = $1
 ORDER BY start_date DESC, start_time DESC
 `
@@ -343,6 +372,7 @@ func (q *Queries) ListEventsByOrganizer(ctx context.Context, organizerID uuid.UU
 			&i.Status,
 			&i.SalesStartDate,
 			&i.SalesEndDate,
+			&i.CapacityRange,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -357,7 +387,7 @@ func (q *Queries) ListEventsByOrganizer(ctx context.Context, organizerID uuid.UU
 }
 
 const listEventsByStatus = `-- name: ListEventsByStatus :many
-SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, created_at, updated_at FROM events 
+SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at FROM events 
 WHERE status = $1
 ORDER BY start_date ASC, start_time ASC
 `
@@ -387,6 +417,7 @@ func (q *Queries) ListEventsByStatus(ctx context.Context, status EventStatus) ([
 			&i.Status,
 			&i.SalesStartDate,
 			&i.SalesEndDate,
+			&i.CapacityRange,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -416,27 +447,29 @@ SET
     status = COALESCE($13, status),
     sales_start_date = COALESCE($14, sales_start_date),
     sales_end_date = COALESCE($15, sales_end_date),
+    capacity_range = COALESCE($16, capacity_range),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND organizer_id = $2
-RETURNING id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, created_at, updated_at
+RETURNING id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at
 `
 
 type PartialEventUpdateParams struct {
-	ID             uuid.UUID    `json:"id"`
-	OrganizerID    uuid.UUID    `json:"organizer_id"`
-	Title          *string      `json:"title"`
-	Slug           *string      `json:"slug"`
-	Description    string       `json:"description"`
-	Venue          string       `json:"venue"`
-	City           *string      `json:"city"`
-	StartDate      *time.Time   `json:"start_date"`
-	EndDate        *time.Time   `json:"end_date"`
-	StartTime      string       `json:"start_time"`
-	EndTime        string       `json:"end_time"`
-	CoverImageUrl  string       `json:"cover_image_url"`
-	Status         *EventStatus `json:"status"`
-	SalesStartDate *time.Time   `json:"sales_start_date"`
-	SalesEndDate   *time.Time   `json:"sales_end_date"`
+	ID             uuid.UUID                  `json:"id"`
+	OrganizerID    uuid.UUID                  `json:"organizer_id"`
+	Title          *string                    `json:"title"`
+	Slug           *string                    `json:"slug"`
+	Description    string                     `json:"description"`
+	Venue          string                     `json:"venue"`
+	City           *string                    `json:"city"`
+	StartDate      *time.Time                 `json:"start_date"`
+	EndDate        *time.Time                 `json:"end_date"`
+	StartTime      *string                    `json:"start_time"`
+	EndTime        *string                    `json:"end_time"`
+	CoverImageUrl  string                     `json:"cover_image_url"`
+	Status         *EventStatus               `json:"status"`
+	SalesStartDate *time.Time                 `json:"sales_start_date"`
+	SalesEndDate   *time.Time                 `json:"sales_end_date"`
+	CapacityRange  *pgtype.Range[pgtype.Int4] `json:"capacity_range"`
 }
 
 func (q *Queries) PartialEventUpdate(ctx context.Context, arg PartialEventUpdateParams) (Event, error) {
@@ -456,6 +489,7 @@ func (q *Queries) PartialEventUpdate(ctx context.Context, arg PartialEventUpdate
 		arg.Status,
 		arg.SalesStartDate,
 		arg.SalesEndDate,
+		arg.CapacityRange,
 	)
 	var i Event
 	err := row.Scan(
@@ -474,6 +508,7 @@ func (q *Queries) PartialEventUpdate(ctx context.Context, arg PartialEventUpdate
 		&i.Status,
 		&i.SalesStartDate,
 		&i.SalesEndDate,
+		&i.CapacityRange,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -484,7 +519,7 @@ const updateEvent = `-- name: UpdateEvent :one
 UPDATE events
 SET title = $2, slug = $3, description = $4, venue = $5, city = $6, start_date = $7, end_date = $8, start_time = $9, end_time = $10, cover_image_url = $11, status = $12, sales_start_date = $13, sales_end_date = $14, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
-RETURNING id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, created_at, updated_at
+RETURNING id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at
 `
 
 type UpdateEventParams struct {
@@ -496,8 +531,8 @@ type UpdateEventParams struct {
 	City           string      `json:"city"`
 	StartDate      time.Time   `json:"start_date"`
 	EndDate        *time.Time  `json:"end_date"`
-	StartTime      string      `json:"start_time"`
-	EndTime        string      `json:"end_time"`
+	StartTime      *string     `json:"start_time"`
+	EndTime        *string     `json:"end_time"`
 	CoverImageUrl  string      `json:"cover_image_url"`
 	Status         EventStatus `json:"status"`
 	SalesStartDate *time.Time  `json:"sales_start_date"`
@@ -538,6 +573,7 @@ func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event
 		&i.Status,
 		&i.SalesStartDate,
 		&i.SalesEndDate,
+		&i.CapacityRange,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -548,7 +584,7 @@ const updateEventCoverImage = `-- name: UpdateEventCoverImage :one
 UPDATE events
 SET cover_image_url = $2, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
-RETURNING id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, created_at, updated_at
+RETURNING id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at
 `
 
 type UpdateEventCoverImageParams struct {
@@ -575,6 +611,7 @@ func (q *Queries) UpdateEventCoverImage(ctx context.Context, arg UpdateEventCove
 		&i.Status,
 		&i.SalesStartDate,
 		&i.SalesEndDate,
+		&i.CapacityRange,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -585,7 +622,7 @@ const updateEventStatus = `-- name: UpdateEventStatus :one
 UPDATE events
 SET status = $2, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
-RETURNING id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, created_at, updated_at
+RETURNING id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at
 `
 
 type UpdateEventStatusParams struct {
@@ -612,6 +649,7 @@ func (q *Queries) UpdateEventStatus(ctx context.Context, arg UpdateEventStatusPa
 		&i.Status,
 		&i.SalesStartDate,
 		&i.SalesEndDate,
+		&i.CapacityRange,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

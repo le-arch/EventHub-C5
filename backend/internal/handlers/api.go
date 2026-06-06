@@ -61,9 +61,9 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 
 	// Protection.POST("/events/:id/publish",h.HandlePublicEvent)
 
-	// Protection.PATCH("/evens/:id", handleUpdateEvent)
+	Protection.PATCH("/events/:id", h.handleUpdateEvent)
 	
-	// Protection.GET("/events", h.handleGetEvents)
+	Protection.GET("/events", h.handleGetEvents)
 	// Protection.GET("/events/:id", h.handleEventDetails)
 
 	// Protection.PUT("/events/:id", h.handleUpdateEvent)

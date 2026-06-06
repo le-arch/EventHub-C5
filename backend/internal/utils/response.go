@@ -4,6 +4,7 @@ package utils
 import (
 	"github.com/google/uuid"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
+	"github.com/le-arch/EventHub-C5/internal/models"
 )
 
 // RegisterResponse defines the structure of the response sent back to the client after a successful registration
@@ -37,8 +38,10 @@ type CreateEventResponse struct {
 	CoverImageUrl  string           `json:"cover_image_url"`
 	Status         repo.EventStatus `json:"status"`
 	SalesStartDate string           `json:"sales_start_date"` 
-	SalesEndDate   string           `json:"sales_end_date"`   
-	CreatedAt      string      
+	SalesEndDate   string           `json:"sales_end_date"` 
+	CapacityRange  *models.CapacityRangeJSON			`json:"capacity_range"`  
+  
+	CreatedAt      string      		`json:"created_at"`
 	
 	UpdatedAt      string           `json:"updated_at"`
 }
@@ -56,8 +59,9 @@ type EventResponse struct{
 	CoverImageUrl  string           `json:"cover_image_url"`
 	Status         repo.EventStatus `json:"status"`
 	SalesStartDate string           `json:"sales_start_date"` 
-	SalesEndDate   string           `json:"sales_end_date"`   
-	CreatedAt      string      
+	SalesEndDate   string           `json:"sales_end_date"` 
+	CapacityRange  *models.CapacityRangeJSON			`json:"capacity_range"`  
 	
 	UpdatedAt      string           `json:"updated_at"`
 }
+

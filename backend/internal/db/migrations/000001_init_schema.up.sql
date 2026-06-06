@@ -34,6 +34,7 @@ CREATE TABLE events (
     status event_status NOT NULL DEFAULT 'draft',
     sales_start_date DATE,
     sales_end_date DATE,
+    capacity_range int4range,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

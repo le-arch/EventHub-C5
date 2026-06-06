@@ -32,14 +32,16 @@ func ParseTime(value string) (time.Time, error) {
 	return t, nil
 }
 
+
+
 // formats a time.Time object into a string in the format "YYYY-MM-DD"
 func FormatDate(t time.Time) string {
 	return t.Format(DateFormat)
 }
 
 // formats a time.Time object into a string in the format "HH:MM:SS"
-func FormatTime(t string) string {
-	timeStr := strings.Split(t, ".")[0]
+func FormatTime(t *string) string {
+	timeStr := strings.Split(*t, ".")[0]
 	return timeStr
 }
 

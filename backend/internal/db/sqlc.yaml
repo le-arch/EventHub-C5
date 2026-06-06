@@ -54,4 +54,18 @@ sql:
         - db_type: "pg_catalog.time"
           nullable: true
           go_type: "string"
+        - column: "events.capacity_range"
+          go_type:
+            import: "github.com/jackc/pgx/v5/pgtype"
+            type: "Range[pgtype.Int4]"
+            pointer: true
+        - column: "events.start_time"
+          go_type:
+            type: "string"
+            pointer: true
+        - column: "events.end_time"
+          go_type:
+            type: "string"
+            pointer: true
+        
         

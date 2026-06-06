@@ -17,7 +17,7 @@ type Querier interface {
 	DeleteEventsByOrganizer(ctx context.Context, organizerID uuid.UUID) error
 	GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
 	GetEventByIDPublic(ctx context.Context, id uuid.UUID) (Event, error)
-	GetEventBySlugPublic(ctx context.Context, slug string) (Event, error)
+	GetEventBySlugPublic(ctx context.Context, slug string) (GetEventBySlugPublicRow, error)
 	GetEventsBySlug(ctx context.Context, slug string) (Event, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
