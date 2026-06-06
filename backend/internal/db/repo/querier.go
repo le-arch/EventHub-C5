@@ -21,7 +21,7 @@ type Querier interface {
 	GetEventsBySlug(ctx context.Context, slug string) (Event, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
-	ListEvents(ctx context.Context) ([]Event, error)
+	ListEvents(ctx context.Context, role UserRole) ([]ListEventsRow, error)
 	ListEventsByCity(ctx context.Context, city string) ([]Event, error)
 	ListEventsByOrganizer(ctx context.Context, organizerID uuid.UUID) ([]Event, error)
 	ListEventsByStatus(ctx context.Context, status EventStatus) ([]Event, error)

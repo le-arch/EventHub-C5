@@ -19,7 +19,8 @@ WHERE organizer_id = $1
 ORDER BY start_date DESC, start_time DESC;
 
 -- name: ListEvents :many
-SELECT * FROM events 
+SELECT e.*, u.role FROM events e, users u 
+where u.role = $1
 ORDER BY start_date ASC, start_time ASC;
 
 -- name: ListEventsByCity :many

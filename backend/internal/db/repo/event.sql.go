@@ -253,19 +253,42 @@ func (q *Queries) GetEventsBySlug(ctx context.Context, slug string) (Event, erro
 }
 
 const listEvents = `-- name: ListEvents :many
-SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at FROM events 
+SELECT e.id, e.organizer_id, e.title, e.slug, e.description, e.venue, e.city, e.start_date, e.end_date, e.start_time, e.end_time, e.cover_image_url, e.status, e.sales_start_date, e.sales_end_date, e.capacity_range, e.created_at, e.updated_at, u.role FROM events e, users u 
+where u.role = $1
 ORDER BY start_date ASC, start_time ASC
 `
 
-func (q *Queries) ListEvents(ctx context.Context) ([]Event, error) {
-	rows, err := q.db.Query(ctx, listEvents)
+type ListEventsRow struct {
+	ID             uuid.UUID                  `json:"id"`
+	OrganizerID    uuid.UUID                  `json:"organizer_id"`
+	Title          string                     `json:"title"`
+	Slug           string                     `json:"slug"`
+	Description    string                     `json:"description"`
+	Venue          string                     `json:"venue"`
+	City           string                     `json:"city"`
+	StartDate      time.Time                  `json:"start_date"`
+	EndDate        *time.Time                 `json:"end_date"`
+	StartTime      *string                    `json:"start_time"`
+	EndTime        *string                    `json:"end_time"`
+	CoverImageUrl  string                     `json:"cover_image_url"`
+	Status         EventStatus                `json:"status"`
+	SalesStartDate *time.Time                 `json:"sales_start_date"`
+	SalesEndDate   *time.Time                 `json:"sales_end_date"`
+	CapacityRange  *pgtype.Range[pgtype.Int4] `json:"capacity_range"`
+	CreatedAt      pgtype.Timestamp           `json:"created_at"`
+	UpdatedAt      pgtype.Timestamp           `json:"updated_at"`
+	Role           UserRole                   `json:"role"`
+}
+
+func (q *Queries) ListEvents(ctx context.Context, role UserRole) ([]ListEventsRow, error) {
+	rows, err := q.db.Query(ctx, listEvents, role)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Event{}
+	items := []ListEventsRow{}
 	for rows.Next() {
-		var i Event
+		var i ListEventsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.OrganizerID,
@@ -285,6 +308,7 @@ func (q *Queries) ListEvents(ctx context.Context) ([]Event, error) {
 			&i.CapacityRange,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Role,
 		); err != nil {
 			return nil, err
 		}

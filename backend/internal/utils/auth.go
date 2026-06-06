@@ -40,3 +40,17 @@ func (h *AuthHelper) IsEventOwner (c *gin.Context, eventID uuid.UUID, organizerI
 	}
 	return event, true
 }
+
+func GetUserRole(c *gin.Context) (string, error) {
+	UserRoleVal, exists := c.Get("user")
+	if !exists {
+		return "", errors.New("unauthorized")
+	}
+
+	claims, ok := UserRoleVal.(*auth.Claims)
+	if !ok {
+		return "", errors.New("invalid claims")
+	}
+
+	return *claims.Role, nil
+}

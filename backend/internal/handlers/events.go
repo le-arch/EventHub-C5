@@ -70,32 +70,41 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 
 	
 	response := utils.CreateEventResponse{
-	ID: event.ID,
-	OrganizerID: event.OrganizerID,
-	Title: event.Title,
-	Slug: event.Slug,
-	Description: event.Description,
-	Venue: event.Venue,
-	City: event.City,
-	StartDate: utils.FormatDate(event.StartDate),
-	EndDate: utils.FormatDate(*event.EndDate),
-	StartTime: utils.FormatTime(event.StartTime),
-	EndTime: utils.FormatTime(event.EndTime),
-	CoverImageUrl: event.CoverImageUrl,
-	Status: event.Status,
-	SalesStartDate: utils.FormatDate(*event.SalesStartDate),
-	SalesEndDate: utils.FormatDate(*event.SalesEndDate),
-	CapacityRange: utils.FromDBRange(event.CapacityRange),
-	CreatedAt: utils.FormatDateTime(event.CreatedAt),
+		ID: event.ID,
+		OrganizerID: event.OrganizerID,
+		Title: event.Title,
+		Slug: event.Slug,
+		Description: event.Description,
+		Venue: event.Venue,
+		City: event.City,
+		StartDate: utils.FormatDate(event.StartDate),
+		EndDate: utils.FormatDate(*event.EndDate),
+		StartTime: utils.FormatTime(event.StartTime),
+		EndTime: utils.FormatTime(event.EndTime),
+		CoverImageUrl: event.CoverImageUrl,
+		Status: event.Status,
+		SalesStartDate: utils.FormatDate(*event.SalesStartDate),
+		SalesEndDate: utils.FormatDate(*event.SalesEndDate),
+		CapacityRange: utils.FromDBRange(event.CapacityRange),
+		CreatedAt: utils.FormatDateTime(event.CreatedAt),
 	}
 
 	c.JSON(http.StatusOK, response)
 }
 
 func (h *EventHubHandler) handleGetEvents(c *gin.Context) {
-    
-    events, err := h.querier.ListEvents(c)
-	    if err != nil {
+    UserRole, err := utils.GetUserRole(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	if UserRole != "admin" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "your not authorized to perform this action"})
+		return
+	}
+    events, err := h.querier.ListEvents(c, repo.UserRole(UserRole))
+	if err != nil {
         c.JSON(http.StatusNotFound, gin.H{"error": "no event created"})
         return
     }

@@ -58,17 +58,33 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 		Protection.GET("/auth/me", h.handleGetCurrentUser)
 	
 	Protection.POST("/events", h.handleCreateEvent)
-
-	// Protection.POST("/events/:id/publish",h.HandlePublicEvent)
+	// Protection.POST("/events/:id/unpublish", h.handleUnpublishEvent)
+	// Protection.POST("/events/:id/publish",h.handlePublicEvent)
+	// Protection.POST("/events/:id/ticket-types",h.handleCreateTicketType)
+	// Protection.POST("/orders", h.handleCreateOrder)
+	// Protection.POST("/checkin", h.handleScanQRCode)
 
 	Protection.PATCH("/events/:id", h.handleUpdateEvent)
-	
+	// Protection.PATCH("/:id/ticket-types",h.handleUpdateTicketType)
+
+	// Protection.GET("/events/:id/share-link", h.handleShareLink)
+	// Protection.GET("/orders/:id/status", h.handleCheckPayementStatus)
+	// Protection.GET("/orders/:id/ticket", h.handleDownloadQRCode)
+	// Protection.GET("/events/:id/attendees", h.handleGetAttendeeList)
+	// Protection.GET("/events/:id/analytics", h.handleGetEventAnalytics)
 	Protection.GET("/events", h.handleGetEvents)
 	// Protection.GET("/events/:id", h.handleEventDetails)
+	// Protection.GET("/checkin/event/:eventId/history", h.handleGetCheckinHistory)
+	// Protection.GET("/admin/users", h.handleListAllUsers)
+	// Protection.GET("/admin/transactions", h.handleViewAllTransactions)
+	// Protection.GET("/admin/events", h.handleViewAllEvents)
 
-	// Protection.PUT("/events/:id", h.handleUpdateEvent)
+	// Protection.PUT("/admin/users/:id/verify", h.handleVerifyOrganizer)
+	// Protection.PUT("/admin/users/:id/suspend", h.handleSuspendUser)
 
 	// Protection.DELETE("/events/:id", h.handleDeleteEvent)
+	// Protection.DELETE("/ticket-type/:id", h.handleDeleteTicketType)
+	
 	}
 
 
