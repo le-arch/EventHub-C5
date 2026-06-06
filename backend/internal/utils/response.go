@@ -9,7 +9,7 @@ import (
 
 // RegisterResponse defines the structure of the response sent back to the client after a successful registration
 type RegisterResponse struct {
-	ID string `json:"id"`
+	ID uuid.UUID `json:"id"`
 	FullName string `json:"full_name"`
 	Email string `json:"email"`
 	Role repo.UserRole `json:"role"`

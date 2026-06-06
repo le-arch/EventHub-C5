@@ -50,8 +50,45 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const getAllUsers = `-- name: GetAllUsers :many
+SELECT id, email, phone, password_hash, full_name, role, is_email_verified, created_at, updated_at FROM users
+WHERE role = $1
+ORDER BY created_at DESC
+`
+
+func (q *Queries) GetAllUsers(ctx context.Context, role UserRole) ([]User, error) {
+	rows, err := q.db.Query(ctx, getAllUsers, role)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.Phone,
+			&i.PasswordHash,
+			&i.FullName,
+			&i.Role,
+			&i.IsEmailVerified,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, phone, password_hash, full_name, role, is_email_verified, created_at, updated_at FROM "users" WHERE email = $1
+SELECT id, email, phone, password_hash, full_name, role, is_email_verified, created_at, updated_at FROM users 
+WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -72,7 +109,8 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, phone, password_hash, full_name, role, is_email_verified, created_at, updated_at FROM "users" WHERE id = $1
+SELECT id, email, phone, password_hash, full_name, role, is_email_verified, created_at, updated_at FROM users 
+WHERE id = $1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {

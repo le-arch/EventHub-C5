@@ -132,12 +132,12 @@ func (h *EventHubHandler) handleVerifyEmail(c *gin.Context) {
 
 	//prepare the response without exposing sensitive information like password hash
 	response := utils.RegisterResponse{
-		ID:              user.ID.String(),
+		ID:              user.ID,
 		FullName:        user.FullName,
 		Email:           user.Email,
 		Role:            user.Role,
 		IsEmailVerified: user.IsEmailVerified,
-		CreatedAt:       user.CreatedAt.Time.Format("2006-01-02 15:04:05"),
+		CreatedAt:       utils.FormatDateTime(user.CreatedAt),
 	}
 
 	// Generate a refresh token to enable auto login for the user after registration without needing to log in again immediately
@@ -213,7 +213,7 @@ func (h *EventHubHandler) handleLogin(c *gin.Context) {
 		Token:        token,
 		RefreshToken: refreshToken,
 		User: utils.RegisterResponse{
-			ID:              user.ID.String(),
+			ID:              user.ID,
 			FullName:        user.FullName,
 			Email:           user.Email,
 			Role:            user.Role,
