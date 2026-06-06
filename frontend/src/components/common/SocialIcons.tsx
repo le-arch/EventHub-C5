@@ -6,11 +6,14 @@
  * @module SocialIcons
  */
 
+import type { ReactNode } from "react"
+
 interface SocialIconProps {
   className?: string
   href: string
   label: string
   color?: string
+  children?: ReactNode
 }
 
 // Facebook SVG Icon
@@ -132,7 +135,7 @@ const TiktokSVG = ({ className = "h-5 w-5" }: { className?: string }) => (
 )
 
 // Social Icon Component
-export function SocialIcon({ href, label, color, className = "h-5 w-5" }: SocialIconProps & { children: React.ReactNode }) {
+export function SocialIcon({ href, label, color, className = "h-5 w-5", children }: SocialIconProps) {
   return (
     <a
       href={href}

@@ -12,7 +12,7 @@
 
 import { useState, useEffect } from 'react'
 import { CalendarIcon, ChevronDown } from 'lucide-react'
-import { formatDate, format } from 'date-fns'
+import { format } from 'date-fns'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
@@ -22,13 +22,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 
 // Types
@@ -167,15 +167,15 @@ export function DateRangePicker({
   const getDisplayText = (): string => {
     if (value.from && value.to) {
       if (value.from.toDateString() === value.to.toDateString()) {
-        return formatDate(value.from)
+        return format(value.from, 'MMM dd, yyyy')
       }
-      return `${formatDate(value.from)} - ${formatDate(value.to)}`
+      return `${format(value.from, 'MMM dd, yyyy')} - ${format(value.to, 'MMM dd, yyyy')}`
     }
     if (value.from) {
-      return `From ${formatDate(value.from)}`
+      return `From ${format(value.from, 'MMM dd, yyyy')}`
     }
     if (value.to) {
-      return `Until ${formatDate(value.to)}`
+      return `Until ${format(value.to, 'MMM dd, yyyy')}`
     }
     return 'Select date range'
   }

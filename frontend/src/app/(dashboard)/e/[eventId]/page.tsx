@@ -28,6 +28,7 @@ import { Separator } from '@/components/ui/separator'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { NameInput } from '@/components/events/NameInput'
 import { PaymentModal } from '@/components/events/PaymentModal'
+import { TicketSelector } from '@/components/events/TicketSelector'
 
 // Utilities
 import api from '@/lib/api'

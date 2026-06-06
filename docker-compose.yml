@@ -1,0 +1,140 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: eventhub-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-eventhub_db}
+      POSTGRES_USER: ${DB_USER:-eventhub}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - eventhub-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-eventhub} -d ${DB_NAME:-eventhub_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Backend API (Go)
+  backend:
+    container_name: eventhub-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: eventhub-backend:latest
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8085}:8085"  # Host:Container mapping
+    env_file:
+      - ./backend/.env
+    environment:
+      # Server Configuration
+      PORT: 8085  # Must match the container port above
+      ENVIRONMENT: production
+      
+      # Database Configuration
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-eventhub}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-eventhub_db}
+      DB_SSL_MODE: disable
+      DB_MAX_CONNECTIONS: 25
+      
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-1h}
+      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-168h}
+      
+      # Email Configuration
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@eventhub.com}
+      
+      # MTN Momo Configuration
+      MTN_MOMO_API_URL: ${MTN_MOMO_API_URL}
+      MTN_MOMO_API_USER: ${MTN_MOMO_API_USER}
+      MTN_MOMO_API_KEY: ${MTN_MOMO_API_KEY}
+      MTN_MOMO_SUBSCRIPTION_KEY: ${MTN_MOMO_SUBSCRIPTION_KEY}
+      
+      # Orange Money Configuration
+      ORANGE_MONEY_API_URL: ${ORANGE_MONEY_API_URL}
+      ORANGE_MONEY_CLIENT_ID: ${ORANGE_MONEY_CLIENT_ID}
+      ORANGE_MONEY_CLIENT_SECRET: ${ORANGE_MONEY_CLIENT_SECRET}
+      
+      # QR Code Configuration
+      QR_SECRET_KEY: ${QR_SECRET_KEY}
+      
+      # Rate Limiting
+      RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-100}
+      RATE_LIMIT_WINDOW: ${RATE_LIMIT_WINDOW:-1m}
+      
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - eventhub-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8085/health"]  # Fixed: Now matches PORT
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    develop:
+      watch:
+        - path: ./backend
+          action: rebuild
+
+  # Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: eventhub-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8085/api/v1}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      NEXT_PUBLIC_MTN_MOMO_REDIRECT_URL: ${NEXT_PUBLIC_MTN_MOMO_REDIRECT_URL}
+      NEXT_PUBLIC_ORANGE_MONEY_REDIRECT_URL: ${NEXT_PUBLIC_ORANGE_MONEY_REDIRECT_URL}
+      NEXT_PUBLIC_QR_BASE_URL: ${NEXT_PUBLIC_QR_BASE_URL}
+      NEXT_PUBLIC_ENABLE_ORANGE_MONEY: ${NEXT_PUBLIC_ENABLE_ORANGE_MONEY:-true}
+      NEXT_PUBLIC_ENABLE_ANALYTICS: ${NEXT_PUBLIC_ENABLE_ANALYTICS:-true}
+      NEXT_PUBLIC_ENABLE_NOVA_ANIMATIONS: ${NEXT_PUBLIC_ENABLE_NOVA_ANIMATIONS:-true}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - eventhub-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# Volumes
+volumes:
+  postgres_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# Networks
+networks:
+  eventhub-network:
+    driver: bridge
+    name: eventhub-network

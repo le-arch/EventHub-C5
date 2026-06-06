@@ -191,7 +191,6 @@ export function TicketBreakdownChart({
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                activeIndex={activeIndex}
                 activeShape={renderActiveShape}
                 data={chartData}
                 cx="50%"

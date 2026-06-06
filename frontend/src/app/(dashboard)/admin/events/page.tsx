@@ -474,25 +474,12 @@ export default function AdminEventsPage() {
         onOpenChange={() => setEventToCancel(null)}
         onConfirm={handleCancelEvent}
         title="❌ Cancel Event"
-        description={`Are you sure you want to cancel "${eventToCancel?.title}"?`}
+        description={`Are you sure you want to cancel "${eventToCancel?.title}"? This action cannot be undone. Event will be marked as cancelled, no further ticket sales will be possible, ticket holders will be notified (if email notifications are enabled), and the event will be hidden from public listings.`}
         confirmText="Yes, Cancel Event"
         cancelText="Back"
         variant="danger"
         isLoading={isProcessing}
-      >
-        <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
-          <div className="flex items-center gap-2 text-red-700 mb-2">
-            <AlertCircle className="h-4 w-4" />
-            <span className="font-medium">Warning! This action cannot be undone.</span>
-          </div>
-          <ul className="space-y-1 text-sm text-red-600 ml-6 list-disc">
-            <li>Event will be marked as cancelled</li>
-            <li>No further ticket sales will be possible</li>
-            <li>Ticket holders will be notified (if email notifications are enabled)</li>
-            <li>Event will be hidden from public listings</li>
-          </ul>
-        </div>
-      </ConfirmationDialog>
+      />
     </div>
   )
 }

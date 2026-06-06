@@ -36,6 +36,7 @@ interface ConfirmationDialogProps {
   variant?: DialogVariant
   isLoading?: boolean
   destructive?: boolean
+  children?: React.ReactNode
 }
 
 const variantConfig = {
@@ -77,6 +78,7 @@ export function ConfirmationDialog({
   variant = 'danger',
   isLoading = false,
   destructive = true,
+  children,
 }: ConfirmationDialogProps) {
   const config = variantConfig[variant]
   const Icon = config.icon
@@ -104,6 +106,7 @@ export function ConfirmationDialog({
             {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {children && <div className="px-6 py-4">{children}</div>}
         <AlertDialogFooter>
           <AlertDialogCancel onClick={handleCancel} disabled={isLoading}>
             {cancelText}

@@ -367,13 +367,13 @@ export default function BlogPostPage() {
             <span className="text-sm text-gray-500">Share this article:</span>
             <div className="flex gap-2">
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={shareOnFacebook}>
-                <FacebookIcon className="h-4 w-4" />
+                <FacebookIcon href="#" />
               </Button>
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={shareOnTwitter}>
-                <TwitterIcon className="h-4 w-4" />
+                <TwitterIcon href="#" />
               </Button>
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={shareOnLinkedIn}>
-                <LinkedinIcon className="h-4 w-4" />
+                <LinkedinIcon href="#" />
               </Button>
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={shareByEmail}>
                 <Mail className="h-4 w-4" />

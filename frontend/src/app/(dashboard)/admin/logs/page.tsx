@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Admin System Logs Page
  * 
@@ -30,6 +31,7 @@ import {
   Clock,
   FileText,
   Server,
+  CheckCircle,
 } from 'lucide-react'
 
 // shadcn/ui components

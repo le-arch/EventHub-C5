@@ -16,7 +16,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Search,
   Filter,
@@ -26,7 +26,6 @@ import {
   Shield,
   Mail,
   Phone,
-  Calendar,
   AlertCircle,
   Users,
   UserCheck,
@@ -103,34 +102,33 @@ export default function AdminUsersPage() {
   const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
 
-  // Fetch users on component mount or when page/pageSize changes
-  useEffect(() => {
-    fetchUsers()
-  }, [page, pageSize])
-
   /**
    * Fetch all users from API with pagination
    */
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true)
     try {
       const response = await api.get('/admin/users', {
         params: {
           page,
           limit: pageSize,
-          search: searchTerm || undefined,
-          status: statusFilter !== 'all' ? statusFilter : undefined,
         },
       })
       setUsers(response.data.users)
       setTotalCount(response.data.total)
       setTotalPages(response.data.totalPages || Math.ceil(response.data.total / pageSize))
     } catch (error) {
+      console.error('Failed to load users:', error)
       toast.error('❌ Failed to load users')
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, pageSize])
+
+  // Fetch users on component mount or when page/pageSize changes
+  useEffect(() => {
+    fetchUsers()
+  }, [fetchUsers])
 
   /**
    * Filter users based on search term and status filter (client-side after fetch)
@@ -192,6 +190,7 @@ export default function AdminUsersPage() {
       toast.success(`✅ ${userToVerify.fullName} verified successfully`)
       fetchUsers()
     } catch (error) {
+      console.error('Failed to verify user:', error)
       toast.error('❌ Failed to verify user')
     } finally {
       setIsProcessing(false)
@@ -211,6 +210,7 @@ export default function AdminUsersPage() {
       toast.success(`⛔ ${userToSuspend.fullName} suspended successfully`)
       fetchUsers()
     } catch (error) {
+      console.error('Failed to suspend user:', error)
       toast.error('❌ Failed to suspend user')
     } finally {
       setIsProcessing(false)
@@ -228,6 +228,7 @@ export default function AdminUsersPage() {
       toast.success(`✅ User restored successfully`)
       fetchUsers()
     } catch (error) {
+      console.error('Failed to restore user:', error)
       toast.error('❌ Failed to restore user')
     } finally {
       setIsProcessing(false)
@@ -246,6 +247,7 @@ export default function AdminUsersPage() {
       setSelectedUsers(new Set())
       fetchUsers()
     } catch (error) {
+      console.error('Failed to batch verify users:', error)
       toast.error('❌ Failed to verify users')
     } finally {
       setIsProcessing(false)
@@ -264,6 +266,7 @@ export default function AdminUsersPage() {
       setSelectedUsers(new Set())
       fetchUsers()
     } catch (error) {
+      console.error('Failed to batch suspend users:', error)
       toast.error('❌ Failed to suspend users')
     } finally {
       setIsProcessing(false)
@@ -610,7 +613,7 @@ export default function AdminUsersPage() {
         description={`Are you sure you want to verify ${userToVerify?.fullName}'s account?`}
         confirmText="Yes, Verify Account"
         cancelText="Cancel"
-        variant="success"
+        variant="info"
         isLoading={isProcessing}
       >
         <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">

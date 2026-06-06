@@ -29,6 +29,7 @@ import {
   FileText,
   ChevronDown,
 } from 'lucide-react'
+import Image from 'next/image'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
