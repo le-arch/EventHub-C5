@@ -410,6 +410,42 @@ func (q *Queries) ListEventsByStatus(ctx context.Context, status EventStatus) ([
 	return items, nil
 }
 
+const listOrganizerEvent = `-- name: ListOrganizerEvent :one
+SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at FROM events 
+WHERE id = $1 AND organizer_id = $2
+`
+
+type ListOrganizerEventParams struct {
+	ID          uuid.UUID `json:"id"`
+	OrganizerID uuid.UUID `json:"organizer_id"`
+}
+
+func (q *Queries) ListOrganizerEvent(ctx context.Context, arg ListOrganizerEventParams) (Event, error) {
+	row := q.db.QueryRow(ctx, listOrganizerEvent, arg.ID, arg.OrganizerID)
+	var i Event
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizerID,
+		&i.Title,
+		&i.Slug,
+		&i.Description,
+		&i.Venue,
+		&i.City,
+		&i.StartDate,
+		&i.EndDate,
+		&i.StartTime,
+		&i.EndTime,
+		&i.CoverImageUrl,
+		&i.Status,
+		&i.SalesStartDate,
+		&i.SalesEndDate,
+		&i.CapacityRange,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const listOrganizerEvents = `-- name: ListOrganizerEvents :many
 SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at FROM events 
 WHERE organizer_id = $1

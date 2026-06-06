@@ -92,6 +92,51 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+func (h *EventHubHandler) handleGetOrganisationEvent(c *gin.Context) {
+	organizerID, err := utils.ExtractOrganizerID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+    eventID := c.Param("id")
+	id, err := uuid.Parse(eventID)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+        return
+    }
+
+    event, err := h.querier.ListOrganizerEvent(c, repo.ListOrganizerEventParams{
+		ID: id,
+		OrganizerID: organizerID,
+	})
+	if err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "no event created"})
+        return
+    }
+
+	
+	response := utils.EventResponse{
+	Title: event.Title,
+	Slug: event.Slug,
+	Description: event.Description,
+	Venue: event.Venue,
+	City: event.City,
+	StartDate: utils.FormatDate(event.StartDate),
+	EndDate: utils.FormatDate(*event.EndDate),
+	StartTime: utils.FormatTime(event.StartTime),
+	EndTime: utils.FormatTime(event.EndTime),
+	CoverImageUrl: event.CoverImageUrl,
+	Status: event.Status,
+	SalesStartDate: utils.FormatDate(*event.SalesStartDate),
+	SalesEndDate: utils.FormatDate(*event.SalesEndDate),
+	CapacityRange: utils.FromDBRange(event.CapacityRange),
+	UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
+	
+}
+
+    c.JSON(http.StatusOK, response)
+}
+
 func (h *EventHubHandler) handleGetOrganisationEvents(c *gin.Context) {
     OrganizerID, err := utils.ExtractOrganizerID(c)
 	if err != nil {

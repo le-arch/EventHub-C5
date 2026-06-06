@@ -18,6 +18,11 @@ SELECT * FROM events
 WHERE organizer_id = $1
 ORDER BY start_date DESC, start_time DESC;
 
+
+-- name: ListOrganizerEvent :one
+SELECT * FROM events 
+WHERE id = $1 AND organizer_id = $2;
+
 -- name: ListEvents :many
 SELECT e.*, u.role FROM events e, users u 
 where u.role = $1
