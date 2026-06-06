@@ -365,14 +365,14 @@ func (q *Queries) ListEventsByCity(ctx context.Context, city string) ([]Event, e
 	return items, nil
 }
 
-const listEventsByOrganizer = `-- name: ListEventsByOrganizer :many
+const listEventsByStatus = `-- name: ListEventsByStatus :many
 SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at FROM events 
-WHERE organizer_id = $1
-ORDER BY start_date DESC, start_time DESC
+WHERE status = $1
+ORDER BY start_date ASC, start_time ASC
 `
 
-func (q *Queries) ListEventsByOrganizer(ctx context.Context, organizerID uuid.UUID) ([]Event, error) {
-	rows, err := q.db.Query(ctx, listEventsByOrganizer, organizerID)
+func (q *Queries) ListEventsByStatus(ctx context.Context, status EventStatus) ([]Event, error) {
+	rows, err := q.db.Query(ctx, listEventsByStatus, status)
 	if err != nil {
 		return nil, err
 	}
@@ -410,14 +410,14 @@ func (q *Queries) ListEventsByOrganizer(ctx context.Context, organizerID uuid.UU
 	return items, nil
 }
 
-const listEventsByStatus = `-- name: ListEventsByStatus :many
+const listOrganizerEvents = `-- name: ListOrganizerEvents :many
 SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at FROM events 
-WHERE status = $1
-ORDER BY start_date ASC, start_time ASC
+WHERE organizer_id = $1
+ORDER BY start_date DESC, start_time DESC
 `
 
-func (q *Queries) ListEventsByStatus(ctx context.Context, status EventStatus) ([]Event, error) {
-	rows, err := q.db.Query(ctx, listEventsByStatus, status)
+func (q *Queries) ListOrganizerEvents(ctx context.Context, organizerID uuid.UUID) ([]Event, error) {
+	rows, err := q.db.Query(ctx, listOrganizerEvents, organizerID)
 	if err != nil {
 		return nil, err
 	}

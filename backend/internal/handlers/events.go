@@ -92,18 +92,14 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func (h *EventHubHandler) handleGetEvents(c *gin.Context) {
-    UserRole, err := utils.GetUserRole(c)
+func (h *EventHubHandler) handleGetOrganisationEvents(c *gin.Context) {
+    OrganizerID, err := utils.ExtractOrganizerID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
-	if UserRole != "admin" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "your not authorized to perform this action"})
-		return
-	}
-    events, err := h.querier.ListEvents(c, repo.UserRole(UserRole))
+    events, err := h.querier.ListOrganizerEvents(c,OrganizerID)
 	if err != nil {
         c.JSON(http.StatusNotFound, gin.H{"error": "no event created"})
         return

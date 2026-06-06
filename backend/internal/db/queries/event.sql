@@ -13,7 +13,7 @@ SELECT * FROM events
 WHERE slug = $1
 LIMIT 1;
 
--- name: ListEventsByOrganizer :many
+-- name: ListOrganizerEvents :many
 SELECT * FROM events 
 WHERE organizer_id = $1
 ORDER BY start_date DESC, start_time DESC;
