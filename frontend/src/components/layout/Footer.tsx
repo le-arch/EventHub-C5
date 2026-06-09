@@ -11,7 +11,8 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react'
+import { Mail, Phone, MapPin } from 'lucide-react'
+import { TwitterIcon, InstagramIcon, LinkedinIcon, FacebookIcon } from '@/components/common/SocialIcons'
 
 interface FooterLink {
   label: string
@@ -67,16 +68,16 @@ export function Footer() {
             </p>
             <div className="flex space-x-4">
               <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
-                <Facebook className="h-5 w-5" />
+                <FacebookIcon href="#" />
               </a>
               <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
-                <Twitter className="h-5 w-5" />
+                <TwitterIcon href="#" />
               </a>
               <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
-                <Instagram className="h-5 w-5" />
+                <InstagramIcon href="#" />
               </a>
               <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
-                <Linkedin className="h-5 w-5" />
+                <LinkedinIcon href="#" />
               </a>
             </div>
           </div>

@@ -84,6 +84,11 @@ const ticketTypeSchema = z.object({
   name: z.string().min(1, 'Ticket name required'),
   price: z.number().min(0, 'Price must be 0 or more'),
   quantityAvailable: z.number().min(1, 'At least 1 ticket required'),
+  quantitySold: z.number().default(0),
+})
+
+const ticketFormSchema = z.object({
+  ticketTypes: z.array(ticketTypeSchema),
 })
 
 interface Event {
@@ -132,7 +137,7 @@ export default function EditEventPage() {
   })
 
   // Form for ticket types
-  const ticketForm = useForm<{ ticketTypes: TicketType[] }>({
+  const ticketForm = useForm({
     resolver: zodResolver(z.object({ ticketTypes: z.array(ticketTypeSchema) })),
     defaultValues: { ticketTypes: [] },
   })
@@ -206,10 +211,17 @@ export default function EditEventPage() {
   /**
    * Save ticket types
    */
-  const handleSaveTickets = async (data: { ticketTypes: TicketType[] }) => {
+  const handleSaveTickets = async (data: z.infer<typeof ticketFormSchema>) => {
     setIsSaving(true)
     try {
-      await api.put(`/events/${params.id}/tickets`, { ticketTypes: data.ticketTypes })
+      const processedTickets = data.ticketTypes.map(t => ({
+        id: t.id || undefined,
+        name: t.name,
+        price: t.price,
+        quantityAvailable: t.quantityAvailable,
+        quantitySold: t.quantitySold,
+      }))
+      await api.put(`/events/${params.id}/tickets`, { ticketTypes: processedTickets })
       toast.success('✅ Ticket types updated successfully')
       fetchEventDetails()
     } catch (error) {
@@ -577,7 +589,7 @@ export default function EditEventPage() {
         description={`Are you ready to publish "${event.title}"?`}
         confirmText="Yes, Publish Event"
         cancelText="Cancel"
-        variant="success"
+        variant="info"
         isLoading={isSaving}
       >
         <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">

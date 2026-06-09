@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Attendee List Page
  * 
@@ -159,7 +160,7 @@ export default function AttendeeListPage() {
       setSummary(summaryRes.data.summary)
 
       // Extract unique ticket types for filter
-      const types = [...new Set(attendeesRes.data.attendees.map((a: Attendee) => a.ticketType))]
+      const types = [...new Set(attendeesRes.data.attendees.map((a: Attendee) => a.ticketType))] as string[]
       setTicketTypes(types)
     } catch (error) {
       toast.error('❌ Failed to load attendees')

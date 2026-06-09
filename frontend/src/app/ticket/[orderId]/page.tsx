@@ -92,7 +92,7 @@ export default function TicketPage() {
     
     try {
       const canvas = document.getElementById('qr-code-canvas') as HTMLCanvasElement
-      if (canvas && navigator.share) {
+      if (canvas && typeof navigator.share === 'function') {
         const blob = await new Promise<Blob>((resolve) => {
           canvas.toBlob((blob) => resolve(blob!), 'image/png')
         })
@@ -232,12 +232,12 @@ export default function TicketPage() {
             Download QR Code (PNG) 📥
           </Button>
           
-          {navigator.share && (
+          
             <Button variant="outline" onClick={shareTicket} className="w-full">
               <Share2 className="h-4 w-4 mr-2" />
               Share Ticket 📤
             </Button>
-          )}
+          
           
           <Button variant="ghost" onClick={() => router.push('/')} className="w-full">
             <Home className="h-4 w-4 mr-2" />

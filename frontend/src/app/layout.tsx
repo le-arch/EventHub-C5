@@ -48,9 +48,9 @@ export const metadata: Metadata = {
     'ticketing platform',
   ],
   authors: [
-    { name: 'Leonie Basil', role: 'Frontend Lead' },
-    { name: 'Fonyuy Verena', role: 'Backend Lead' },
-    { name: 'Rosine Achah', role: 'QA/Full Stack' },
+    { name: 'Leonie Basil' },
+    { name: 'Fonyuy Verena' },
+    { name: 'Rosine Achah' },
   ],
   creator: 'EventHub Team',
   publisher: 'EventHub',

@@ -503,6 +503,7 @@ export default function AdminTransactionsPage() {
       </div>
 
       {/* Refund Confirmation Dialog */}
+  
       <ConfirmationDialog
         open={!!transactionToRefund}
         onOpenChange={() => setTransactionToRefund(null)}

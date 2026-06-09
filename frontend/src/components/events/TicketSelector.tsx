@@ -20,8 +20,10 @@ import { cn } from '@/lib/utils'
 interface TicketType {
   id: string
   name: string
+  description: string | null
   price: number
   quantityAvailable: number
+  quantitySold: number
 }
 
 interface TicketSelectorProps {
