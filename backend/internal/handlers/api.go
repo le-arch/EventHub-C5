@@ -56,7 +56,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	{
 		Protection.GET("/auth/me", h.handleGetCurrentUser)
 	
-	// Protection.POST("/events", h.handleCreateEvent)
+	    Protection.POST("/events", h.handleCreateEvent)
 	// Protection.POST("/events/:id/publish",h.HandlePublicEvent)
 	
 	// Protection.GET("/events", h.handleGetEvents)
@@ -68,7 +68,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	}
 
 
-	return r
+	return r 
 }
 
 
