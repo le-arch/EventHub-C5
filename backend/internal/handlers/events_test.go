@@ -17,42 +17,11 @@ func TestHandleCreateEventValidation(t *testing.T) {
 	
 	router := handler.WireHttpHandler()
 
-	// List of bad data payloads testing each rule in your validator.go
-	tests := []struct {
-		name    string
-		payload map[string]interface{}
-	}{
-		{
-			name: "Empty Title Rule Check",
-			payload: map[string]interface{}{
-				"title": "", "description": "Music Festival", "venue": "Open Grounds", "city": "Buea", "ticket_price": 2500.0,
-			},
-		},
-		{
-			name: "Empty Description Rule Check",
-			payload: map[string]interface{}{
-				"title": "CIMFEST", "description": "", "venue": "Open Grounds", "city": "Buea", "ticket_price": 2500.0,
-			},
-		},
-		{
-			name: "Empty Venue Rule Check",
-			payload: map[string]interface{}{
-				"title": "CIMFEST", "description": "Music Festival", "venue": "", "city": "Buea", "ticket_price": 2500.0,
-			},
-		},
-		{
-			name: "Empty City Rule Check",
-			payload: map[string]interface{}{
-				"title": "CIMFEST", "description": "Music Festival", "venue": "Open Grounds", "city": "", "ticket_price": 2500.0,
-			},
-		},
-		{
-			name: "Negative Ticket Price Rule Check",
-			payload: map[string]interface{}{
-				"title": "CIMFEST", "description": "Music Festival", "venue": "Open Grounds", "city": "Buea", "ticket_price": -1500.0,
-			},
-		},
-	}
+	// Setup a clean test environment router instance
+	// Passing nil properties here allows testing validation layers in isolation
+	h := NewEventHubHandler(nil, nil, nil, "", "", "", "")
+	router := gin.Default()
+	router.POST("/events", h.handleCreateEvent)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

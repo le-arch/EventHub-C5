@@ -1,0 +1,54 @@
+# Docker Compose for EventHub Frontend
+
+version: '3.8'
+
+services:
+  # Development service with hot reload
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: eventhub-frontend-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+    volumes:
+      # Mount source code for hot reload
+      - .:/app
+      # Exclude node_modules to keep it from being overwritten
+      - /app/node_modules
+      - /app/.next
+    restart: unless-stopped
+    networks:
+      - eventhub-network
+
+  # Production service
+  frontend-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: eventhub-frontend-prod
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://api.eventhub.com/api/v1
+      - NEXT_PUBLIC_APP_URL=https://eventhub.com
+    restart: unless-stopped
+    networks:
+      - eventhub-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+networks:
+  eventhub-network:
+    driver: bridge
+    name: eventhub-network

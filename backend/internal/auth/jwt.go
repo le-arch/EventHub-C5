@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 // Define constants for token durations to ensure consistent expiration times across the application
@@ -17,7 +18,7 @@ const (
 // Claims defines the structure of the JWT claims used for authentication, including user information and standard registered claims
 
 type Claims struct {
-	ID              string           `json:"id"`
+	ID              uuid.UUID           `json:"id"`
 	Email           string           `json:"email"`
 	Phone           string           `json:"phone"`
 	FullName        string           `json:"full_name"`
@@ -26,7 +27,7 @@ type Claims struct {
 }
 
 // CreateToken generates a JWT token with the provided user information and secret key
-func CreateToken(id, email, phone, full_name, role, secret string) (string, error) {
+func CreateToken(id uuid.UUID, email, phone, full_name, role, secret string) (string, error) {
 	
 	// Create the claims with user information and set the expiration time for the token
 	claims := Claims{

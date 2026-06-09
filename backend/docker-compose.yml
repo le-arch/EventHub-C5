@@ -62,7 +62,7 @@ services:
       - ./Docker/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
       - grafana-data:/var/lib/grafana
     ports:
-      - 3000:3000
+      - 3001:3001
     networks:
       - go-network
     environment:
