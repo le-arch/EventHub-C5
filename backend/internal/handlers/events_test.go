@@ -7,59 +7,82 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateEventIntegration(t *testing.T) {
-	gin.SetMode(gin.TestMode)
+func TestHandleCreateEventValidation(t *testing.T) {
+	// Initialize handler and give it a dummy wildcard origin so CORS middleware doesn't crash
+	handler := &EventHubHandler{}
+	handler.frontendOrigin = "*" // 👈 This fixes the "bad origin" panic!
+	
+	router := handler.WireHttpHandler()
 
-	// Setup a clean test environment router instance
-	// Passing nil properties here allows testing validation layers in isolation
-	h := NewEventHubHandler(nil, nil, nil, "", "", "", "")
-	router := gin.Default()
-	router.POST("/events", h.HandleCreateEvent)
+	// List of bad data payloads testing each rule in your validator.go
+	tests := []struct {
+		name    string
+		payload map[string]interface{}
+	}{
+		{
+			name: "Empty Title Rule Check",
+			payload: map[string]interface{}{
+				"title": "", "description": "Music Festival", "venue": "Open Grounds", "city": "Buea", "ticket_price": 2500.0,
+			},
+		},
+		{
+			name: "Empty Description Rule Check",
+			payload: map[string]interface{}{
+				"title": "CIMFEST", "description": "", "venue": "Open Grounds", "city": "Buea", "ticket_price": 2500.0,
+			},
+		},
+		{
+			name: "Empty Venue Rule Check",
+			payload: map[string]interface{}{
+				"title": "CIMFEST", "description": "Music Festival", "venue": "", "city": "Buea", "ticket_price": 2500.0,
+			},
+		},
+		{
+			name: "Empty City Rule Check",
+			payload: map[string]interface{}{
+				"title": "CIMFEST", "description": "Music Festival", "venue": "Open Grounds", "city": "", "ticket_price": 2500.0,
+			},
+		},
+		{
+			name: "Negative Ticket Price Rule Check",
+			payload: map[string]interface{}{
+				"title": "CIMFEST", "description": "Music Festival", "venue": "Open Grounds", "city": "Buea", "ticket_price": -1500.0,
+			},
+		},
+	}
 
-	// Test Case A: Testing standard request validation rejection (Empty Title field)
-	t.Run("Should fail when event title is missing", func(t *testing.T) {
-		badPayload := map[string]interface{}{
-			"title":        "",
-			"description":  "Annual music gathering in Buea",
-			"venue":        "Open Ground",
-			"city":         "Buea",
-			"ticket_price": 2500,
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			body, _ := json.Marshal(tt.payload)
+			req, _ := http.NewRequest("POST", "/events", bytes.NewBuffer(body))
+			req.Header.Set("Content-Type", "application/json")
+			resp := httptest.NewRecorder()
 
-		jsonBytes, _ := json.Marshal(badPayload)
-		req, _ := http.NewRequest(http.MethodPost, "/events", bytes.NewBuffer(jsonBytes))
-		req.Header.Set("Content-Type", "application/json")
+			router.ServeHTTP(resp, req)
 
-		responseRecorder := httptest.NewRecorder()
-		router.ServeHTTP(responseRecorder, req)
+			// We expect a 400 Bad Request because data breaks your validator.go rules
+			assert.Equal(t, http.StatusBadRequest, resp.Code)
+		})
+	}
 
-		if responseRecorder.Code != http.StatusBadRequest {
-			t.Errorf("Expected status 400 Bad Request for empty title, but got %d", responseRecorder.Code)
-		}
-	})
-
-	// Test Case B: Testing valid structure processing acceptance
-	t.Run("Should pass when all fields conform to validation schema guidelines", func(t *testing.T) {
+	// Test case checking a successful request payload execution
+	t.Run("Valid Data Execution Success", func(t *testing.T) {
 		goodPayload := map[string]interface{}{
 			"title":        "CIMFEST 2026",
-			"description":  "Cameroon International Music Festival showcase",
-			"venue":        "Alliance Française",
+			"description":  "Cameroon International Music Festival",
+			"venue":        "Open Grounds",
 			"city":         "Buea",
-			"ticket_price": 5000,
+			"ticket_price": 5000.0,
 		}
-
-		jsonBytes, _ := json.Marshal(goodPayload)
-		req, _ := http.NewRequest(http.MethodPost, "/events", bytes.NewBuffer(jsonBytes))
+		body, _ := json.Marshal(goodPayload)
+		req, _ := http.NewRequest("POST", "/events", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
+		resp := httptest.NewRecorder()
 
-		responseRecorder := httptest.NewRecorder()
-		router.ServeHTTP(responseRecorder, req)
-
-		if responseRecorder.Code != http.StatusCreated {
-			t.Errorf("Expected status 201 Created for valid data input, but got %d", responseRecorder.Code)
-		}
+		router.ServeHTTP(resp, req)
+		assert.Equal(t, http.StatusCreated, resp.Code)
 	})
 }

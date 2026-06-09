@@ -408,3 +408,7 @@ func (h *EventHubHandler) handleResendOTP(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "A new OTP has been sent to your email"})
 }
+
+
+
+
