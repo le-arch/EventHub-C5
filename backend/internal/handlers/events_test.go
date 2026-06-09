@@ -17,7 +17,7 @@ func TestCreateEventIntegration(t *testing.T) {
 	// Passing nil properties here allows testing validation layers in isolation
 	h := NewEventHubHandler(nil, nil, nil, "", "", "", "")
 	router := gin.Default()
-	router.POST("/events", h.HandleCreateEvent)
+	router.POST("/events", h.handleCreateEvent)
 
 	// Test Case A: Testing standard request validation rejection (Empty Title field)
 	t.Run("Should fail when event title is missing", func(t *testing.T) {
