@@ -14,7 +14,7 @@ type CapacityRangeJSON struct {
 
 
 type CreateEventRequest struct {
-	OrganizerID    uuid.UUID        `json:"organizer_id" binding:"required"`
+	OrganizerID    uuid.UUID        `json:"organizer_id" `
 	Title          string           `json:"title" binding:"required"`
 	Slug           string           `json:"slug" binding:"required"`
 	Description    string           `json:"description" binding:"required"`

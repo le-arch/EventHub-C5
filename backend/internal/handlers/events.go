@@ -18,12 +18,20 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
+	
 
 	startDate, err := utils.ParseDate(req.StartDate)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
+
+	req.OrganizerID, err = utils.ExtractOrganizerID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
 	endDate, err := utils.ParseDate(req.EndDate)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})

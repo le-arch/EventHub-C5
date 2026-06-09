@@ -248,9 +248,10 @@ func (q *Queries) GetEventsBySlug(ctx context.Context, slug string) (Event, erro
 }
 
 const listEvents = `-- name: ListEvents :many
-SELECT e.id, e.organizer_id, e.title, e.slug, e.description, e.venue, e.city, e.start_date, e.end_date, e.start_time, e.end_time, e.cover_image_url, e.status, e.sales_start_date, e.sales_end_date, e.capacity_range, e.created_at, e.updated_at, u.role FROM events e, users u 
-where u.role = $1
-ORDER BY start_date ASC, start_time ASC
+SELECT e.id, e.organizer_id, e.title, e.slug, e.description, e.venue, e.city, e.start_date, e.end_date, e.start_time, e.end_time, e.cover_image_url, e.status, e.sales_start_date, e.sales_end_date, e.capacity_range, e.created_at, e.updated_at, u.full_name as organizer_name
+FROM events e
+INNER JOIN users u ON e.organizer_id = u.id
+ORDER BY u.full_name, e.start_date
 `
 
 type ListEventsRow struct {
@@ -272,11 +273,11 @@ type ListEventsRow struct {
 	CapacityRange  *pgtype.Range[pgtype.Int4] `json:"capacity_range"`
 	CreatedAt      pgtype.Timestamp           `json:"created_at"`
 	UpdatedAt      pgtype.Timestamp           `json:"updated_at"`
-	Role           UserRole                   `json:"role"`
+	OrganizerName  string                     `json:"organizer_name"`
 }
 
-func (q *Queries) ListEvents(ctx context.Context, role UserRole) ([]ListEventsRow, error) {
-	rows, err := q.db.Query(ctx, listEvents, role)
+func (q *Queries) ListEvents(ctx context.Context) ([]ListEventsRow, error) {
+	rows, err := q.db.Query(ctx, listEvents)
 	if err != nil {
 		return nil, err
 	}
@@ -303,7 +304,7 @@ func (q *Queries) ListEvents(ctx context.Context, role UserRole) ([]ListEventsRo
 			&i.CapacityRange,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.Role,
+			&i.OrganizerName,
 		); err != nil {
 			return nil, err
 		}

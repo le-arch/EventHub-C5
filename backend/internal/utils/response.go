@@ -46,7 +46,9 @@ type CreateEventResponse struct {
 	UpdatedAt      string           `json:"updated_at"`
 }
 
-type EventResponse struct{
+type EventResponse struct{	
+	OrganizerName string	`json:"organizer_name,omitempty"`
+
 	Title          string           `json:"title"`
 	Slug           string           `json:"slug"`
 	Description    string           `json:"description"`
@@ -61,7 +63,5 @@ type EventResponse struct{
 	SalesStartDate string           `json:"sales_start_date"` 
 	SalesEndDate   string           `json:"sales_end_date"` 
 	CapacityRange  *models.CapacityRangeJSON			`json:"capacity_range"`  
-	
 	UpdatedAt      string           `json:"updated_at"`
 }
-

@@ -24,9 +24,11 @@ SELECT * FROM events
 WHERE id = $1 AND organizer_id = $2;
 
 -- name: ListEvents :many
-SELECT e.*, u.role FROM events e, users u 
-where u.role = $1
-ORDER BY start_date ASC, start_time ASC;
+SELECT e.*, u.full_name as organizer_name
+FROM events e
+INNER JOIN users u ON e.organizer_id = u.id
+ORDER BY u.full_name, e.start_date;
+
 
 -- name: ListEventsByCity :many
 SELECT * FROM events 

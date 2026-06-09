@@ -20,9 +20,10 @@ func (h *EventHubHandler) handleGetEvents(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "your not authorized to perform this action"})
 		return
 	}
-    events, err := h.querier.ListEvents(c, repo.UserRole(UserRole))
+
+    events, err := h.querier.ListEvents(c)
 	if err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "no event created"})
+        c.JSON(http.StatusNotFound, gin.H{"error": "failed to fetch events"})
         return
     }
 
@@ -30,6 +31,7 @@ func (h *EventHubHandler) handleGetEvents(c *gin.Context) {
 	
 	for _, event := range events {
 	response = append(response, utils.EventResponse{
+	OrganizerName: event.OrganizerName,
 	Title: event.Title,
 	Slug: event.Slug,
 	Description: event.Description,
@@ -47,6 +49,11 @@ func (h *EventHubHandler) handleGetEvents(c *gin.Context) {
 	UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
 	})
 }
+
+	if response == nil{
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "reponse is empty"})
+		return
+	}
 
     c.JSON(http.StatusOK, response)
 }
