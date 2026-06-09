@@ -84,7 +84,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	// Protection.PUT("/admin/users/:id/verify", h.handleVerifyOrganizer)
 	// Protection.PUT("/admin/users/:id/suspend", h.handleSuspendUser)
 
-	// Protection.DELETE("/events/:id", h.handleDeleteEvent)
+	Protection.DELETE("/events/:id", h.handleDeleteEvent)
 	// Protection.DELETE("/ticket-type/:id", h.handleDeleteTicketType)
 	
 	}

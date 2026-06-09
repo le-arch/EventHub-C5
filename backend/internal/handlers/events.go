@@ -318,5 +318,35 @@ func (h *EventHubHandler) handleUpdateEvent(c *gin.Context) {
 	})
 }
 
+func (h *EventHubHandler) handleDeleteEvent(c *gin.Context) {
+    organizerID, err := utils.ExtractOrganizerID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	eventID := c.Param("id")
+	id, err := uuid.Parse(eventID)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+        return
+    }
+
+
+    err = h.querier.DeleteEvent(c, repo.DeleteEventParams{
+		ID: id,
+		OrganizerID: organizerID,
+	})
+	if err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "no event found"})
+        return
+    }
+
+    c.JSON(http.StatusOK,gin.H{
+		"message": "Event deleted successfully",
+	} )
+}
+
+
 
 

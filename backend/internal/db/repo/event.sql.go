@@ -81,21 +81,16 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event
 
 const deleteEvent = `-- name: DeleteEvent :exec
 DELETE FROM events
-WHERE id = $1
+WHERE id = $1 AND organizer_id = $2
 `
 
-func (q *Queries) DeleteEvent(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteEvent, id)
-	return err
+type DeleteEventParams struct {
+	ID          uuid.UUID `json:"id"`
+	OrganizerID uuid.UUID `json:"organizer_id"`
 }
 
-const deleteEventsByOrganizer = `-- name: DeleteEventsByOrganizer :exec
-DELETE FROM events
-WHERE organizer_id = $1
-`
-
-func (q *Queries) DeleteEventsByOrganizer(ctx context.Context, organizerID uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteEventsByOrganizer, organizerID)
+func (q *Queries) DeleteEvent(ctx context.Context, arg DeleteEventParams) error {
+	_, err := q.db.Exec(ctx, deleteEvent, arg.ID, arg.OrganizerID)
 	return err
 }
 

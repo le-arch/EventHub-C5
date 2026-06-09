@@ -74,11 +74,7 @@ WHERE slug = $1 AND status = 'published';
 
 -- name: DeleteEvent :exec
 DELETE FROM events
-WHERE id = $1;
-
--- name: DeleteEventsByOrganizer :exec
-DELETE FROM events
-WHERE organizer_id = $1;
+WHERE id = $1 AND organizer_id = $2;
 
 -- name: PartialEventUpdate :one
 UPDATE events

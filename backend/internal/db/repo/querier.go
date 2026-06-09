@@ -13,8 +13,7 @@ import (
 type Querier interface {
 	CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	DeleteEvent(ctx context.Context, id uuid.UUID) error
-	DeleteEventsByOrganizer(ctx context.Context, organizerID uuid.UUID) error
+	DeleteEvent(ctx context.Context, arg DeleteEventParams) error
 	GetAllUsers(ctx context.Context, role UserRole) ([]User, error)
 	GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
 	GetEventByIDPublic(ctx context.Context, id uuid.UUID) (Event, error)
