@@ -21,7 +21,7 @@ func (h *EventHubHandler) handleRegister(c *gin.Context) {
 	//handle any errors that occur during binding
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+		return 
 	}
 
 	//validate email address using the utility function before proceeding with user creation
@@ -144,7 +144,7 @@ func (h *EventHubHandler) handleVerifyEmail(c *gin.Context) {
 	refreshToken, err := auth.CreateRefreshToken(
 		user.ID.String(),
 		h.jwtSecret)
-	if err != nil {
+	if err != nil { 
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token: " + err.Error()})
 		return
 	}
@@ -160,7 +160,7 @@ func (h *EventHubHandler) handleVerifyEmail(c *gin.Context) {
 
 func (h *EventHubHandler) handleLogin(c *gin.Context) {
 	//bind the incoming JSON request to the LoginRequest struct
-	var req models.LoginRequest
+	var req models.LoginRequest 
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

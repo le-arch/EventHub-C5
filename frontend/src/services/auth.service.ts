@@ -24,10 +24,19 @@ export interface VerifyEmailPayload {
   otp: string
 }
 
+
+// export interface LoginPayload {
+//   identifier: string
+//   password_hash: string  
+// }
+
+
+//  Changeing it to match user.go exactly
 export interface LoginPayload {
-  identifier: string
+  email: string
   password_hash: string  
 }
+
 
 export interface RefreshTokenPayload {
   refresh_token: string
@@ -130,15 +139,34 @@ export const authService = {
    * @param identifier - User's email or phone number
    * @param password - User's password
    */
-  login: async (identifier: string, password: string): Promise<AuthResponse> => {
-    const payload: LoginPayload = {
-      identifier,
-      password_hash: password,
-    }
 
-    const response = await api.post<AuthResponse>('/auth/login', payload)
-    return response.data
-  },
+
+
+  // login: async (identifier: string, password: string): Promise<AuthResponse> => {
+  //   const payload: LoginPayload = {
+  //     identifier,
+  //     password_hash: password,
+  //   }
+
+  //   const response = await api.post<AuthResponse>('/auth/login', payload)
+  //   return response.data
+  // },
+
+
+
+login: async (email: string, password: string): Promise<AuthResponse> => {
+  const payload: LoginPayload = {
+    email,                     // Sends "email": email
+    password_hash: password,   // Sends "password_hash": password
+  }
+
+  const response = await api.post<AuthResponse>('/auth/login', payload)
+  return response.data
+},
+
+
+
+
 
   /**
    * Refresh access token using refresh token

@@ -10,7 +10,7 @@ type RegisterRequest struct {
 	Role            repo.UserRole `json:"role"`
 	PasswordHash    string        `json:"password_hash" binding:"required,min=6"`
 	IsEmailVerified *bool         `json:"is_email_verified"`
-}
+} 
 
 type VerifyEmailRequest struct {
 	Email string `json:"email" binding:"required,email"`
