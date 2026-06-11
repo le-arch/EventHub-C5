@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/le-arch/EventHub-C5/internal/auth"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
+	"github.com/le-arch/EventHub-C5/internal/handlers/storage"
 	"github.com/le-arch/EventHub-C5/internal/middleware"
 )
 
@@ -17,9 +18,10 @@ import (
 	frontendOrigin string
 	gmailUser string
 	gmailPassword string
+	MinioClient *storage.MinioClient
 }
 
-func NewEventHubHandler(querier repo.Querier, otpHandler *auth.OTPHandler, revocationStore *auth.RevocationStore, jwtSecret, frontendOrigin, gmailUser, gmailPassword string) *EventHubHandler {
+func NewEventHubHandler(querier repo.Querier, otpHandler *auth.OTPHandler, revocationStore *auth.RevocationStore, jwtSecret, frontendOrigin, gmailUser, gmailPassword string,minioClient *storage.MinioClient ) *EventHubHandler {
 	return &EventHubHandler{
 		querier: querier,
 		otpHandler: otpHandler,
@@ -28,8 +30,10 @@ func NewEventHubHandler(querier repo.Querier, otpHandler *auth.OTPHandler, revoc
 		frontendOrigin: frontendOrigin,
 		gmailUser: gmailUser,
 		gmailPassword: gmailPassword,
+		MinioClient: minioClient,
 	}
 }
+
 
 func (h *EventHubHandler) WireHttpHandler() http.Handler {
 
@@ -50,6 +54,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	r.POST("/api/v1/auth/forgot-password", h.handleForgotPassword)
 	r.POST("/api/v1/auth/reset-password", h.handlePasswrordReset)
 	r.POST("/api/v1/auth/resend-otp", h.handleResendOTP)
+
 	r.GET("/api/v1/events/public/:id", h.handleGetPublicEvent)
 
 	Protection := r.Group("/api/v1")
@@ -61,11 +66,10 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	Protection.POST("/events/:id/ticket-types",h.handleCreateTicketType)
 	// Protection.POST("/orders", h.handleCreateOrder)
 	// Protection.POST("/checkin", h.handleScanQRCode)
-	Protection.POST("/events/:id/ticket-types", h.handleCreateEvent)
+	Protection.POST("events/upload-image", h.handleUploadImage)
 
 	Protection.PATCH("/events/:id", h.handleUpdateEvent)
 	Protection.PATCH("/:id/ticket-types",h.handleUpdateTicketType)
-	Protection.PATCH("/admin/events/:id/status", h.handleGetEvents)
 	Protection.PATCH("events/:id/status", h.handleOrganizerUpdateEventStatus)
 	Protection.PATCH("/events/:id/publish",h.handlePublishEvent)
 	Protection.PATCH("/events/:id/unpublish", h.handleUnpublishEvent)

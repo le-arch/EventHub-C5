@@ -3,7 +3,9 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -99,6 +101,47 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, response)
+}
+
+func (h *EventHubHandler) handleUploadImage(c *gin.Context) {
+    // Authenticate user (organizer or admin)
+    _, err := utils.ExtractOrganizerID(c)
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+        return
+    }
+
+    file, err := c.FormFile("image")
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "image file is required"})
+        return
+    }
+
+    // Validate file type
+    ext := filepath.Ext(file.Filename)
+    allowed := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true}
+    if !allowed[ext] {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid file type"})
+        return
+    }
+
+    // Open file
+    src, err := file.Open()
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to open file"})
+        return
+    }
+    defer src.Close()
+
+    // Upload to MinIO
+    url, err := h.MinioClient.UploadEventImage(src, file)
+    if err != nil {
+        log.Printf("MinIO upload error: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload image"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"url": url})
 }
 
 func (h *EventHubHandler) handleGetOrganisationEvent(c *gin.Context) {
