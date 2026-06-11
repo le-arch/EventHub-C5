@@ -634,7 +634,7 @@ export default function HomePage() {
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
             <p>&copy; {new Date().getFullYear()} EventHub. All rights reserved.</p>
-            <p className="mt-1">Built with ❤️ for Cameroon's event organizers</p>
+            <p className="mt-1">Built with ❤️ for Cameroon&apos;s event organizers</p>
           </div>
         </div>
       </footer>
