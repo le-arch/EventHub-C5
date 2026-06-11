@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
 	"github.com/le-arch/EventHub-C5/internal/models"
 	"github.com/le-arch/EventHub-C5/internal/utils"
@@ -93,8 +94,7 @@ func (h *EventHubHandler) handleListAllUsers(c *gin.Context) {
 }
 
 func (h *EventHubHandler) handleAdminUpdateEventStatus(c *gin.Context) {
-	var req models.UpdateEventStatusRequest
-
+	
     UserRole, err := utils.GetUserRole(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
@@ -105,8 +105,21 @@ func (h *EventHubHandler) handleAdminUpdateEventStatus(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "your not authorized to perform this action"})
 		return
 	}
+
+	eventID, err := uuid.Parse(c.Param("id"))
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+        return
+    }
+	
+	var req models.UpdateEventStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+	
     event, err := h.querier.UpdateEventStatus(c, repo.UpdateEventStatusParams{
-		ID: req.ID,
+		ID: eventID,
 		Status: req.Status,
 	})
 	if err != nil {
@@ -114,26 +127,7 @@ func (h *EventHubHandler) handleAdminUpdateEventStatus(c *gin.Context) {
         return
     }
 
-
-	response := utils.EventResponse{
-	OrganizerID: event.OrganizerID,
-	Title: event.Title,
-	Slug: event.Slug,
-	Description: event.Description,
-	Venue: event.Venue,
-	City: event.City,
-	StartDate: utils.FormatDate(event.StartDate),
-	EndDate: utils.FormatDate(*event.EndDate),
-	StartTime: utils.FormatTime(event.StartTime),
-	EndTime: utils.FormatTime(event.EndTime),
-	CoverImageUrl: event.CoverImageUrl,
-	Status: event.Status,
-	SalesStartDate: utils.FormatDate(*event.SalesStartDate),
-	SalesEndDate: utils.FormatDate(*event.SalesEndDate),
-	CapacityRange: utils.FromDBRange(event.CapacityRange),
-	UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
-	}
 	
 
-    c.JSON(http.StatusOK,response)
+    c.JSON(http.StatusOK,gin.H{"message": "event status update successfully", "status": event.Status})
 }
