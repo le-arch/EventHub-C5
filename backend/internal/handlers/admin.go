@@ -131,3 +131,48 @@ func (h *EventHubHandler) handleAdminUpdateEventStatus(c *gin.Context) {
 
     c.JSON(http.StatusOK,gin.H{"message": "event status update successfully", "status": event.Status})
 }
+
+
+func (h *EventHubHandler) handleAdminSuspendEvent(c *gin.Context) {
+    userRole, err := utils.GetUserRole(c)
+    if err != nil || userRole != "admin" {
+        c.JSON(http.StatusForbidden, gin.H{"error": "admin only"})
+        return
+    }
+    eventID, err := uuid.Parse(c.Param("id"))
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+        return
+    }
+    updated, err := h.querier.UpdateEventStatus(c, repo.UpdateEventStatusParams{
+        ID:     eventID,
+        Status: models.EventStatusSuspended,
+    })
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(http.StatusOK, gin.H{"message": "event suspended", "status": updated.Status})
+}
+
+func (h *EventHubHandler) handleAdminRestoreEvent(c *gin.Context) {
+    userRole, err := utils.GetUserRole(c)
+    if err != nil || userRole != "admin" {
+        c.JSON(http.StatusForbidden, gin.H{"error": "admin only"})
+        return
+    }
+    eventID, err := uuid.Parse(c.Param("id"))
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+        return
+    }
+    updated, err := h.querier.UpdateEventStatus(c, repo.UpdateEventStatusParams{
+        ID:     eventID,
+        Status: models.EventStatusPublished,
+    })
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(http.StatusOK, gin.H{"message": "event restored to published", "status": updated.Status})
+}

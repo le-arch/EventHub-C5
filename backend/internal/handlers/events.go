@@ -394,6 +394,70 @@ func (h *EventHubHandler) handleDeleteEvent(c *gin.Context) {
 	} )
 }
 
+func (h *EventHubHandler) handlePublishEvent(c *gin.Context) {
+    organizerID, err := utils.ExtractOrganizerID(c)
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+        return
+    }
+    eventID, err := uuid.Parse(c.Param("id"))
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+        return
+    }
+    event, err := h.querier.GetEventByID(c, eventID)
+    if err != nil || event.OrganizerID != organizerID {
+        c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
+        return
+    }
+    if event.Status != models.EventStatusDraft && event.Status != models.EventStatusSuspended {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "cannot publish from current status"})
+        return
+    }
+    updated, err := h.querier.UpdateEventStatus(c, repo.UpdateEventStatusParams{
+        ID:     eventID,
+        Status: models.EventStatusPublished,
+    })
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(http.StatusOK, gin.H{"message": "event published successfully", "status": updated.Status})
+}
+
+func (h *EventHubHandler) handleUnpublishEvent(c *gin.Context) {
+    organizerID, err := utils.ExtractOrganizerID(c)
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+        return
+    }
+    eventID, err := uuid.Parse(c.Param("id"))
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+        return
+    }
+    event, err := h.querier.GetEventByID(c, eventID)
+    if err != nil || event.OrganizerID != organizerID {
+        c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
+        return
+    }
+    if event.Status != models.EventStatusPublished {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "only published events can be unpublished"})
+        return
+    }
+    updated, err := h.querier.UpdateEventStatus(c, repo.UpdateEventStatusParams{
+        ID:     eventID,
+        Status: models.EventStatusDraft,
+    })
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(http.StatusOK, gin.H{"message": "event unpublished", "status": updated.Status})
+}
+
+// ticket type handlers
+
 func (h *EventHubHandler) handleCreateTicketType(c *gin.Context) {
     eventID, err := uuid.Parse(c.Param("id"))
     if err != nil {
@@ -565,6 +629,7 @@ func (h *EventHubHandler) handleDeleteTicketType(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{"message": "ticket type deleted succesfully"})
 }
 
+//event link
 func (h *EventHubHandler) handleShareLink(c *gin.Context) {
     eventID, err := uuid.Parse(c.Param("id"))
     if err != nil {
@@ -572,9 +637,9 @@ func (h *EventHubHandler) handleShareLink(c *gin.Context) {
         return
     }
     
-    _, err = h.querier.GetEventByID(c, eventID)
+    _, err = h.querier.GetEventByIDPublic(c, eventID)
     if err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
+        c.JSON(http.StatusNotFound, gin.H{"error": "event not found or not published"})
         return
     }
     

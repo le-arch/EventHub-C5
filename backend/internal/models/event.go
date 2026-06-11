@@ -73,3 +73,11 @@ type UpdateTicketTypeRequest struct {
     QuantityAvailable *int32 `json:"quantity_available"`
     IsActive         *bool   `json:"is_active"`
 }
+
+const (
+	EventStatusDraft      = "draft"
+	EventStatusPublished  = "published"
+	EventStatusCancelled  = "cancelled"
+	EventStatusSuspended  = "suspended"
+	EventStatusArchived   = "archived"
+)
