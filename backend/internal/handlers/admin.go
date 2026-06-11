@@ -107,7 +107,7 @@ func (h *EventHubHandler) handleAdminUpdateEventStatus(c *gin.Context) {
 	}
     event, err := h.querier.UpdateEventStatus(c, repo.UpdateEventStatusParams{
 		ID: req.ID,
-		Status: *req.Status,
+		Status: req.Status,
 	})
 	if err != nil {
         c.JSON(http.StatusNotFound, gin.H{"error": "status not updated"})

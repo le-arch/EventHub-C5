@@ -51,7 +51,11 @@ type UpdateEventRequest struct {
 
 type UpdateEventStatusRequest struct {
 	ID uuid.UUID `json:"id" binding:"required"`
-	Status         *repo.EventStatus `json:"status" binding:"required"`
+	Status   repo.EventStatus `json:"status" binding:"required"`
+}
+
+type UpdateEventStatus struct {
+	Status   repo.EventStatus `json:"status" binding:"required,oneof=draft published cancelled archived"`
 }
 
 // for event tickets
