@@ -12,6 +12,7 @@ import (
 
 type Querier interface {
 	CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error)
+	CreateTicketType(ctx context.Context, arg CreateTicketTypeParams) (TicketType, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteEvent(ctx context.Context, arg DeleteEventParams) error
 	GetAllUsers(ctx context.Context, role UserRole) ([]User, error)
@@ -21,7 +22,7 @@ type Querier interface {
 	GetEventsBySlug(ctx context.Context, slug string) (Event, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
-	ListEvents(ctx context.Context, role UserRole) ([]ListEventsRow, error)
+	ListEvents(ctx context.Context) ([]ListEventsRow, error)
 	ListEventsByCity(ctx context.Context, city string) ([]Event, error)
 	ListEventsByStatus(ctx context.Context, status EventStatus) ([]Event, error)
 	ListOrganizerEvent(ctx context.Context, arg ListOrganizerEventParams) (Event, error)

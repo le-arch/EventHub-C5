@@ -63,6 +63,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	// Protection.POST("/events/:id/ticket-types",h.handleCreateTicketType)
 	// Protection.POST("/orders", h.handleCreateOrder)
 	// Protection.POST("/checkin", h.handleScanQRCode)
+	Protection.POST("/events/:id/ticket-types", h.handleCreateEvent)
 
 	Protection.PATCH("/events/:id", h.handleUpdateEvent)
 	// Protection.PATCH("/:id/ticket-types",h.handleUpdateTicketType)
@@ -74,6 +75,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	// Protection.GET("/orders/:id/ticket", h.handleDownloadQRCode)
 	// Protection.GET("/events/:id/attendees", h.handleGetAttendeeList)
 	// Protection.GET("/events/:id/analytics", h.handleGetEventAnalytics)
+	Protection.PATCH("/admin/events/:id/status", h.handleGetEvents)
 	Protection.GET("/admin/events", h.handleGetEvents)
 	// Protection.GET("/events/:id", h.handleEventDetails)
 	// Protection.GET("/checkin/event/:eventId/history", h.handleGetCheckinHistory)

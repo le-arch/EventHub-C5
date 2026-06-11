@@ -14,7 +14,7 @@ type CapacityRangeJSON struct {
 
 
 type CreateEventRequest struct {
-	OrganizerID    uuid.UUID        `json:"organizer_id" binding:"required"`
+	OrganizerID    uuid.UUID        `json:"organizer_id" `
 	Title          string           `json:"title" binding:"required"`
 	Slug           string           `json:"slug" binding:"required"`
 	Description    string           `json:"description" binding:"required"`
@@ -47,4 +47,18 @@ type UpdateEventRequest struct {
     SalesStartDate *string `json:"sales_start_date,omitempty"`
     SalesEndDate   *string `json:"sales_end_date,omitempty"`
 	CapacityRange *CapacityRangeJSON `json:"capacity_range,omitempty"`
+}
+
+type UpdateEventStatusRequest struct {
+	ID uuid.UUID `json:"id" binding:"required"`
+	Status         *repo.EventStatus `json:"status" binding:"required"`
+}
+
+// for event tickets
+type CreateTicketTypeRequest struct {
+	Name             string `json:"name" binding:"required"`
+    Description      string `json:"description"`
+    Price            int32  `json:"price" binding:"required,min=0"`
+    QuantityAvailable int32 `json:"quantity_available" binding:"required,min=0"`
+    IsActive         *bool  `json:"is_active"`
 }
