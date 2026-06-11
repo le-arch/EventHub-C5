@@ -44,6 +44,15 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 
 	r.POST("/api/v1/auth/register", h.handleRegister)
 	r.POST("/api/v1/auth/verify-otp", h.handleVerifyEmail)
+	
+	r.GET("/health", func(c *gin.Context) {
+    c.JSON(200, gin.H{
+        "status": "healthy",
+    })
+})
+
+
+
 	r.POST("/api/v1/auth/login", h.handleLogin)
 	r.POST("/api/v1/auth/refresh", h.handleRefreshToken)
 	r.POST("/api/v1/auth/logout", h.handleLogout)

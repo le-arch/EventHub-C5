@@ -74,10 +74,21 @@ api.interceptors.response.use(
           throw new Error('No refresh token')
         }
         
-        const response = await axios.post<RefreshTokenResponse>(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
-          { refresh_token: refreshToken }
-        )
+        // const response = await axios.post<RefreshTokenResponse>(
+        //   `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+        //   { refresh_token: refreshToken }
+        // )
+
+
+      
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8085/api/v1'
+
+          const response = await axios.post<RefreshTokenResponse>(
+             `${baseUrl}/auth/refresh`,
+              { refresh_token: refreshToken }
+            )
+
+
         
         const { access_token, refresh_token } = response.data
         
