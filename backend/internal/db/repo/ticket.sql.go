@@ -49,3 +49,58 @@ func (q *Queries) CreateTicketType(ctx context.Context, arg CreateTicketTypePara
 	)
 	return i, err
 }
+
+const getTicketTypeByID = `-- name: GetTicketTypeByID :one
+SELECT id, event_id, name, description, price, quantity_available, quantity_sold, is_active, created_at FROM ticket_types WHERE id = $1
+`
+
+func (q *Queries) GetTicketTypeByID(ctx context.Context, id uuid.UUID) (TicketType, error) {
+	row := q.db.QueryRow(ctx, getTicketTypeByID, id)
+	var i TicketType
+	err := row.Scan(
+		&i.ID,
+		&i.EventID,
+		&i.Name,
+		&i.Description,
+		&i.Price,
+		&i.QuantityAvailable,
+		&i.QuantitySold,
+		&i.IsActive,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getTicketTypesByEvent = `-- name: GetTicketTypesByEvent :many
+SELECT id, event_id, name, description, price, quantity_available, quantity_sold, is_active, created_at FROM ticket_types WHERE event_id = $1 ORDER BY price ASC
+`
+
+func (q *Queries) GetTicketTypesByEvent(ctx context.Context, eventID uuid.UUID) ([]TicketType, error) {
+	rows, err := q.db.Query(ctx, getTicketTypesByEvent, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []TicketType{}
+	for rows.Next() {
+		var i TicketType
+		if err := rows.Scan(
+			&i.ID,
+			&i.EventID,
+			&i.Name,
+			&i.Description,
+			&i.Price,
+			&i.QuantityAvailable,
+			&i.QuantitySold,
+			&i.IsActive,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

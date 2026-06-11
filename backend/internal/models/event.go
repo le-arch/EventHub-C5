@@ -50,7 +50,6 @@ type UpdateEventRequest struct {
 }
 
 type UpdateEventStatusRequest struct {
-	ID uuid.UUID `json:"id" binding:"required"`
 	Status   repo.EventStatus `json:"status" binding:"required"`
 }
 

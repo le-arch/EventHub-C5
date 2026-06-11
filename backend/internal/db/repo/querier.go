@@ -20,6 +20,8 @@ type Querier interface {
 	GetEventByIDPublic(ctx context.Context, id uuid.UUID) (Event, error)
 	GetEventBySlugPublic(ctx context.Context, slug string) (GetEventBySlugPublicRow, error)
 	GetEventsBySlug(ctx context.Context, slug string) (Event, error)
+	GetTicketTypeByID(ctx context.Context, id uuid.UUID) (TicketType, error)
+	GetTicketTypesByEvent(ctx context.Context, eventID uuid.UUID) ([]TicketType, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	ListEvents(ctx context.Context) ([]ListEventsRow, error)

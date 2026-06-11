@@ -446,6 +446,34 @@ func (h *EventHubHandler) handleCreateTicketType(c *gin.Context) {
     c.JSON(http.StatusCreated, response)
 }
 
+func (h *EventHubHandler) handleListTicketTypes(c *gin.Context) {
+    eventID, err := uuid.Parse(c.Param("id"))
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+        return
+    }
+    tickets, err := h.querier.GetTicketTypesByEvent(c, eventID)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    response := make([]utils.TicketTypeResponse, len(tickets))
+    for i, t := range tickets {
+        response[i] = utils.TicketTypeResponse{
+            ID:                t.ID,
+            EventID:           t.EventID,
+            Name:              t.Name,
+            Description:       t.Description,
+            Price:             t.Price,
+            QuantityAvailable: t.QuantityAvailable,
+            QuantitySold:      t.QuantitySold,
+            IsActive:          t.IsActive,
+            CreatedAt:         utils.FormatDateTime(t.CreatedAt),
+        }
+    }
+    c.JSON(http.StatusOK, response)
+}
+
 
 
 

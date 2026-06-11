@@ -81,6 +81,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	Protection.GET("/admin/events", h.handleGetEvents)
 	// Protection.GET("/events/:id", h.handleEventDetails)
 	// Protection.GET("/checkin/event/:eventId/history", h.handleGetCheckinHistory)
+	Protection.GET("/events/:id/ticket-types", h.handleListTicketTypes)
 	Protection.GET("/admin/users", h.handleListAllUsers)
 	// Protection.GET("/admin/transactions", h.handleViewAllTransactions)
 	// Protection.GET("/admin/events", h.handleViewAllEvents)
