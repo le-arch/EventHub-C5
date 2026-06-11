@@ -2,6 +2,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -562,6 +563,23 @@ func (h *EventHubHandler) handleDeleteTicketType(c *gin.Context) {
         return
     }
     c.JSON(http.StatusOK, gin.H{"message": "ticket type deleted succesfully"})
+}
+
+func (h *EventHubHandler) handleShareLink(c *gin.Context) {
+    eventID, err := uuid.Parse(c.Param("id"))
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+        return
+    }
+    
+    _, err = h.querier.GetEventByID(c, eventID)
+    if err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
+        return
+    }
+    
+    link := fmt.Sprintf("%s/events/%s", h.frontendOrigin, eventID)
+    c.JSON(http.StatusOK, gin.H{"share_link": link})
 }
 
 
