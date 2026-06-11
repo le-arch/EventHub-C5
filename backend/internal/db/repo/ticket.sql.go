@@ -14,7 +14,7 @@ import (
 const createTicketType = `-- name: CreateTicketType :one
 INSERT INTO ticket_types (event_id, name, description, price, quantity_available, is_active)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, event_id, name, description, price, quantity_available, quantity_sold, is_active, created_at
+RETURNING id, event_id, name, description, price, quantity_available, quantity_sold, is_active, created_at, updated_at
 `
 
 type CreateTicketTypeParams struct {
@@ -46,12 +46,13 @@ func (q *Queries) CreateTicketType(ctx context.Context, arg CreateTicketTypePara
 		&i.QuantitySold,
 		&i.IsActive,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getTicketTypeByID = `-- name: GetTicketTypeByID :one
-SELECT id, event_id, name, description, price, quantity_available, quantity_sold, is_active, created_at FROM ticket_types WHERE id = $1
+SELECT id, event_id, name, description, price, quantity_available, quantity_sold, is_active, created_at, updated_at FROM ticket_types WHERE id = $1
 `
 
 func (q *Queries) GetTicketTypeByID(ctx context.Context, id uuid.UUID) (TicketType, error) {
@@ -67,12 +68,13 @@ func (q *Queries) GetTicketTypeByID(ctx context.Context, id uuid.UUID) (TicketTy
 		&i.QuantitySold,
 		&i.IsActive,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getTicketTypesByEvent = `-- name: GetTicketTypesByEvent :many
-SELECT id, event_id, name, description, price, quantity_available, quantity_sold, is_active, created_at FROM ticket_types WHERE event_id = $1 ORDER BY price ASC
+SELECT id, event_id, name, description, price, quantity_available, quantity_sold, is_active, created_at, updated_at FROM ticket_types WHERE event_id = $1 ORDER BY price ASC
 `
 
 func (q *Queries) GetTicketTypesByEvent(ctx context.Context, eventID uuid.UUID) ([]TicketType, error) {
@@ -94,6 +96,7 @@ func (q *Queries) GetTicketTypesByEvent(ctx context.Context, eventID uuid.UUID) 
 			&i.QuantitySold,
 			&i.IsActive,
 			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -103,4 +106,52 @@ func (q *Queries) GetTicketTypesByEvent(ctx context.Context, eventID uuid.UUID) 
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateTicketType = `-- name: UpdateTicketType :one
+UPDATE ticket_types
+SET
+    name = COALESCE($3, name),
+    description = COALESCE($4, description),
+    price = COALESCE($5, price),
+    quantity_available = COALESCE($6, quantity_available),
+    is_active = COALESCE($7, is_active)
+WHERE id = $1 AND event_id = $2
+RETURNING id, event_id, name, description, price, quantity_available, quantity_sold, is_active, created_at, updated_at
+`
+
+type UpdateTicketTypeParams struct {
+	ID                uuid.UUID `json:"id"`
+	EventID           uuid.UUID `json:"event_id"`
+	Name              *string   `json:"name"`
+	Description       string    `json:"description"`
+	Price             *int32    `json:"price"`
+	QuantityAvailable *int32    `json:"quantity_available"`
+	IsActive          *bool     `json:"is_active"`
+}
+
+func (q *Queries) UpdateTicketType(ctx context.Context, arg UpdateTicketTypeParams) (TicketType, error) {
+	row := q.db.QueryRow(ctx, updateTicketType,
+		arg.ID,
+		arg.EventID,
+		arg.Name,
+		arg.Description,
+		arg.Price,
+		arg.QuantityAvailable,
+		arg.IsActive,
+	)
+	var i TicketType
+	err := row.Scan(
+		&i.ID,
+		&i.EventID,
+		&i.Name,
+		&i.Description,
+		&i.Price,
+		&i.QuantityAvailable,
+		&i.QuantitySold,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

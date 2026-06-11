@@ -431,7 +431,7 @@ func (h *EventHubHandler) handleCreateTicketType(c *gin.Context) {
         return
     }
 
-	response := utils.TicketTypeResponse{
+	response := utils.CreateTicketTypeResponse{
         ID:                ticket.ID,
         EventID:           ticket.EventID,
         Name:              ticket.Name,
@@ -440,7 +440,8 @@ func (h *EventHubHandler) handleCreateTicketType(c *gin.Context) {
         QuantityAvailable: ticket.QuantityAvailable,
         QuantitySold:      ticket.QuantitySold,
         IsActive:          ticket.IsActive,
-        CreatedAt:         utils.FormatDateTime(ticket.CreatedAt),
+        UpdatedAt:         utils.FormatDateTime(ticket.UpdatedAt),
+		CreatedAt:			utils.FormatDateTime(ticket.CreatedAt),
     }
 
     c.JSON(http.StatusCreated, response)
@@ -457,9 +458,9 @@ func (h *EventHubHandler) handleListTicketTypes(c *gin.Context) {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
-    response := make([]utils.TicketTypeResponse, len(tickets))
+    response := make([]utils.CreateTicketTypeResponse, len(tickets))
     for i, t := range tickets {
-        response[i] = utils.TicketTypeResponse{
+        response[i] = utils.CreateTicketTypeResponse{
             ID:                t.ID,
             EventID:           t.EventID,
             Name:              t.Name,
@@ -468,11 +469,69 @@ func (h *EventHubHandler) handleListTicketTypes(c *gin.Context) {
             QuantityAvailable: t.QuantityAvailable,
             QuantitySold:      t.QuantitySold,
             IsActive:          t.IsActive,
-            CreatedAt:         utils.FormatDateTime(t.CreatedAt),
+            UpdatedAt:         utils.FormatDateTime(t.UpdatedAt),
+			CreatedAt:			utils.FormatDateTime(t.CreatedAt),
         }
     }
     c.JSON(http.StatusOK, response)
 }
+
+func (h *EventHubHandler) handleUpdateTicketType(c *gin.Context) {
+    eventID, err := uuid.Parse(c.Param("id"))
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+        return
+    }
+    ticketID, err := uuid.Parse(c.Param("ticket_id"))
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ticket id"})
+        return
+    }
+    organizerID, err := utils.ExtractOrganizerID(c)
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+        return
+    }
+    event, err := h.querier.GetEventByID(c, eventID)
+    if err != nil || event.OrganizerID != organizerID {
+        c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
+        return
+    }
+    var req models.UpdateTicketTypeRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    params := repo.UpdateTicketTypeParams{
+        ID:      ticketID,
+        EventID: eventID,
+        Name:    req.Name,
+        Description: req.Description,
+        Price:       req.Price,
+        QuantityAvailable: req.QuantityAvailable,
+        IsActive:    req.IsActive,
+    }
+    ticket, err := h.querier.UpdateTicketType(c, params)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+	response := utils.TicketTypeResponse{
+        ID:                ticket.ID,
+        EventID:           ticket.EventID,
+        Name:              ticket.Name,
+        Description:       ticket.Description,
+        Price:             ticket.Price,
+        QuantityAvailable: ticket.QuantityAvailable,
+        QuantitySold:      ticket.QuantitySold,
+        IsActive:          ticket.IsActive,
+        UpdatedAt:         utils.FormatDateTime(ticket.UpdatedAt),
+    }
+
+    c.JSON(http.StatusOK, response)
+}
+
 
 
 

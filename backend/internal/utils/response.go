@@ -68,7 +68,7 @@ type EventResponse struct{
 	UpdatedAt      string           `json:"updated_at"`
 }
 
-type TicketTypeResponse struct {
+type CreateTicketTypeResponse struct {
     ID               uuid.UUID `json:"id"`
     EventID          uuid.UUID `json:"event_id"`
     Name             string    `json:"name"`
@@ -77,5 +77,20 @@ type TicketTypeResponse struct {
     QuantityAvailable int32     `json:"quantity_available"`
     QuantitySold     int32     `json:"quantity_sold"`
     IsActive         *bool      `json:"is_active"`
-    CreatedAt        string    `json:"created_at"`
+	UpdatedAt        string    `json:"updated_at"`
+	CreatedAt      string      		`json:"created_at"`
 }
+
+type TicketTypeResponse struct {
+    ID               uuid.UUID `json:"id"`
+    EventID          uuid.UUID `json:"event_id"`
+    Name             string    `json:"name,omitempty"`
+    Description      string    `json:"description,omitempty"`
+    Price            int32     `json:"price,omitempty"`
+    QuantityAvailable int32     `json:"quantity_available,omitempty"`
+    QuantitySold     int32     `json:"quantity_sold,omitempty"`
+    IsActive         *bool      `json:"is_active"`
+	UpdatedAt        string    `json:"updated_at"`
+	
+}
+

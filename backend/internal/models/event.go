@@ -65,3 +65,11 @@ type CreateTicketTypeRequest struct {
     QuantityAvailable int32 `json:"quantity_available" binding:"required,min=0"`
     IsActive         *bool  `json:"is_active"`
 }
+
+type UpdateTicketTypeRequest struct {
+    Name             *string `json:"name"`
+    Description      string `json:"description"`
+    Price            *int32  `json:"price"`
+    QuantityAvailable *int32 `json:"quantity_available"`
+    IsActive         *bool   `json:"is_active"`
+}

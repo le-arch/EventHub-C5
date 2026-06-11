@@ -33,6 +33,7 @@ type Querier interface {
 	UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event, error)
 	UpdateEventCoverImage(ctx context.Context, arg UpdateEventCoverImageParams) (Event, error)
 	UpdateEventStatus(ctx context.Context, arg UpdateEventStatusParams) (Event, error)
+	UpdateTicketType(ctx context.Context, arg UpdateTicketTypeParams) (TicketType, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 }
 

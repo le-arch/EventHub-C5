@@ -178,6 +178,7 @@ type TicketType struct {
 	QuantitySold      int32            `json:"quantity_sold"`
 	IsActive          *bool            `json:"is_active"`
 	CreatedAt         pgtype.Timestamp `json:"created_at"`
+	UpdatedAt         pgtype.Timestamp `json:"updated_at"`
 }
 
 type User struct {
