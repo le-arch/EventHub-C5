@@ -12,6 +12,7 @@ import (
 
 type Querier interface {
 	CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error)
+	CreateTicketType(ctx context.Context, arg CreateTicketTypeParams) (TicketType, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteEvent(ctx context.Context, arg DeleteEventParams) error
 	GetAllUsers(ctx context.Context, role UserRole) ([]User, error)

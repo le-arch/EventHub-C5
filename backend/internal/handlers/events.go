@@ -97,7 +97,7 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 		CreatedAt: utils.FormatDateTime(event.CreatedAt),
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusCreated, response)
 }
 
 func (h *EventHubHandler) handleGetOrganisationEvent(c *gin.Context) {
@@ -354,6 +354,60 @@ func (h *EventHubHandler) handleDeleteEvent(c *gin.Context) {
 		"message": "Event deleted successfully",
 	} )
 }
+
+func (h *EventHubHandler) handleCreateTicketType(c *gin.Context) {
+    eventID, err := uuid.Parse(c.Param("id"))
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+        return
+    }
+    organizerID, err := utils.ExtractOrganizerID(c)
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+        return
+    }
+    event, err := h.querier.GetEventByID(c, eventID)
+    if err != nil || event.OrganizerID != organizerID {
+        c.JSON(http.StatusForbidden, gin.H{"error": "you do not own this event"})
+        return
+    }
+    var req models.CreateTicketTypeRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    isActive := true
+    if req.IsActive != nil {
+        isActive = *req.IsActive
+    }
+    ticket, err := h.querier.CreateTicketType(c, repo.CreateTicketTypeParams{
+        EventID:          eventID,
+        Name:             req.Name,
+        Description:      req.Description,
+        Price:            req.Price,
+        QuantityAvailable: req.QuantityAvailable,
+        IsActive:         &isActive,
+    })
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+	response := utils.TicketTypeResponse{
+        ID:                ticket.ID,
+        EventID:           ticket.EventID,
+        Name:              ticket.Name,
+        Description:       ticket.Description,
+        Price:             ticket.Price,
+        QuantityAvailable: ticket.QuantityAvailable,
+        QuantitySold:      ticket.QuantitySold,
+        IsActive:          ticket.IsActive,
+        CreatedAt:         utils.FormatDateTime(ticket.CreatedAt),
+    }
+
+    c.JSON(http.StatusCreated, response)
+}
+
 
 
 

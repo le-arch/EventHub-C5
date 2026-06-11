@@ -46,12 +46,6 @@ SET title = $2, slug = $3, description = $4, venue = $5, city = $6, start_date =
 WHERE id = $1
 RETURNING *;
 
--- name: UpdateEventStatus :one
-UPDATE events
-SET status = $2, updated_at = CURRENT_TIMESTAMP
-WHERE id = $1
-RETURNING *;
-
 -- name: UpdateEventCoverImage :one
 UPDATE events
 SET cover_image_url = $2, updated_at = CURRENT_TIMESTAMP
@@ -97,4 +91,10 @@ SET
     capacity_range = COALESCE(sqlc.narg(capacity_range), capacity_range),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND organizer_id = $2
+RETURNING *;
+
+-- name: UpdateEventStatus :one
+UPDATE events
+SET status = $2, updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
 RETURNING *;

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
+	"github.com/le-arch/EventHub-C5/internal/models"
 	"github.com/le-arch/EventHub-C5/internal/utils"
 )
 
@@ -89,4 +90,50 @@ func (h *EventHubHandler) handleListAllUsers(c *gin.Context) {
 }
 
     c.JSON(http.StatusOK, response)
+}
+
+func (h *EventHubHandler) handleAdminUpdateEventStatus(c *gin.Context) {
+	var req models.UpdateEventStatusRequest
+
+    UserRole, err := utils.GetUserRole(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	if UserRole != "admin" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "your not authorized to perform this action"})
+		return
+	}
+    event, err := h.querier.UpdateEventStatus(c, repo.UpdateEventStatusParams{
+		ID: req.ID,
+		Status: *req.Status,
+	})
+	if err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "status not updated"})
+        return
+    }
+
+
+	response := utils.EventResponse{
+	OrganizerID: event.OrganizerID,
+	Title: event.Title,
+	Slug: event.Slug,
+	Description: event.Description,
+	Venue: event.Venue,
+	City: event.City,
+	StartDate: utils.FormatDate(event.StartDate),
+	EndDate: utils.FormatDate(*event.EndDate),
+	StartTime: utils.FormatTime(event.StartTime),
+	EndTime: utils.FormatTime(event.EndTime),
+	CoverImageUrl: event.CoverImageUrl,
+	Status: event.Status,
+	SalesStartDate: utils.FormatDate(*event.SalesStartDate),
+	SalesEndDate: utils.FormatDate(*event.SalesEndDate),
+	CapacityRange: utils.FromDBRange(event.CapacityRange),
+	UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
+	}
+	
+
+    c.JSON(http.StatusOK,response)
 }

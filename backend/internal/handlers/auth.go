@@ -150,7 +150,7 @@ func (h *EventHubHandler) handleVerifyEmail(c *gin.Context) {
 	}
 
 	//send the response back to the client
-	c.JSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusCreated, gin.H{
 		"message":       "User registered successfully",
 		"token":         token,
 		"refresh_token": refreshToken,

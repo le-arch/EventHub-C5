@@ -20,6 +20,8 @@ const (
 	EventStatusDraft     EventStatus = "draft"
 	EventStatusPublished EventStatus = "published"
 	EventStatusCancelled EventStatus = "cancelled"
+	EventStatusSuspended EventStatus = "suspended"
+	EventStatusArchived  EventStatus = "archived"
 )
 
 func (e *EventStatus) Scan(src interface{}) error {

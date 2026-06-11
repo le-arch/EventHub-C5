@@ -48,3 +48,17 @@ type UpdateEventRequest struct {
     SalesEndDate   *string `json:"sales_end_date,omitempty"`
 	CapacityRange *CapacityRangeJSON `json:"capacity_range,omitempty"`
 }
+
+type UpdateEventStatusRequest struct {
+	ID uuid.UUID `json:"id" binding:"required"`
+	Status         *repo.EventStatus `json:"status" binding:"required"`
+}
+
+// for event tickets
+type CreateTicketTypeRequest struct {
+	Name             string `json:"name" binding:"required"`
+    Description      string `json:"description"`
+    Price            int32  `json:"price" binding:"required,min=0"`
+    QuantityAvailable int32 `json:"quantity_available" binding:"required,min=0"`
+    IsActive         *bool  `json:"is_active"`
+}
