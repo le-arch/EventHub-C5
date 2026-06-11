@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"github.com/le-arch/EventHub-C5/internal/auth"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
 	"github.com/le-arch/EventHub-C5/internal/handlers"
+	"github.com/le-arch/EventHub-C5/internal/handlers/storage"
 )
 
 // DBConfig holds the database configuration. This struct is populated from the .env in the current directory.
@@ -29,6 +31,14 @@ type DBConfig struct {
 	TLSDisabled bool   `conf:"env:DB_TLS_DISABLED"`
 }
 
+type MinioConfig struct{
+	Endpoint string `conf:"env:MINIO_ENDPOINT,required"`
+	AccessKey string `conf:"env:MINIO_ACCESS_KEY,required"`
+	SecretKey string `conf:"env:MINIO_SECRET_KEY,required"`
+	Bucket string `conf:"env:MINIO_BUCKET,required"`
+	UseSSL bool `conf:"env:MINIO_USE_SSL,required"`
+}
+
 // Config holds the application configuration. This struct is populated from the .env in the current directory.
 type Config struct {
 	ListenPort     uint16 `conf:"env:LISTEN_PORT,required"`
@@ -38,7 +48,9 @@ type Config struct {
 	GmailUser      string `conf:"env:GMAIL_USER,required"`
     GmailPassword  string `conf:"env:GMAIL_PASSWORD,required"`
 	DB             DBConfig
+	Minio          MinioConfig
 }
+
 
 func main() {
 
@@ -89,8 +101,14 @@ func run() error {
 	otpHandler.StartCleanupRoutine(10 * time.Minute)
 
 	// We create a new http handler using the database querier.
-	handler := handlers.NewEventHubHandler(querier, otpHandler, revocationStore, config.JWTSecret, config.FrontendOrigin, config.GmailUser, config.GmailPassword).WireHttpHandler()
+	minioClient, err := storage.NewMinioClient(config.Minio.Endpoint, config.Minio.AccessKey, config.Minio.SecretKey,config.Minio.Bucket, config.Minio.UseSSL)
+	if err != nil {
+		log.Fatal("Failed to create MinIO client:", err)
+	}
 
+	handler := handlers.NewEventHubHandler(querier, otpHandler, revocationStore, config.JWTSecret, config.FrontendOrigin, config.GmailUser, config.GmailPassword, minioClient).WireHttpHandler()
+
+	
 	// And finally we start the HTTP server on the configured port.
 	err = http.ListenAndServe(fmt.Sprintf(":%d", config.ListenPort), handler)
 	if err != nil {

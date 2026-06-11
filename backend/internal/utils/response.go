@@ -46,7 +46,11 @@ type CreateEventResponse struct {
 	UpdatedAt      string           `json:"updated_at"`
 }
 
-type EventResponse struct{
+type EventResponse struct{	
+	OrganizerID	uuid.UUID	`json:"organizer_id,omitempty"`
+
+	OrganizerName string	`json:"organizer_name,omitempty"`
+
 	Title          string           `json:"title"`
 	Slug           string           `json:"slug"`
 	Description    string           `json:"description"`
@@ -61,7 +65,32 @@ type EventResponse struct{
 	SalesStartDate string           `json:"sales_start_date"` 
 	SalesEndDate   string           `json:"sales_end_date"` 
 	CapacityRange  *models.CapacityRangeJSON			`json:"capacity_range"`  
-	
 	UpdatedAt      string           `json:"updated_at"`
+}
+
+type CreateTicketTypeResponse struct {
+    ID               uuid.UUID `json:"id"`
+    EventID          uuid.UUID `json:"event_id"`
+    Name             string    `json:"name"`
+    Description      string    `json:"description"`
+    Price            int32     `json:"price"`
+    QuantityAvailable int32     `json:"quantity_available"`
+    QuantitySold     int32     `json:"quantity_sold"`
+    IsActive         *bool      `json:"is_active"`
+	UpdatedAt        string    `json:"updated_at"`
+	CreatedAt      string      		`json:"created_at"`
+}
+
+type TicketTypeResponse struct {
+    ID               uuid.UUID `json:"id"`
+    EventID          uuid.UUID `json:"event_id"`
+    Name             string    `json:"name,omitempty"`
+    Description      string    `json:"description,omitempty"`
+    Price            int32     `json:"price,omitempty"`
+    QuantityAvailable int32     `json:"quantity_available,omitempty"`
+    QuantitySold     int32     `json:"quantity_sold,omitempty"`
+    IsActive         *bool      `json:"is_active"`
+	UpdatedAt        string    `json:"updated_at"`
+	
 }
 

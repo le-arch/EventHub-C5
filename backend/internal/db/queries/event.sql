@@ -24,9 +24,11 @@ SELECT * FROM events
 WHERE id = $1 AND organizer_id = $2;
 
 -- name: ListEvents :many
-SELECT e.*, u.role FROM events e, users u 
-where u.role = $1
-ORDER BY start_date ASC, start_time ASC;
+SELECT e.*, u.full_name as organizer_name
+FROM events e
+INNER JOIN users u ON e.organizer_id = u.id
+ORDER BY u.full_name, e.start_date;
+
 
 -- name: ListEventsByCity :many
 SELECT * FROM events 
@@ -41,12 +43,6 @@ ORDER BY start_date ASC, start_time ASC;
 -- name: UpdateEvent :one
 UPDATE events
 SET title = $2, slug = $3, description = $4, venue = $5, city = $6, start_date = $7, end_date = $8, start_time = $9, end_time = $10, cover_image_url = $11, status = $12, sales_start_date = $13, sales_end_date = $14, updated_at = CURRENT_TIMESTAMP
-WHERE id = $1
-RETURNING *;
-
--- name: UpdateEventStatus :one
-UPDATE events
-SET status = $2, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING *;
 
@@ -95,4 +91,10 @@ SET
     capacity_range = COALESCE(sqlc.narg(capacity_range), capacity_range),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND organizer_id = $2
+RETURNING *;
+
+-- name: UpdateEventStatus :one
+UPDATE events
+SET status = $2, updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
 RETURNING *;

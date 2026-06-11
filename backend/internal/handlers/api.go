@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/le-arch/EventHub-C5/internal/auth"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
+	"github.com/le-arch/EventHub-C5/internal/handlers/storage"
 	"github.com/le-arch/EventHub-C5/internal/middleware"
 )
 
@@ -17,9 +18,10 @@ import (
 	frontendOrigin string
 	gmailUser string
 	gmailPassword string
+	MinioClient *storage.MinioClient
 }
 
-func NewEventHubHandler(querier repo.Querier, otpHandler *auth.OTPHandler, revocationStore *auth.RevocationStore, jwtSecret, frontendOrigin, gmailUser, gmailPassword string) *EventHubHandler {
+func NewEventHubHandler(querier repo.Querier, otpHandler *auth.OTPHandler, revocationStore *auth.RevocationStore, jwtSecret, frontendOrigin, gmailUser, gmailPassword string,minioClient *storage.MinioClient ) *EventHubHandler {
 	return &EventHubHandler{
 		querier: querier,
 		otpHandler: otpHandler,
@@ -28,8 +30,10 @@ func NewEventHubHandler(querier repo.Querier, otpHandler *auth.OTPHandler, revoc
 		frontendOrigin: frontendOrigin,
 		gmailUser: gmailUser,
 		gmailPassword: gmailPassword,
+		MinioClient: minioClient,
 	}
 }
+
 
 func (h *EventHubHandler) WireHttpHandler() http.Handler {
 
@@ -50,6 +54,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	r.POST("/api/v1/auth/forgot-password", h.handleForgotPassword)
 	r.POST("/api/v1/auth/reset-password", h.handlePasswrordReset)
 	r.POST("/api/v1/auth/resend-otp", h.handleResendOTP)
+
 	r.GET("/api/v1/events/public/:id", h.handleGetPublicEvent)
 
 	Protection := r.Group("/api/v1")
@@ -58,18 +63,22 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 		Protection.GET("/auth/me", h.handleGetCurrentUser)
 	
 	Protection.POST("/events", h.handleCreateEvent)
-	// Protection.POST("/events/:id/unpublish", h.handleUnpublishEvent)
-	// Protection.POST("/events/:id/publish",h.handlePublicEvent)
-	// Protection.POST("/events/:id/ticket-types",h.handleCreateTicketType)
+	Protection.POST("/events/:id/ticket-types",h.handleCreateTicketType)
 	// Protection.POST("/orders", h.handleCreateOrder)
 	// Protection.POST("/checkin", h.handleScanQRCode)
+	Protection.POST("events/upload-image", h.handleUploadImage)
 
 	Protection.PATCH("/events/:id", h.handleUpdateEvent)
-	// Protection.PATCH("/:id/ticket-types",h.handleUpdateTicketType)
+	Protection.PATCH("/:id/ticket-types",h.handleUpdateTicketType)
+	Protection.PATCH("events/:id/status", h.handleOrganizerUpdateEventStatus)
+	Protection.PATCH("/events/:id/publish",h.handlePublishEvent)
+	Protection.PATCH("/events/:id/unpublish", h.handleUnpublishEvent)
+	Protection.PATCH("/admin/events/:id/status", h.handleAdminUpdateEventStatus)
+	Protection.PATCH("/admin/events/:id/restore", h.handleAdminRestoreEvent)
 
 	Protection.GET("/Organization/events", h.handleGetOrganisationEvents)
 	Protection.GET("/Organization/:id", h.handleGetOrganisationEvent)
-	// Protection.GET("/events/:id/share-link", h.handleShareLink)
+	Protection.GET("/events/:id/share-link", h.handleShareLink)
 	// Protection.GET("/orders/:id/status", h.handleCheckPayementStatus)
 	// Protection.GET("/orders/:id/ticket", h.handleDownloadQRCode)
 	// Protection.GET("/events/:id/attendees", h.handleGetAttendeeList)
@@ -77,15 +86,15 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	Protection.GET("/admin/events", h.handleGetEvents)
 	// Protection.GET("/events/:id", h.handleEventDetails)
 	// Protection.GET("/checkin/event/:eventId/history", h.handleGetCheckinHistory)
+	Protection.GET("/events/:id/ticket-types", h.handleListTicketTypes)
 	Protection.GET("/admin/users", h.handleListAllUsers)
 	// Protection.GET("/admin/transactions", h.handleViewAllTransactions)
 	// Protection.GET("/admin/events", h.handleViewAllEvents)
 
 	// Protection.PUT("/admin/users/:id/verify", h.handleVerifyOrganizer)
-	// Protection.PUT("/admin/users/:id/suspend", h.handleSuspendUser)
 
 	Protection.DELETE("/events/:id", h.handleDeleteEvent)
-	// Protection.DELETE("/ticket-type/:id", h.handleDeleteTicketType)
+	Protection.DELETE("/ticket-type/:id", h.handleDeleteTicketType)
 	
 	}
 

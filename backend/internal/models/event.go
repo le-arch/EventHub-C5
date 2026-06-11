@@ -14,7 +14,7 @@ type CapacityRangeJSON struct {
 
 
 type CreateEventRequest struct {
-	OrganizerID    uuid.UUID        `json:"organizer_id" binding:"required"`
+	OrganizerID    uuid.UUID        `json:"organizer_id" `
 	Title          string           `json:"title" binding:"required"`
 	Slug           string           `json:"slug" binding:"required"`
 	Description    string           `json:"description" binding:"required"`
@@ -48,3 +48,36 @@ type UpdateEventRequest struct {
     SalesEndDate   *string `json:"sales_end_date,omitempty"`
 	CapacityRange *CapacityRangeJSON `json:"capacity_range,omitempty"`
 }
+
+type UpdateEventStatusRequest struct {
+	Status   repo.EventStatus `json:"status" binding:"required"`
+}
+
+type UpdateEventStatus struct {
+	Status   repo.EventStatus `json:"status" binding:"required,oneof=draft published cancelled archived"`
+}
+
+// for event tickets
+type CreateTicketTypeRequest struct {
+	Name             string `json:"name" binding:"required"`
+    Description      string `json:"description"`
+    Price            int32  `json:"price" binding:"required,min=0"`
+    QuantityAvailable int32 `json:"quantity_available" binding:"required,min=0"`
+    IsActive         *bool  `json:"is_active"`
+}
+
+type UpdateTicketTypeRequest struct {
+    Name             *string `json:"name"`
+    Description      string `json:"description"`
+    Price            *int32  `json:"price"`
+    QuantityAvailable *int32 `json:"quantity_available"`
+    IsActive         *bool   `json:"is_active"`
+}
+
+const (
+	EventStatusDraft      = "draft"
+	EventStatusPublished  = "published"
+	EventStatusCancelled  = "cancelled"
+	EventStatusSuspended  = "suspended"
+	EventStatusArchived   = "archived"
+)
