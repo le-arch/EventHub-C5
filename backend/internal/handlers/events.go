@@ -532,7 +532,37 @@ func (h *EventHubHandler) handleUpdateTicketType(c *gin.Context) {
     c.JSON(http.StatusOK, response)
 }
 
-
+func (h *EventHubHandler) handleDeleteTicketType(c *gin.Context) {
+    eventID, err := uuid.Parse(c.Param("id"))
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+        return
+    }
+    ticketID, err := uuid.Parse(c.Param("ticket_id"))
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ticket id"})
+        return
+    }
+    organizerID, err := utils.ExtractOrganizerID(c)
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+        return
+    }
+    event, err := h.querier.GetEventByID(c, eventID)
+    if err != nil || event.OrganizerID != organizerID {
+        c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
+        return
+    }
+    err = h.querier.DeleteTicketType(c, repo.DeleteTicketTypeParams{
+        ID:      ticketID,
+        EventID: eventID,
+    })
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(http.StatusOK, gin.H{"message": "ticket type deleted succesfully"})
+}
 
 
 

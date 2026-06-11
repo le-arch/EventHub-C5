@@ -15,6 +15,7 @@ type Querier interface {
 	CreateTicketType(ctx context.Context, arg CreateTicketTypeParams) (TicketType, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteEvent(ctx context.Context, arg DeleteEventParams) error
+	DeleteTicketType(ctx context.Context, arg DeleteTicketTypeParams) error
 	GetAllUsers(ctx context.Context, role UserRole) ([]User, error)
 	GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
 	GetEventByIDPublic(ctx context.Context, id uuid.UUID) (Event, error)

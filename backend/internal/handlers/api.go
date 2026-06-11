@@ -69,6 +69,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	// Protection.PATCH("/:id/ticket-types",h.handleUpdateTicketType)
 	Protection.PATCH("/admin/events/:id/status", h.handleGetEvents)
 	Protection.PATCH("events/:id/status", h.handleOrganizerUpdateEventStatus)
+	Protection.DELETE("/events/:id/ticket-types/:ticket_id", h.handleDeleteTicketType)
 
 	Protection.GET("/Organization/events", h.handleGetOrganisationEvents)
 	Protection.GET("/Organization/:id", h.handleGetOrganisationEvent)

@@ -51,6 +51,20 @@ func (q *Queries) CreateTicketType(ctx context.Context, arg CreateTicketTypePara
 	return i, err
 }
 
+const deleteTicketType = `-- name: DeleteTicketType :exec
+DELETE FROM ticket_types WHERE id = $1 AND event_id = $2
+`
+
+type DeleteTicketTypeParams struct {
+	ID      uuid.UUID `json:"id"`
+	EventID uuid.UUID `json:"event_id"`
+}
+
+func (q *Queries) DeleteTicketType(ctx context.Context, arg DeleteTicketTypeParams) error {
+	_, err := q.db.Exec(ctx, deleteTicketType, arg.ID, arg.EventID)
+	return err
+}
+
 const getTicketTypeByID = `-- name: GetTicketTypeByID :one
 SELECT id, event_id, name, description, price, quantity_available, quantity_sold, is_active, created_at, updated_at FROM ticket_types WHERE id = $1
 `

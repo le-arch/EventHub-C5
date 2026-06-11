@@ -19,3 +19,6 @@ SET
     is_active = COALESCE(sqlc.narg(is_active), is_active)
 WHERE id = $1 AND event_id = $2
 RETURNING *;
+
+-- name: DeleteTicketType :exec
+DELETE FROM ticket_types WHERE id = $1 AND event_id = $2;
