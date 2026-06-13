@@ -12,6 +12,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { authService, UserData } from '@/services/auth.service'
 import { STORAGE_KEYS } from '@/lib/constant'
+import { email } from 'zod'
 
 // Types
 export interface User {
@@ -41,8 +42,8 @@ interface AuthState {
   usersTotal: number              // Added for pagination
   usersLoading: boolean           // Added for loading state
   
-  // Actions
-  login: (identifier: string, password: string) => Promise<void>
+  // Actions 
+  login: (email: string, password: string) => Promise<void>
   register: (data: RegisterData) => Promise<void>
   verifyOTP: (email: string, otp: string) => Promise<void>
   logout: () => Promise<void>
@@ -126,11 +127,11 @@ export const useAuthStore = create<AuthState>()(
        * Login with email or phone and password
        * Supports both email and phone identifiers
        */
-      login: async (identifier: string, password: string) => {
+      login: async (email: string, password: string) => {
         set({ isLoading: true, error: null })
         
         try {
-          const response = await authService.login(identifier, password)
+          const response = await authService.login(email, password)
           const { access_token, refresh_token, user: backendUser } = response
           
           // Transform backend user data to frontend format

@@ -94,7 +94,10 @@ export function Breadcrumb({
         )}
         
         {items.map((item, index) => (
-          <li key={item.href} className="flex items-center">
+          //changed key={item.href} to use a combination of the path and its position(index), making every single item completely unique
+            <li key={`${item.href}-${index}`} className="flex items-center">
+
+          {/* <li key={item.href} className="flex items-center"> */}
             {item.isActive ? (
               <span className="text-gray-900 font-medium" aria-current="page">
                 {item.label}

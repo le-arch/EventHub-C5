@@ -24,10 +24,16 @@ export interface VerifyEmailPayload {
   otp: string
 }
 
+// export interface LoginPayload {
+//   identifier: string
+//   password_hash: string  
+// }
+
 export interface LoginPayload {
-  identifier: string
+  email: string   
   password_hash: string  
 }
+
 
 export interface RefreshTokenPayload {
   refresh_token: string
@@ -127,12 +133,12 @@ export const authService = {
 
   /**
    * Login with email or phone and password
-   * @param identifier - User's email or phone number
+   * @param email - User's email or phone number
    * @param password - User's password
    */
   login: async (identifier: string, password: string): Promise<AuthResponse> => {
     const payload: LoginPayload = {
-      identifier,
+      email,
       password_hash: password,
     }
 

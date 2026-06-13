@@ -114,7 +114,7 @@ export default function EventsDashboardPage() {
   const fetchEvents = async () => {
     setLoading(true)
     try {
-      const response = await api.get('/events', {
+      const response = await api.get('Organization/events', {
         params: {
           page,
           limit: pageSize,
@@ -174,7 +174,7 @@ export default function EventsDashboardPage() {
           </Badge>
         )
       case 'cancelled':
-        return (
+        return ( 
           <Badge variant="destructive">
             <XCircle className="h-3 w-3 mr-1" />
             Cancelled ❌
