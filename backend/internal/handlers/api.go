@@ -68,6 +68,9 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	// Protection.POST("/checkin", h.handleScanQRCode)
 	Protection.POST("events/upload-image", h.handleUploadImage)
 
+	// Ticket booking checkout route endpoint registration
+	Protection.POST("/orders", h.HandleCreateOrder)
+
 	Protection.PATCH("/events/:id", h.handleUpdateEvent)
 	Protection.PATCH("/:id/ticket-types",h.handleUpdateTicketType)
 	Protection.PATCH("events/:id/status", h.handleOrganizerUpdateEventStatus)

@@ -81,3 +81,13 @@ const (
 	EventStatusSuspended  = "suspended"
 	EventStatusArchived   = "archived"
 )
+
+
+
+
+// CreateOrderRequest represents the payload required to purchase an event ticket.
+type CreateOrderRequest struct {
+	TicketTypeID string `json:"ticket_type_id" binding:"required,uuid"`
+	Quantity     int32  `json:"quantity" binding:"required,min=1"`
+	FullName     string `json:"full_name" binding:"required"`
+} 
