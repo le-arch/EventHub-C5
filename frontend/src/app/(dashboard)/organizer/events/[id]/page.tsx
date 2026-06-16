@@ -175,13 +175,16 @@ export default function EditEventPage() {
         status: eventData.status,
       })
       
-      setTicketTypes(ticketsRes.data.ticket_types)
+      // ✅ Ensure ticketTypes is always an array
+      const ticketData = ticketsRes.data.ticket_types || []
+      setTicketTypes(ticketData)
       ticketForm.reset({
-        ticketTypes: ticketsRes.data.ticket_types.map((t: TicketType) => ({
+        ticketTypes: ticketData.map((t: TicketType) => ({
           id: t.id,
           name: t.name,
           price: t.price,
           quantityAvailable: t.quantityAvailable,
+          quantitySold: t.quantitySold || 0,
         })),
       })
     } catch (error) {
@@ -284,6 +287,9 @@ export default function EditEventPage() {
 
   const isPublished = event.status === 'published'
 
+  // ✅ Safe calculation of total tickets sold
+  const totalTicketsSold = ticketTypes.reduce((sum, t) => sum + (t.quantitySold || 0), 0)
+
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
@@ -334,7 +340,7 @@ export default function EditEventPage() {
         </div>
       </div>
 
-      {/*Stats Card */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
@@ -369,9 +375,7 @@ export default function EditEventPage() {
                 <Ticket className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">
-                  {ticketTypes.reduce((sum, t) => sum + t.quantitySold, 0)}
-                </p>
+                <p className="text-2xl font-bold">{totalTicketsSold}</p>
                 <p className="text-xs text-gray-500">tickets sold 🎟️</p>
               </div>
             </div>
@@ -437,10 +441,10 @@ export default function EditEventPage() {
                       onValueChange={(value) => form.setValue('city', value)}
                       value={form.watch('city')}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-white">
                         <SelectValue placeholder="📍 Select a city" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white">
                         {CAMEROON_CITIES.map((city) => (
                           <SelectItem key={city} value={city}>{city}</SelectItem>
                         ))}
@@ -589,7 +593,7 @@ export default function EditEventPage() {
         description={`Are you ready to publish "${event.title}"?`}
         confirmText="Yes, Publish Event"
         cancelText="Cancel"
-        variant="info"
+        variant="success"
         isLoading={isSaving}
       >
         <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">

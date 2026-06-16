@@ -22,15 +22,12 @@ import {
   Users,
   Calendar,
   MapPin,
-  TrendingDown,
   BarChart3,
   PieChart,
   CheckCircle,
   Clock,
 } from 'lucide-react'
 import {
-  LineChart,
-  Line,
   AreaChart,
   Area,
   PieChart as RePieChart,
@@ -63,6 +60,7 @@ import { Breadcrumb } from '@/components/common/Breadcrumb'
 // Utilities
 import api from '@/lib/api'
 import { formatCurrency, formatDate, formatTime } from '@/lib/utils'
+import { toast } from 'sonner'
 
 // Colors for pie chart
 const COLORS = ['#2563EB', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899']
@@ -107,25 +105,58 @@ interface Event {
 export default function AnalyticsPage() {
   const params = useParams()
   const router = useRouter()
+  const eventId = params.eventId as string
+
   const [event, setEvent] = useState<Event | null>(null)
   const [analytics, setAnalytics] = useState<EventAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Redirect if no eventId is provided
   useEffect(() => {
-    fetchAnalytics()
-  }, [params.eventId])
+    if (!eventId) {
+      router.replace('/organizer/events')
+    }
+  }, [eventId, router])
+
+  useEffect(() => {
+    if (eventId) {
+      fetchAnalytics()
+    }
+  }, [eventId])
 
   const fetchAnalytics = async () => {
+    setLoading(true)
     try {
       const [eventRes, analyticsRes] = await Promise.all([
-        api.get(`/events/${params.eventId}`),
-        api.get(`/events/${params.eventId}/analytics`),
+        api.get(`/events/${eventId}`),
+        api.get(`/events/${eventId}/analytics`),
       ])
-      
+
+      if (!eventRes.data?.event) {
+        throw new Error('Event not found')
+      }
+
       setEvent(eventRes.data.event)
-      setAnalytics(analyticsRes.data)
-    } catch (error) {
+
+      // Safe fallbacks for all analytics properties
+      const data = analyticsRes.data || {}
+      setAnalytics({
+        totalTickets: data.totalTickets ?? 0,
+        totalRevenue: data.totalRevenue ?? 0,
+        checkinCount: data.checkinCount ?? 0,
+        checkinPercentage: data.checkinPercentage ?? 0,
+        dailySales: data.dailySales ?? [],
+        ticketBreakdown: data.ticketBreakdown ?? [],
+        recentCheckins: data.recentCheckins ?? [],
+      })
+    } catch (error: any) {
       console.error('Failed to load analytics:', error)
+      if (error.response?.status === 404) {
+        toast.error('❌ Event not found')
+        router.push('/organizer/events')
+      } else {
+        toast.error('❌ Failed to load analytics')
+      }
     } finally {
       setLoading(false)
     }
@@ -212,7 +243,7 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Summary Card */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-100">
           <CardContent className="pt-6">

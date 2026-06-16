@@ -265,10 +265,10 @@ export default function CreateEventPage() {
                     onValueChange={(value) => basicForm.setValue('city', value)}
                     value={basicForm.watch('city')}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white border-gray-300"> 
                       <SelectValue placeholder="📍 Select a city" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       {CAMEROON_CITIES.map((city) => (
                         <SelectItem key={city} value={city}>
                           {city}

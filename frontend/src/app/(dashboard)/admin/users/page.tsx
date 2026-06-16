@@ -114,12 +114,14 @@ export default function AdminUsersPage() {
           limit: pageSize,
         },
       })
-      setUsers(response.data.users)
-      setTotalCount(response.data.total)
-      setTotalPages(response.data.totalPages || Math.ceil(response.data.total / pageSize))
+      // Ensure users is always an array
+      setUsers(response.data.users || [])
+      setTotalCount(response.data.total || 0)
+      setTotalPages(response.data.totalPages || Math.ceil((response.data.total || 0) / pageSize))
     } catch (error) {
       console.error('Failed to load users:', error)
       toast.error('❌ Failed to load users')
+      setUsers([]) // fallback to empty array
     } finally {
       setLoading(false)
     }
@@ -133,7 +135,7 @@ export default function AdminUsersPage() {
   /**
    * Filter users based on search term and status filter (client-side after fetch)
    */
-  const filteredUsers = users.filter((user) => {
+  const filteredUsers = (users || []).filter((user) => {
     // Search filter
     const matchesSearch =
       searchTerm === '' ||
@@ -613,7 +615,7 @@ export default function AdminUsersPage() {
         description={`Are you sure you want to verify ${userToVerify?.fullName}'s account?`}
         confirmText="Yes, Verify Account"
         cancelText="Cancel"
-        variant="info"
+        variant="success"
         isLoading={isProcessing}
       >
         <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">

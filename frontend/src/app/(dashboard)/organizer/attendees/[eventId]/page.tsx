@@ -19,14 +19,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import Image from 'next/image'
 import {
   ArrowLeft,
   Users,
   TrendingUp,
   CheckCircle,
-  Download,
-  Filter,
   Calendar,
   MapPin,
   Ticket,
@@ -106,6 +103,13 @@ export default function AttendeeListPage() {
   const router = useRouter()
   const eventId = params.eventId as string
 
+  // Redirect if no eventId is provided (handle direct access without ID)
+  useEffect(() => {
+    if (!eventId) {
+      router.replace('/organizer/events')
+    }
+  }, [eventId, router])
+
   // State
   const [event, setEvent] = useState<Event | null>(null)
   const [attendees, setAttendees] = useState<Attendee[]>([])
@@ -130,7 +134,9 @@ export default function AttendeeListPage() {
 
   // Fetch data on mount
   useEffect(() => {
-    fetchEventAndAttendees()
+    if (eventId) {
+      fetchEventAndAttendees()
+    }
   }, [eventId, page, pageSize])
 
   // Apply filters and search whenever dependencies change
@@ -153,14 +159,26 @@ export default function AttendeeListPage() {
       ])
 
       setEvent(eventRes.data.event)
-      setAttendees(attendeesRes.data.attendees)
-      setFilteredAttendees(attendeesRes.data.attendees)
-      setTotalCount(attendeesRes.data.total)
-      setTotalPages(attendeesRes.data.totalPages || Math.ceil(attendeesRes.data.total / pageSize))
-      setSummary(summaryRes.data.summary)
+      
+      // ✅ Safe fallback for attendees array
+      const attendeesList = attendeesRes.data?.attendees || []
+      setAttendees(attendeesList)
+      setFilteredAttendees(attendeesList)
+      setTotalCount(attendeesRes.data?.total || 0)
+      setTotalPages(attendeesRes.data?.totalPages || Math.ceil((attendeesRes.data?.total || 0) / pageSize))
+      
+      // ✅ Safe summary
+      const summaryData = summaryRes.data?.summary || {
+        totalAttendees: 0,
+        totalRevenue: 0,
+        checkedInCount: 0,
+        checkInPercentage: 0,
+        ticketBreakdown: [],
+      }
+      setSummary(summaryData)
 
-      // Extract unique ticket types for filter
-      const types = [...new Set(attendeesRes.data.attendees.map((a: Attendee) => a.ticketType))] as string[]
+      // Extract unique ticket types
+      const types = [...new Set(attendeesList.map((a: Attendee) => a.ticketType))]
       setTicketTypes(types)
     } catch (error) {
       toast.error('❌ Failed to load attendees')
@@ -382,7 +400,7 @@ export default function AttendeeListPage() {
         />
       </div>
 
-      {/* Summary Card */}
+      {/* Summary Cards */}
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
@@ -474,7 +492,7 @@ export default function AttendeeListPage() {
         </Card>
       )}
 
-      {/* =Search and Filter */}
+      {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
           <AttendeeSearch
@@ -498,12 +516,12 @@ export default function AttendeeListPage() {
         )}
       </div>
 
-      {/* Result Count */}
+      {/* Results Count - with safe fallbacks */}
       <div className="text-sm text-gray-500 flex items-center justify-between flex-wrap gap-2">
         <span>
-          Showing {filteredAttendees.length} of {attendees.length} attendees
+          Showing {filteredAttendees?.length || 0} of {attendees?.length || 0} attendees
         </span>
-        {filteredAttendees.length > 0 && (
+        {filteredAttendees?.length > 0 && (
           <span className="text-xs">
             📊 Check-in progress: {summary?.checkedInCount || 0}/{summary?.totalAttendees || 0}
           </span>
@@ -557,7 +575,7 @@ export default function AttendeeListPage() {
         />
       )}
 
-      {/* Empty State */}
+      {/* Empty State for No Results */}
       {filteredAttendees.length === 0 && attendees.length > 0 && (
         <Card>
           <CardContent className="py-12 text-center">

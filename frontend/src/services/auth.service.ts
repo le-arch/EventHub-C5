@@ -294,3 +294,4 @@ export const authService = {
     await api.post('/admin/users/batch-suspend', { user_ids: userIds })
   },
 }
+

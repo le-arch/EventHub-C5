@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Admin System Logs Page
  * 
@@ -17,7 +16,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Search,
   Filter,
@@ -68,7 +67,7 @@ import api from '@/lib/api'
 import { toast } from 'sonner'
 import { formatDate, formatTime } from '@/lib/utils'
 
-// Type definitions
+// Types
 interface LogEntry {
   id: string
   adminName: string
@@ -135,10 +134,7 @@ export default function AdminLogsPage() {
     fetchLogs()
   }, [page, pageSize])
 
-  /**
-   * Fetch system logs from API with pagination
-   */
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setLoading(true)
     try {
       const response = await api.get('/admin/logs', {
@@ -150,20 +146,21 @@ export default function AdminLogsPage() {
           targetType: targetFilter !== 'all' ? targetFilter : undefined,
         },
       })
-      setLogs(response.data.logs)
-      setTotalCount(response.data.total)
-      setTotalPages(response.data.totalPages || Math.ceil(response.data.total / pageSize))
+      setLogs(response.data.logs || [])
+      setTotalCount(response.data.total || 0)
+      setTotalPages(response.data.totalPages || Math.ceil((response.data.total || 0) / pageSize))
     } catch (error) {
       toast.error('❌ Failed to load logs')
+      setLogs([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, pageSize, searchTerm, actionFilter, targetFilter])
 
   /**
-   * Filter logs based on search term and filters
+   * Filter logs based on search term and filters (client‑side after fetch)
    */
-  const filteredLogs = logs.filter((log) => {
+  const filteredLogs = (logs || []).filter((log) => {
     const matchesSearch =
       searchTerm === '' ||
       log.adminName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -214,7 +211,7 @@ export default function AdminLogsPage() {
 
   return (
     <div className="space-y-6">
-      {/* BreadCrumb */}
+      {/* Breadcrumb */}
       <Breadcrumb 
         items={[
           { label: 'Admin', href: '/admin/users' },
@@ -237,7 +234,7 @@ export default function AdminLogsPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchLogs}>
+          <Button variant="outline" onClick={() => fetchLogs()}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh 🔄
           </Button>
@@ -248,7 +245,7 @@ export default function AdminLogsPage() {
         </div>
       </div>
 
-      {/* Search and Filter */}
+      {/* Search and Filters */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4">

@@ -17,7 +17,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import {
   Search,
@@ -112,10 +112,7 @@ export default function AdminEventsPage() {
     fetchEvents()
   }, [page, pageSize])
 
-  /**
-   * Fetch all events from API with pagination
-   */
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     setLoading(true)
     try {
       const response = await api.get('/admin/events', {
@@ -126,20 +123,21 @@ export default function AdminEventsPage() {
           status: statusFilter !== 'all' ? statusFilter : undefined,
         },
       })
-      setEvents(response.data.events)
-      setTotalCount(response.data.total)
-      setTotalPages(response.data.totalPages || Math.ceil(response.data.total / pageSize))
+      setEvents(response.data.events || [])
+      setTotalCount(response.data.total || 0)
+      setTotalPages(response.data.totalPages || Math.ceil((response.data.total || 0) / pageSize))
     } catch (error) {
       toast.error('❌ Failed to load events')
+      setEvents([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, pageSize, searchTerm, statusFilter])
 
   /**
-   * Filter events based on search term and status filter
+   * Filter events based on search term and status filter (client‑side after fetch)
    */
-  const filteredEvents = events.filter((event) => {
+  const filteredEvents = (events || []).filter((event) => {
     const matchesSearch =
       searchTerm === '' ||
       event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -252,7 +250,7 @@ export default function AdminEventsPage() {
         </div>
       </div>
 
-      {/* Search and Filter */}
+      {/* Search and Filters */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -293,7 +291,7 @@ export default function AdminEventsPage() {
         </CardContent>
       </Card>
 
-      {/* Result Count */}
+      {/* Results Count */}
       <div className="text-sm text-gray-500 flex items-center gap-2">
         <CalendarDays className="h-4 w-4" />
         Showing {filteredEvents.length} of {totalCount} event{totalCount !== 1 ? 's' : ''}
@@ -468,18 +466,31 @@ export default function AdminEventsPage() {
         </Card>
       </div>
 
-      {/* Cancel Events Dialog */}
+      {/* Cancel Event Confirmation Dialog */}
       <ConfirmationDialog
         open={!!eventToCancel}
         onOpenChange={() => setEventToCancel(null)}
         onConfirm={handleCancelEvent}
         title="❌ Cancel Event"
-        description={`Are you sure you want to cancel "${eventToCancel?.title}"? This action cannot be undone. Event will be marked as cancelled, no further ticket sales will be possible, ticket holders will be notified (if email notifications are enabled), and the event will be hidden from public listings.`}
+        description={`Are you sure you want to cancel "${eventToCancel?.title}"?`}
         confirmText="Yes, Cancel Event"
         cancelText="Back"
         variant="danger"
         isLoading={isProcessing}
-      />
+      >
+        <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
+          <div className="flex items-center gap-2 text-red-700 mb-2">
+            <AlertCircle className="h-4 w-4" />
+            <span className="font-medium">Warning! This action cannot be undone.</span>
+          </div>
+          <ul className="space-y-1 text-sm text-red-600 ml-6 list-disc">
+            <li>Event will be marked as cancelled</li>
+            <li>No further ticket sales will be possible</li>
+            <li>Ticket holders will be notified (if email notifications are enabled)</li>
+            <li>Event will be hidden from public listings</li>
+          </ul>
+        </div>
+      </ConfirmationDialog>
     </div>
   )
 }

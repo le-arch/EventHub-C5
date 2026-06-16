@@ -17,7 +17,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Search,
   Filter,
@@ -27,7 +27,6 @@ import {
   Clock,
   RefreshCw,
   AlertCircle,
-  Download,
   TrendingUp,
   Wallet,
   CreditCard,
@@ -114,7 +113,7 @@ export default function AdminTransactionsPage() {
   /**
    * Fetch all transactions from API with pagination
    */
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     setLoading(true)
     try {
       const response = await api.get('/admin/transactions', {
@@ -126,20 +125,21 @@ export default function AdminTransactionsPage() {
           method: methodFilter !== 'all' ? methodFilter : undefined,
         },
       })
-      setTransactions(response.data.transactions)
-      setTotalCount(response.data.total)
-      setTotalPages(response.data.totalPages || Math.ceil(response.data.total / pageSize))
+      setTransactions(response.data.transactions || [])
+      setTotalCount(response.data.total || 0)
+      setTotalPages(response.data.totalPages || Math.ceil((response.data.total || 0) / pageSize))
     } catch (error) {
       toast.error('❌ Failed to load transactions')
+      setTransactions([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, pageSize, searchTerm, statusFilter, methodFilter])
 
   /**
-   * Filter transactions based on search term and filters
+   * Filter transactions based on search term and filters (client-side after fetch)
    */
-  const filteredTransactions = transactions.filter((transaction) => {
+  const filteredTransactions = (transactions || []).filter((transaction) => {
     const matchesSearch =
       searchTerm === '' ||
       transaction.transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -274,13 +274,13 @@ export default function AdminTransactionsPage() {
             </p>
           </div>
         </div>
-        <Button variant="outline" onClick={fetchTransactions}>
+        <Button variant="outline" onClick={() => fetchTransactions()}>
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh 🔄
         </Button>
       </div>
 
-      {/* Search and Filter */}
+      {/* Search and Filters */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -333,13 +333,13 @@ export default function AdminTransactionsPage() {
         </CardContent>
       </Card>
 
-      {/* Result Count */}
+      {/* Results Count */}
       <div className="text-sm text-gray-500 flex items-center gap-2">
         <CreditCard className="h-4 w-4" />
         Showing {filteredTransactions.length} of {totalCount} transaction{totalCount !== 1 ? 's' : ''}
       </div>
 
-      {/* Transaction Table */}
+      {/* Transactions Table */}
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -503,7 +503,6 @@ export default function AdminTransactionsPage() {
       </div>
 
       {/* Refund Confirmation Dialog */}
-  
       <ConfirmationDialog
         open={!!transactionToRefund}
         onOpenChange={() => setTransactionToRefund(null)}

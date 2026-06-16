@@ -1,11 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * useQRScanner Hook
- * 
- * Manages QR code scanning using the device camera.
+ * * Manages QR code scanning using the device camera.
  * Provides camera permissions, scanning state, and error handling.
- * 
- * @module useQRScanner
+ * * @module useQRScanner
  */
 
 'use client'
@@ -18,7 +16,7 @@ interface UseQRScannerOptions {
   onScanSuccess?: (decodedText: string) => void
   onScanError?: (error: string) => void
   fps?: number
-  qrbox?: number
+  qrbox?: number // numeric size (e.g., 250)
   aspectRatio?: number
   disableFlip?: boolean
   verbose?: boolean
@@ -42,6 +40,12 @@ export function useQRScanner({
 
   // Check for camera availability on mount
   useEffect(() => {
+    if (typeof window === 'undefined' || !navigator?.mediaDevices) {
+      setHasCamera(false)
+      setError('❌ Media devices not supported in this browser context')
+      return
+    }
+
     const checkCamera = async () => {
       try {
         const devices = await navigator.mediaDevices.enumerateDevices()
@@ -56,7 +60,7 @@ export function useQRScanner({
         }
       } catch (err: any) {
         setHasCamera(false)
-        setError('❌ Unable to access camera. Please check permissions.')
+        setError('❌ Unable to access camera details. Please check permissions.')
         if (verbose) console.error('Camera check error:', err)
       }
     }
@@ -64,7 +68,6 @@ export function useQRScanner({
     checkCamera()
   }, [verbose])
 
-  // Start scanning
   const startScanning = useCallback(async () => {
     if (!hasCamera) {
       setError('📷 Camera not available')
@@ -77,13 +80,28 @@ export function useQRScanner({
       return
     }
 
-    // Clean up any existing scanner instance
+    // Wait for DOM container to be ready (fix for canvas size 0)
+    let container = document.getElementById(scannerId)
+    if (!container || container.offsetWidth === 0) {
+      if (verbose) console.log('Waiting for container to have dimensions...')
+      await new Promise(resolve => setTimeout(resolve, 300))
+      container = document.getElementById(scannerId)
+      if (!container || container.offsetWidth === 0) {
+        setError('❌ Scanner container element not ready in DOM')
+        return
+      }
+    }
+
+    // Clean up existing scanner instance safely
     if (scannerRef.current) {
       try {
-        await scannerRef.current.stop()
+        const state = scannerRef.current.getState()
+        if (state === Html5QrcodeScannerState.SCANNING) {
+          await scannerRef.current.stop()
+        }
         scannerRef.current.clear()
       } catch (err) {
-        // Ignore cleanup errors
+        if (verbose) console.warn('Clean up warning during startup:', err)
       }
       scannerRef.current = null
     }
@@ -93,56 +111,85 @@ export function useQRScanner({
       
       const config = {
         fps,
-        qrbox: { width: qrbox, height: qrbox },
+        qrbox: qrbox,
         aspectRatio,
         disableFlip,
       }
       
       if (verbose) console.log('Starting QR scanner with config:', config)
       
-      await scannerRef.current.start(
-        { facingMode: 'environment' }, // Use back camera
-        config,
-        (decodedText) => {
-          if (verbose) console.log('QR Code detected:', decodedText)
-          onScanSuccess?.(decodedText)
-        },
-        (errorMessage) => {
-          // Ignore scanning errors (usually just no QR in frame)
-          if (!errorMessage.includes('No MultiFormat Readers') && !errorMessage.includes('NotFoundException')) {
-            if (verbose) console.warn('Scan error:', errorMessage)
-            onScanError?.(errorMessage)
+      // Attempt starting with primary 'environment' (back) camera
+      try {
+        await scannerRef.current.start(
+          { facingMode: 'environment' },
+          config,
+          (decodedText) => {
+            if (verbose) console.log('QR Code detected:', decodedText)
+            onScanSuccess?.(decodedText)
+          },
+          (errorMessage) => {
+            if (!errorMessage.includes('No MultiFormat Readers') && !errorMessage.includes('NotFoundException')) {
+              if (verbose) console.warn('Scan error:', errorMessage)
+              onScanError?.(errorMessage)
+            }
           }
-        }
-      )
+        )
+      } catch (firstErr) {
+        // Fallback strategy: try 'user' facing mode if environment camera configuration fails
+        if (verbose) console.warn('Environment camera failed, attempting user camera fallback...', firstErr)
+        await scannerRef.current.start(
+          { facingMode: 'user' },
+          config,
+          (decodedText) => {
+            if (verbose) console.log('QR Code detected (fallback):', decodedText)
+            onScanSuccess?.(decodedText)
+          },
+          (errorMessage) => {
+            if (!errorMessage.includes('No MultiFormat Readers') && !errorMessage.includes('NotFoundException')) {
+              onScanError?.(errorMessage)
+            }
+          }
+        )
+      }
       
       setIsScanning(true)
       setError(null)
       if (verbose) console.log('QR scanner started successfully')
     } catch (err: any) {
-      const errorMsg = err.message || 'Failed to start scanner'
+      const errorMsg = err?.message || err || 'Failed to start scanner'
       setError(`❌ ${errorMsg}`)
       onScanError?.(errorMsg)
-      if (verbose) console.error('Start scanner error:', err)
+      if (verbose) console.error('Start scanner initialization threw:', err)
     }
-  }, [hasCamera, isScanning, fps, qrbox, aspectRatio, disableFlip, verbose, onScanSuccess, onScanError])
+  }, [hasCamera, isScanning, fps, qrbox, aspectRatio, disableFlip, verbose, onScanSuccess, onScanError, scannerId])
 
-  // Stop scanning
+  // Stop scanning – safely only if scanner is actually running
   const stopScanning = useCallback(async () => {
-    if (scannerRef.current && isScanning) {
-      try {
+    if (!scannerRef.current) {
+      if (verbose) console.log('No scanner instance, skipping stop')
+      return
+    }
+    try {
+      const state = scannerRef.current.getState()
+      if (state === Html5QrcodeScannerState.SCANNING) {
         await scannerRef.current.stop()
         scannerRef.current.clear()
         setIsScanning(false)
         if (verbose) console.log('QR scanner stopped')
-      } catch (err) {
-        console.error('Error stopping scanner:', err)
+      } else if (verbose) {
+        console.log(`Scanner not scanning (state: ${state}), skipping stop`)
       }
+    } catch (err) {
+      console.error('Error stopping scanner:', err)
     }
-  }, [isScanning, verbose])
+  }, [verbose])
 
-  // Request camera permission
+  // Request camera permission explicitly
   const requestCameraPermission = useCallback(async () => {
+    if (typeof window === 'undefined' || !navigator?.mediaDevices) {
+      toast.error('Media devices not supported.')
+      return false
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true })
       stream.getTracks().forEach(track => track.stop())
@@ -184,8 +231,15 @@ export function useQRScanner({
   useEffect(() => {
     return () => {
       if (scannerRef.current) {
-        scannerRef.current.stop().catch(console.error)
-        scannerRef.current.clear()
+        try {
+          const state = scannerRef.current.getState()
+          if (state === Html5QrcodeScannerState.SCANNING) {
+            scannerRef.current.stop().catch(console.error)
+          }
+          scannerRef.current.clear()
+        } catch (err) {
+          // ignore cleanup errors on sudden unmounts
+        }
       }
     }
   }, [])
