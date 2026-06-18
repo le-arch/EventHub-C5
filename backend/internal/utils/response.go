@@ -94,3 +94,27 @@ type TicketTypeResponse struct {
 	
 }
 
+type OrderResponse struct {
+	ID              uuid.UUID `json:"id"`
+	EventID         uuid.UUID `json:"event_id"`
+	TicketTypeID    uuid.UUID `json:"ticket_type_id"`
+	AttendeeName    string    `json:"attendee_name"`
+	AttendeePhone   string    `json:"attendee_phone"`
+	AttendeeEmail   *string   `json:"attendee_email,omitempty"`
+	Quantity        int32     `json:"quantity"`
+	UnitPrice       int32     `json:"unit_price"`
+	TotalAmount     int32     `json:"total_amount"`
+	PaymentStatus   string    `json:"payment_status"`
+	TransactionID   *string   `json:"transaction_id,omitempty"`
+	QRCodeHash      string    `json:"qr_code_hash"`
+	QRCodeImageURL  string    `json:"qr_code_image_url"`
+	IsUsed          *bool      `json:"is_used"`
+	CreatedAt       string    `json:"created_at"`
+}
+
+
+
+type PaymentResponse struct {
+	TransactionID string `json:"transactionId"`
+	Status        string `json:"status"`
+}

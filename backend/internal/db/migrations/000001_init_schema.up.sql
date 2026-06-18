@@ -1,5 +1,6 @@
 CREATE TYPE user_role AS ENUM ('organizer', 'admin');
 CREATE TYPE event_status AS ENUM ('draft', 'published', 'cancelled', 'suspended', 'archived');
+CREATE TYPE payment_status AS ENUM ('pending', 'paid', 'failed', 'cancelled', 'refunded');
 
 -- Enable required UUID generation extensions
 CREATE EXTENSION "uuid-ossp";
@@ -68,19 +69,21 @@ CREATE TABLE orders (
     unit_price INT NOT NULL,
     total_amount INT NOT NULL,
     
-    payment_status VARCHAR(20) DEFAULT 'pending', 
-    payment_method VARCHAR(20) DEFAULT 'mobile_money', 
+    payment_status payment_status NOT NULL DEFAULT 'pending', 
+    payment_method VARCHAR(20) DEFAULT 'mtn_momo'
+        CHECK (payment_method IN ('mtn_momo', 'orange_money', 'credit card')), 
     transaction_id VARCHAR(255) UNIQUE,
     payment_received_at TIMESTAMP,
     payment_webhook_received BOOLEAN DEFAULT FALSE,
     
     qr_code_hash VARCHAR(255) UNIQUE NOT NULL,
-    qr_code_image_url TEXT,
-    qr_code_plaintext TEXT,
+    qr_code_image_url TEXT DEFAULT '',
+    qr_code_plaintext TEXT NOT NULL DEFAULT '',
     
     is_used BOOLEAN DEFAULT FALSE,
     used_at TIMESTAMP,
     checked_in_by UUID REFERENCES users(id),
+    platform_fee INT NOT NULL DEFAULT 0,
     
     device_info TEXT,
     ip_address INET,

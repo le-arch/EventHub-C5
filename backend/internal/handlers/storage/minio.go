@@ -1,15 +1,16 @@
 package storage
 
 import (
-    "context"
-    "fmt"
-    "log"
-    "mime/multipart"
-    "path/filepath"
+	"bytes"
+	"context"
+	"fmt"
+	"log"
+	"mime/multipart"
+	"path/filepath"
 
-    "github.com/minio/minio-go/v7"
-    "github.com/minio/minio-go/v7/pkg/credentials"
-    "github.com/google/uuid"
+	"github.com/google/uuid"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 type MinioClient struct {
@@ -77,4 +78,16 @@ func (m *MinioClient) UploadEventImage(file multipart.File, fileHeader *multipar
     }
     _ = info // can be used for logging
     return publicURL, nil
+}
+
+func (m *MinioClient) UploadFile(ctx context.Context, objectName string, data []byte, contentType string) (string, error) {
+	reader := bytes.NewReader(data)
+	_, err := m.Client.PutObject(ctx, m.BucketName, objectName, reader, int64(len(data)), minio.PutObjectOptions{
+		ContentType: contentType,
+	})
+	if err != nil {
+		return "", err
+	}
+	// Return public URL (assuming bucket is public)
+	return fmt.Sprintf("https://%s/%s/%s", m.Endpoint, m.BucketName, objectName), nil
 }

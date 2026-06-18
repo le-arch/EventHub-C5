@@ -19,6 +19,7 @@ import (
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
 	"github.com/le-arch/EventHub-C5/internal/handlers"
 	"github.com/le-arch/EventHub-C5/internal/handlers/storage"
+	"github.com/le-arch/EventHub-C5/internal/payment"
 )
 
 // DBConfig holds the database configuration. This struct is populated from the .env in the current directory.
@@ -47,8 +48,24 @@ type Config struct {
 	FrontendOrigin string `conf:"env:FRONTEND_ORIGIN,required"`
 	GmailUser      string `conf:"env:GMAIL_USER,required"`
     GmailPassword  string `conf:"env:GMAIL_PASSWORD,required"`
+	qrSecret		string `conf:"env:QR_HMAC_SECRET"`
 	DB             DBConfig
 	Minio          MinioConfig
+	Payment        PaymentConfig
+	Momo           MomoConfig
+}
+
+type PaymentConfig struct {
+	momoSecret  string `conf:"env:MTN_MOMO_WEBHOOK_SECRET,required"`
+}
+
+type MomoConfig struct {
+	APIURL     string `conf:"env:MTN_MOMO_API_URL"`
+	SubscriptionKey string `conf:"env:MTN_MOMO_SUBSCRIPTION_KEY"`
+	APIUser		string `conf:"MTN_MOMO_API_USER"`
+	APIKey string `conf:"env:MTN_MOMO_API_KEY"`
+	TargetEnvironment      string `conf:"env:MTN_MOMO_TARGET_ENVIRONMENT"`
+    CallbackURL  string `conf:"env:MTN_MOMO_CALLBACK_URL"`
 }
 
 
@@ -106,7 +123,17 @@ func run() error {
 		log.Fatal("Failed to create MinIO client:", err)
 	}
 
-	handler := handlers.NewEventHubHandler(querier, otpHandler, revocationStore, config.JWTSecret, config.FrontendOrigin, config.GmailUser, config.GmailPassword, minioClient).WireHttpHandler()
+	paymentClient := payment.NewWebhookHandler(querier, config.Payment.momoSecret)
+	momoCfg := payment.Config{
+		APIURL: config.Momo.APIURL,
+		SubscriptionKey: config.Momo.SubscriptionKey,APIUser: config.Momo.APIUser,
+		APIKey: config.Momo.APIKey,
+		TargetEnvironment: config.Momo.TargetEnvironment,
+		CallbackURL: config.Momo.CallbackURL,
+	}
+	momoClient := payment.NewClient(momoCfg)
+
+	handler := handlers.NewEventHubHandler(querier, otpHandler, revocationStore, config.JWTSecret, config.FrontendOrigin, config.GmailUser, config.GmailPassword,config.qrSecret, paymentClient, minioClient, momoClient).WireHttpHandler()
 
 	
 	// And finally we start the HTTP server on the configured port.
