@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Registration Page Component
  * 
@@ -16,6 +17,8 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import Image from 'next/image'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
@@ -27,8 +30,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuthStore } from '@/store/authStore'
 import { toast } from 'sonner'
 
-// Validation schema for registration form
-// Includes full name, email, phone (Cameroon format), and password confirmation
 const registerSchema = z.object({
   fullName: z.string()
     .min(3, 'Full name must be at least 3 characters')
@@ -41,7 +42,7 @@ const registerSchema = z.object({
   
   phone: z.string()
     .min(1, 'Phone number is required')
-    .regex(/^[0-9]{9}$/, 'Phone number must be 9 digits starting with +237 (e.g., +237612345678)'),
+    .regex(/^[0-9]{9}$/, 'Phone number must be exactly 9 digits'),
   
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
@@ -63,7 +64,6 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  // Initialize react-hook-form with zod validation
   const {
     register,
     handleSubmit,
@@ -79,15 +79,8 @@ export default function RegisterPage() {
     },
   })
 
-  /**
-   * Handles form submission
-   * Creates new organizer account
-   * On success: stores email for OTP verification and redirects
-   * On error: displays error message
-   */
   const onSubmit = async (data: RegisterFormValues) => {
     try {
-      // Call registration API
       await registerUser({
         fullName: data.fullName,
         email: data.email,
@@ -95,9 +88,7 @@ export default function RegisterPage() {
         password: data.password,
       })
       
-      // Store email for OTP verification page
       localStorage.setItem('verify_email', data.email)
-      
       toast.success('Account created! Please verify your email address.')
       router.push('/verify-otp')
     } catch (error: any) {
@@ -107,184 +98,188 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card className="shadow-lg border-0">
-      <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
-        <CardDescription>
-          Join EventHub to start managing your events
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 py-12 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-50/50 via-slate-50 to-blue-50/50 antialiased selection:bg-indigo-500/10">
+      <div className="w-full max-w-md space-y-6">
+        
+        {/* App Branding Top Header */}
+        <div className="flex flex-col items-center text-center space-y-2">
+          <div className="p-3 bg-white border border-slate-200/60 rounded-2xl shadow-sm backdrop-blur-md">
+            <Image src="/images/logo.svg" alt="Logo" width={40} height={40} className="w-10 h-10" />
+          </div>
+          <h1 className="text-2xl font-black tracking-tight text-slate-900">EventHub</h1>
+        </div>
+
+        {/* Premium Frosted Glass Card Wrapper */}
+        <Card className="shadow-[0_8px_32px_rgba(0,0,0,0.04)] border-white/40 bg-white/60 backdrop-blur-xl rounded-2xl">
+          <CardHeader className="space-y-1.5 pb-6 text-center">
+            <CardTitle className="text-xl font-bold text-slate-800">Create Account</CardTitle>
+            <CardDescription className="text-slate-500 text-sm">
+              Join EventHub to start managing your events
+            </CardDescription>
+          </CardHeader>
           
-          {/* Full Name Field */}
-          <div className="space-y-2">
-            <Label htmlFor="fullName">
-              Full Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="fullName"
-              type="text"
-              placeholder="John Doe"
-              {...register('fullName')}
-              aria-invalid={!!errors.fullName}
-              disabled={isLoading}
-              className={errors.fullName ? 'border-red-500' : ''}
-            />
-            {errors.fullName && (
-              <p className="text-sm text-red-500 mt-1">{errors.fullName.message}</p>
-            )}
-            <p className="text-xs text-gray-400">
-              Your full name will be displayed on your organizer profile
-            </p>
-          </div>
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              
+              {/* Full Name Field */}
+              <div className="space-y-1.5">
+                <Label htmlFor="fullName" className="text-xs font-semibold text-slate-700 tracking-wide uppercase">
+                  Full Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="John Doe"
+                  {...register('fullName')}
+                  aria-invalid={!!errors.fullName}
+                  disabled={isLoading}
+                  className={`h-11 rounded-xl bg-white/80 border-slate-200/80 shadow-sm transition-all focus-visible:ring-indigo-500 focus-visible:border-indigo-500 ${errors.fullName ? 'border-red-400' : ''}`}
+                />
+                {errors.fullName ? (
+                  <p className="text-xs font-medium text-red-500 mt-1">⚠️ {errors.fullName.message}</p>
+                ) : (
+                  <p className="text-[11px] text-slate-400 pl-1">Your public profile name</p>
+                )}
+              </div>
 
-          {/* Email Field */}
-          <div className="space-y-2">
-            <Label htmlFor="email">
-              Email Address <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="john@example.com"
-              {...register('email')}
-              aria-invalid={!!errors.email}
-              disabled={isLoading}
-              className={errors.email ? 'border-red-500' : ''}
-            />
-            {errors.email && (
-              <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
-            )}
-            <p className="text-xs text-gray-400">
-              We&apos;ll send a verification code to this email
-            </p>
-          </div>
+              {/* Email Field */}
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-xs font-semibold text-slate-700 tracking-wide uppercase">
+                  Email Address <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="john@example.com"
+                  {...register('email')}
+                  aria-invalid={!!errors.email}
+                  disabled={isLoading}
+                  className={`h-11 rounded-xl bg-white/80 border-slate-200/80 shadow-sm transition-all focus-visible:ring-indigo-500 focus-visible:border-indigo-500 ${errors.email ? 'border-red-400' : ''}`}
+                />
+                {errors.email ? (
+                  <p className="text-xs font-medium text-red-500 mt-1">⚠️ {errors.email.message}</p>
+                ) : (
+                  <p className="text-[11px] text-slate-400 pl-1">Requires active OTP verification token</p>
+                )}
+              </div>
 
-          {/* Phone Number Field (Cameroon Format) */}
-          <div className="space-y-2">
-            <Label htmlFor="phone">
-              Phone Number <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                +237
-              </span>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="612345678"
-                className="pl-14"
-                {...register('phone')}
-                aria-invalid={!!errors.phone}
+              {/* Phone Number Field */}
+              <div className="space-y-1.5">
+                <Label htmlFor="phone" className="text-xs font-semibold text-slate-700 tracking-wide uppercase">
+                  Phone Number <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-3.5 text-sm font-semibold text-slate-400 select-none">
+                    +237
+                  </span>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="612345678"
+                    className="pl-14 h-11 rounded-xl bg-white/80 border-slate-200/80 shadow-sm focus-visible:ring-indigo-500 focus-visible:border-indigo-500"
+                    {...register('phone')}
+                    aria-invalid={!!errors.phone}
+                    disabled={isLoading}
+                  />
+                </div>
+                {errors.phone && (
+                  <p className="text-xs font-medium text-red-500 mt-1">⚠️ {errors.phone.message}</p>
+                )}
+              </div>
+
+              {/* Password Field */}
+              <div className="space-y-1.5">
+                <Label htmlFor="password" className="text-xs font-semibold text-slate-700 tracking-wide uppercase">
+                  Password <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Create a strong password"
+                    {...register('password')}
+                    aria-invalid={!!errors.password}
+                    disabled={isLoading}
+                    className={`h-11 rounded-xl bg-white/80 border-slate-200/80 shadow-sm transition-all pr-10 focus-visible:ring-indigo-500 focus-visible:border-indigo-500 ${errors.password ? 'border-red-400' : ''}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {errors.password ? (
+                  <p className="text-xs font-medium text-red-500 mt-1">⚠️ {errors.password.message}</p>
+                ) : (
+                  <p className="text-[11px] text-slate-400 pl-1">Min 8 chars, 1 uppercase letter, 1 digit</p>
+                )}
+              </div>
+
+              {/* Confirm Password Field */}
+              <div className="space-y-1.5">
+                <Label htmlFor="confirmPassword" className="text-xs font-semibold text-slate-700 tracking-wide uppercase">
+                  Confirm Password <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Confirm your password"
+                    {...register('confirmPassword')}
+                    aria-invalid={!!errors.confirmPassword}
+                    disabled={isLoading}
+                    className={`h-11 rounded-xl bg-white/80 border-slate-200/80 shadow-sm transition-all pr-10 focus-visible:ring-indigo-500 focus-visible:border-indigo-500 ${errors.confirmPassword ? 'border-red-400' : ''}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-xs font-medium text-red-500 mt-1">⚠️ {errors.confirmPassword.message}</p>
+                )}
+              </div>
+
+              {/* Submit Button */}
+              <Button 
+                type="submit" 
+                className="w-full h-11 rounded-xl font-medium bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 transition-all text-white shadow-md shadow-indigo-600/10 mt-4" 
                 disabled={isLoading}
-              />
-            </div>
-            {errors.phone && (
-              <p className="text-sm text-red-500 mt-1">{errors.phone.message}</p>
-            )}
-            <p className="text-xs text-gray-400">
-              Enter your phone number without the country code (e.g., 612345678)
-            </p>
-          </div>
-
-          {/* Password Field */}
-          <div className="space-y-2">
-            <Label htmlFor="password">
-              Password <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Create a strong password"
-                {...register('password')}
-                aria-invalid={!!errors.password}
-                disabled={isLoading}
-                className={errors.password ? 'border-red-500' : ''}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
-                {showPassword ? '👁️' : '👁️‍🗨️'}
-              </button>
-            </div>
-            {errors.password && (
-              <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
-            )}
-            <p className="text-xs text-gray-400">
-              Must be at least 8 characters with one uppercase letter and one number
-            </p>
-          </div>
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-white" />
+                    Creating account...
+                  </span>
+                ) : (
+                  'Create Account'
+                )}
+              </Button>
 
-          {/* Confirm Password Field */}
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">
-              Confirm Password <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative">
-              <Input
-                id="confirmPassword"
-                type={showConfirmPassword ? 'text' : 'password'}
-                placeholder="Confirm your password"
-                {...register('confirmPassword')}
-                aria-invalid={!!errors.confirmPassword}
-                disabled={isLoading}
-                className={errors.confirmPassword ? 'border-red-500' : ''}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-              >
-                {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
-              </button>
-            </div>
-            {errors.confirmPassword && (
-              <p className="text-sm text-red-500 mt-1">{errors.confirmPassword.message}</p>
-            )}
-          </div>
+              {/* Terms Agreement Notice */}
+              <p className="text-[11px] text-center text-slate-400 px-4 mt-3">
+                By signing up, you accept our{' '}
+                <Link href="/terms" className="text-indigo-500 font-medium hover:underline">Terms</Link>
+                {' '}and{' '}
+                <Link href="/privacy" className="text-indigo-500 font-medium hover:underline">Privacy Policy</Link>.
+              </p>
 
-          {/* Submit Button */}
-          <Button 
-            type="submit" 
-            className="w-full" 
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <span className="flex items-center gap-2">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Creating account...
-              </span>
-            ) : (
-              'Create Account'
-            )}
-          </Button>
-
-          {/* Terms Agreement Notice */}
-          <p className="text-xs text-center text-gray-500">
-            By creating an account, you agree to our{' '}
-            <Link href="/terms" className="text-primary hover:underline">
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link href="/privacy" className="text-primary hover:underline">
-              Privacy Policy
-            </Link>
-          </p>
-
-          {/* Link to Login Page */}
-          <p className="text-center text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link href="/login" className="text-primary hover:underline font-medium">
-              Log in
-            </Link>
-          </p>
-        </form>
-      </CardContent>
-    </Card>
+              {/* Link to Login Page */}
+              <p className="text-center text-sm text-slate-600 pt-3 border-t border-slate-200/40">
+                Already have an account?{' '}
+                <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-semibold transition-colors">
+                  Log in
+                </Link>
+              </p>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   )
 }

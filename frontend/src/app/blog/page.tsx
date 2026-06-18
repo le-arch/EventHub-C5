@@ -2,6 +2,7 @@
  * Blog Listing Page
  * 
  * Displays 5 blog posts across 5 categories.
+ * Purple/Blue theme with consistent styling.
  * 
  * @module BlogPage
  */
@@ -10,8 +11,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-// import Image from 'next/image'
-import { Calendar, User, Clock, Search } from 'lucide-react'
+import { Calendar, User, Clock, Search, RefreshCw } from 'lucide-react'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
@@ -97,6 +97,16 @@ const blogPosts: BlogPost[] = [
 
 const categories = ['All', 'Tutorial', 'Technology', 'Trends', 'News', 'Case Studies']
 
+// Category colors for badges and buttons
+const categoryColors: Record<string, { bg: string; text: string; border: string; active: string }> = {
+  'All': { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-300', active: 'bg-purple-600 text-white hover:bg-purple-700' },
+  'Tutorial': { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-300', active: 'bg-blue-600 text-white hover:bg-blue-700' },
+  'Technology': { bg: 'bg-indigo-100', text: 'text-indigo-700', border: 'border-indigo-300', active: 'bg-indigo-600 text-white hover:bg-indigo-700' },
+  'Trends': { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-300', active: 'bg-emerald-600 text-white hover:bg-emerald-700' },
+  'News': { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-300', active: 'bg-amber-600 text-white hover:bg-amber-700' },
+  'Case Studies': { bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-300', active: 'bg-rose-600 text-white hover:bg-rose-700' },
+}
+
 export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
@@ -141,11 +151,16 @@ export default function BlogPage() {
     }
   }
 
+  const getCategoryColor = (category: string) => {
+    return categoryColors[category] || categoryColors['All']
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-8">
-          <Skeleton className="h-8 w-48 mb-4" />
+          <Skeleton className="h-6 w-64 mb-4" />
+          <Skeleton className="h-48 w-full rounded-xl mb-8" />
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5].map((i) => (
               <Card key={i}>
@@ -163,17 +178,22 @@ export default function BlogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-primary/10 to-primary/5 py-16">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      {/* Hero Section with Purple/Blue Gradient */}
+      <div className="bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 py-16 text-white">
         <div className="container mx-auto px-4">
           <Breadcrumb 
-            items={[{ label: 'Blog', href: '#', isActive: true }]}
+            items={[
+              { label: 'Blog', href: '#', isActive: true },
+            ]}
             showHome
           />
           <div className="text-center mt-8">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">EventHub Blog 📝</h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <div className="inline-block bg-white/20 backdrop-blur-sm px-4 py-1 rounded-full text-sm font-medium mb-4">
+              📝 Latest Articles
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg">EventHub Blog</h1>
+            <p className="text-xl text-white/90 max-w-2xl mx-auto drop-shadow">
               Insights, tips, and news for event organizers in Cameroon
             </p>
           </div>
@@ -184,46 +204,55 @@ export default function BlogPage() {
         {/* Search and Filter */}
         <div className="flex flex-col md:flex-row justify-between gap-4 mb-8">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-400" />
             <Input
               placeholder="🔍 Search articles..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 border-purple-200 focus:border-purple-500 focus:ring-purple-500"
             />
           </div>
           <div className="flex gap-2 flex-wrap">
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCategory(category)}
-                className="rounded-full"
-              >
-                {getCategoryEmoji(category)} {category}
-                {category !== 'All' && (
-                  <span className="ml-1 text-xs opacity-70">
-                    ({posts.filter(p => p.category === category).length})
-                  </span>
-                )}
-              </Button>
-            ))}
+            {categories.map((category) => {
+              const colors = getCategoryColor(category)
+              const isActive = selectedCategory === category
+              return (
+                <Button
+                  key={category}
+                  variant={isActive ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedCategory(category)}
+                  className={`rounded-full transition-all duration-200 ${
+                    isActive 
+                      ? colors.active 
+                      : `${colors.bg} ${colors.text} ${colors.border} hover:bg-${category === 'All' ? 'purple' : category.toLowerCase()}-200`
+                  }`}
+                >
+                  {getCategoryEmoji(category)} {category}
+                  {category !== 'All' && (
+                    <span className="ml-1 text-xs opacity-70">
+                      ({posts.filter(p => p.category === category).length})
+                    </span>
+                  )}
+                </Button>
+              )
+            })}
           </div>
         </div>
 
         {/* Results Count */}
         {filteredPosts.length > 0 && (
-          <div className="text-sm text-gray-500 mb-4">
-            Found {filteredPosts.length} article{filteredPosts.length !== 1 ? 's' : ''}
+          <div className="text-sm text-gray-500 mb-4 flex items-center gap-2">
+            <span className="inline-block w-2 h-2 bg-purple-500 rounded-full" />
+            Found <span className="font-semibold text-purple-700">{filteredPosts.length}</span> article{filteredPosts.length !== 1 ? 's' : ''}
           </div>
         )}
 
         {/* Blog Grid */}
         {filteredPosts.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="text-6xl mb-4">🔍</div>
-            <p className="text-gray-500">No posts found matching your criteria 📭</p>
+            <p className="text-gray-500 text-lg">No posts found matching your criteria 📭</p>
             {(searchTerm || selectedCategory !== 'All') && (
               <Button
                 variant="link"
@@ -231,7 +260,7 @@ export default function BlogPage() {
                   setSearchTerm('')
                   setSelectedCategory('All')
                 }}
-                className="mt-2"
+                className="mt-2 text-purple-600"
               >
                 Clear filters
               </Button>
@@ -239,38 +268,47 @@ export default function BlogPage() {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPosts.map((post) => (
-              <Link href={`/blog/${post.slug}`} key={post.id}>
-                <Card className="h-full card-hover cursor-pointer">
-                  <div className="relative h-48 bg-gradient-to-br from-primary/20 to-primary/10 rounded-t-lg flex items-center justify-center">
-                    <span className="text-6xl">{getCategoryEmoji(post.category)}</span>
-                    <Badge className="absolute top-3 right-3 bg-white/90 text-gray-800">
-                      {getCategoryEmoji(post.category)} {post.category}
-                    </Badge>
-                  </div>
-                  <CardHeader>
-                    <CardTitle className="line-clamp-2">{post.title}</CardTitle>
-                    <div className="line-clamp-2 text-sm text-gray-600 mt-2">
-                      {post.excerpt}
+            {filteredPosts.map((post) => {
+              const colors = getCategoryColor(post.category)
+              return (
+                <Link href={`/blog/${post.slug}`} key={post.id}>
+                  <Card className="h-full card-hover cursor-pointer border-t-4 border-t-purple-500 hover:shadow-xl transition-all duration-300">
+                    <div className={`relative h-48 bg-gradient-to-br from-${post.category === 'Tutorial' ? 'blue' : post.category === 'Technology' ? 'indigo' : post.category === 'Trends' ? 'emerald' : post.category === 'News' ? 'amber' : 'rose'}-100 to-purple-100 rounded-t-lg flex items-center justify-center`}>
+                      <span className="text-7xl opacity-80">{getCategoryEmoji(post.category)}</span>
+                      <Badge className={`absolute top-3 right-3 ${colors.bg} ${colors.text} border ${colors.border} shadow-sm`}>
+                        {getCategoryEmoji(post.category)} {post.category}
+                      </Badge>
                     </div>
-                  </CardHeader>
-                  <CardFooter className="flex justify-between text-xs text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <User className="h-3 w-3" />
-                      <span>{post.author}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-3 w-3" />
-                      <span>{formatDate(post.publishedAt)}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-3 w-3" />
-                      <span>{post.readTime} min</span>
-                    </div>
-                  </CardFooter>
-                </Card>
-              </Link>
-            ))}
+                    <CardHeader>
+                      <CardTitle className="line-clamp-2 text-gray-800 hover:text-purple-700 transition-colors">
+                        {post.title}
+                      </CardTitle>
+                      <div className="line-clamp-2 text-sm text-gray-600 mt-2 leading-relaxed">
+                        {post.excerpt}
+                      </div>
+                    </CardHeader>
+                    <CardFooter className="flex justify-between text-xs text-gray-500 pt-2 border-t border-gray-100">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
+                          <User className="h-3 w-3 text-purple-600" />
+                        </div>
+                        <span className="font-medium">{post.author}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3 text-purple-400" />
+                          <span>{formatDate(post.publishedAt)}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3 text-purple-400" />
+                          <span>{post.readTime} min</span>
+                        </div>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                </Link>
+              )
+            })}
           </div>
         )}
       </div>

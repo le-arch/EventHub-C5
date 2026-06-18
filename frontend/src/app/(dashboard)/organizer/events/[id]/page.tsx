@@ -25,8 +25,10 @@ import {
   CheckCircle, 
   AlertCircle,
   Eye,
-  EyeOff
+  EyeOff,
+  RefreshCw,
 } from 'lucide-react'
+import { ShareEventButton } from '@/components/events/ShareEventButton'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
@@ -49,7 +51,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 
 // Custom components
@@ -111,6 +112,8 @@ interface TicketType {
   quantitySold: number
 }
 
+type TabKey = 'details' | 'tickets'
+
 export default function EditEventPage() {
   const params = useParams()
   const router = useRouter()
@@ -118,7 +121,7 @@ export default function EditEventPage() {
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([])
   const [loading, setLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState('details')
+  const [activeTab, setActiveTab] = useState<TabKey>('details')
   const [showPublishDialog, setShowPublishDialog] = useState(false)
   const [showUnpublishDialog, setShowUnpublishDialog] = useState(false)
 
@@ -162,7 +165,6 @@ export default function EditEventPage() {
       const eventData = eventRes.data.event
       setEvent(eventData)
       
-      // Format date for input
       const formattedDate = eventData.startDate.split('T')[0]
       
       form.reset({
@@ -175,7 +177,6 @@ export default function EditEventPage() {
         status: eventData.status,
       })
       
-      // ✅ Ensure ticketTypes is always an array
       const ticketData = ticketsRes.data.ticket_types || []
       setTicketTypes(ticketData)
       ticketForm.reset({
@@ -195,9 +196,6 @@ export default function EditEventPage() {
     }
   }
 
-  /**
-   * Save event details
-   */
   const handleSaveEvent = async (data: z.infer<typeof eventSchema>) => {
     setIsSaving(true)
     try {
@@ -211,9 +209,6 @@ export default function EditEventPage() {
     }
   }
 
-  /**
-   * Save ticket types
-   */
   const handleSaveTickets = async (data: z.infer<typeof ticketFormSchema>) => {
     setIsSaving(true)
     try {
@@ -234,9 +229,6 @@ export default function EditEventPage() {
     }
   }
 
-  /**
-   * Publish event
-   */
   const handlePublish = async () => {
     setIsSaving(true)
     try {
@@ -251,9 +243,6 @@ export default function EditEventPage() {
     }
   }
 
-  /**
-   * Unpublish event
-   */
   const handleUnpublish = async () => {
     setIsSaving(true)
     try {
@@ -268,11 +257,22 @@ export default function EditEventPage() {
     }
   }
 
+  // Tab configuration
+  const tabs: { key: TabKey; label: string; icon: React.ReactNode; accent: string }[] = [
+    { key: 'details', label: 'Event Details', icon: <Calendar className="h-4 w-4" />, accent: 'purple' },
+    { key: 'tickets', label: 'Ticket Types', icon: <Ticket className="h-4 w-4" />, accent: 'blue' },
+  ]
+
+  const accentColors: Record<string, string> = {
+    purple: 'text-purple-700 border-b-purple-600 bg-purple-50',
+    blue: 'text-blue-700 border-b-blue-600 bg-blue-50',
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-6 w-64" />
-        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-24 w-full" />
         <div className="grid grid-cols-3 gap-4">
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />
@@ -286,8 +286,6 @@ export default function EditEventPage() {
   if (!event) return null
 
   const isPublished = event.status === 'published'
-
-  // ✅ Safe calculation of total tickets sold
   const totalTicketsSold = ticketTypes.reduce((sum, t) => sum + (t.quantitySold || 0), 0)
 
   return (
@@ -303,116 +301,149 @@ export default function EditEventPage() {
         showHome
       />
 
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Calendar className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Edit Event ✏️</h1>
-            <p className="text-gray-500 mt-1">
-              Update your event details and manage ticket types
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          {isPublished ? (
-            <Button 
-              variant="outline" 
-              onClick={() => setShowUnpublishDialog(true)} 
-              disabled={isSaving}
-              className="border-amber-500 text-amber-600 hover:bg-amber-50"
-            >
-              <EyeOff className="h-4 w-4 mr-2" />
-              Unpublish 📝
-            </Button>
-          ) : (
-            <Button 
-              onClick={() => setShowPublishDialog(true)} 
-              disabled={isSaving}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Publish Event 🚀
-            </Button>
-          )}
-        </div>
-      </div>
+      {/* Header with Purple/Blue Gradient */}
+<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 p-5 rounded-xl shadow-lg text-white">
+  <div className="flex items-center gap-3">
+    <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+      <Calendar className="h-7 w-7" />
+    </div>
+    <div>
+      <h1 className="text-2xl font-bold">Edit Event ✏️</h1>
+      <p className="text-white/80 text-sm mt-0.5">
+        Update your event details and manage ticket types
+      </p>
+    </div>
+  </div>
+  
+  <div className="flex flex-wrap gap-2">
+    {/* Only display the share button if the event is published */}
+    {isPublished && (
+      <ShareEventButton
+        eventId={event.id}
+        eventTitle={event.title}
+        eventDate={event.startDate}
+        venueName={event.venueName}
+        variant="outline"
+        className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:text-white backdrop-blur-sm"
+      />
+    )}
 
-      {/* Stats Cards */}
+    {isPublished ? (
+      <Button 
+        variant="outline" 
+        onClick={() => setShowUnpublishDialog(true)} 
+        disabled={isSaving}
+        className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:text-white backdrop-blur-sm"
+      >
+        <EyeOff className="h-4 w-4 mr-2" />
+        Unpublish 📝
+      </Button>
+    ) : (
+      <Button 
+        onClick={() => setShowPublishDialog(true)} 
+        disabled={isSaving}
+        className="bg-white text-purple-600 hover:bg-gray-100"
+      >
+        <Eye className="h-4 w-4 mr-2" />
+        Publish Event 🚀
+      </Button>
+    )}
+  </div>
+</div>
+      {/* Stats Cards with Gradients */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-md">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Calendar className="h-5 w-5 text-primary" />
+              <div className="p-2 bg-purple-200 rounded-lg">
+                <Calendar className="h-5 w-5 text-purple-700" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{formatDate(event.startDate)}</p>
-                <p className="text-xs text-gray-500">at {formatTime(event.startTime)}</p>
+                <p className="text-2xl font-bold text-purple-700">{formatDate(event.startDate)}</p>
+                <p className="text-xs text-purple-600">at {formatTime(event.startTime)}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-md">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <MapPin className="h-5 w-5 text-primary" />
+              <div className="p-2 bg-blue-200 rounded-lg">
+                <MapPin className="h-5 w-5 text-blue-700" />
               </div>
               <div>
-                <p className="font-semibold">{event.venueName}</p>
-                <p className="text-xs text-gray-500">{event.city}</p>
+                <p className="font-semibold text-blue-800">{event.venueName}</p>
+                <p className="text-xs text-blue-600">{event.city}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 shadow-md">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Ticket className="h-5 w-5 text-primary" />
+              <div className="p-2 bg-emerald-200 rounded-lg">
+                <Ticket className="h-5 w-5 text-emerald-700" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{totalTicketsSold}</p>
-                <p className="text-xs text-gray-500">tickets sold 🎟️</p>
+                <p className="text-2xl font-bold text-emerald-700">{totalTicketsSold}</p>
+                <p className="text-xs text-emerald-600">tickets sold 🎟️</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="details" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Event Details 📅
-          </TabsTrigger>
-          <TabsTrigger value="tickets" className="flex items-center gap-2">
-            <Ticket className="h-4 w-4" />
-            Ticket Types 🎟️
-          </TabsTrigger>
-        </TabsList>
+      {/* Horizontal Nav Bar Tabs */}
+      <div className="w-full bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+        <div className="flex w-full overflow-x-auto">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.key
+            const activeClass = isActive
+              ? accentColors[tab.accent]
+              : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`
+                  flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200
+                  border-b-2 border-transparent whitespace-nowrap flex-1 justify-center
+                  ${activeClass}
+                  ${isActive ? `border-b-${tab.accent === 'purple' ? 'purple' : tab.accent}-600` : 'hover:border-gray-300'}
+                `}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
 
+      {/* Content Panels */}
+      <div className="w-full">
         {/* Event Details Tab */}
-        <TabsContent value="details">
-          <Card>
+        {activeTab === 'details' && (
+          <Card className="w-full border-l-4 border-l-purple-500 shadow-md">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-primary" />
+              <CardTitle className="flex items-center gap-2 text-purple-700">
+                <Calendar className="h-5 w-5 text-purple-500" />
                 Event Information
               </CardTitle>
               <CardDescription>
                 Update your event details below
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <form id="event-form" onSubmit={form.handleSubmit(handleSaveEvent)} className="space-y-4">
+            <form id="event-form" onSubmit={form.handleSubmit(handleSaveEvent)}>
+              <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="title">Event Title *</Label>
-                  <Input id="title" placeholder="e.g., Douala Music Fest 2025" {...form.register('title')} />
+                  <Label htmlFor="title" className="text-gray-700 font-medium">Event Title *</Label>
+                  <Input
+                    id="title"
+                    placeholder="e.g., Douala Music Fest 2025"
+                    {...form.register('title')}
+                    className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                  />
                   {form.formState.errors.title && (
                     <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" /> {form.formState.errors.title.message}
@@ -421,14 +452,25 @@ export default function EditEventPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="description">Description 📝</Label>
-                  <Textarea id="description" rows={5} placeholder="Describe your event..." {...form.register('description')} />
+                  <Label htmlFor="description" className="text-gray-700 font-medium">Description 📝</Label>
+                  <Textarea
+                    id="description"
+                    rows={5}
+                    placeholder="Describe your event..."
+                    {...form.register('description')}
+                    className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="venueName">Venue Name *</Label>
-                    <Input id="venueName" placeholder="e.g., Palais des Congrès" {...form.register('venueName')} />
+                    <Label htmlFor="venueName" className="text-gray-700 font-medium">Venue Name *</Label>
+                    <Input
+                      id="venueName"
+                      placeholder="e.g., Palais des Congrès"
+                      {...form.register('venueName')}
+                      className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                    />
                     {form.formState.errors.venueName && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
                         <AlertCircle className="h-3 w-3" /> {form.formState.errors.venueName.message}
@@ -436,12 +478,12 @@ export default function EditEventPage() {
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="city">City *</Label>
+                    <Label htmlFor="city" className="text-gray-700 font-medium">City *</Label>
                     <Select
                       onValueChange={(value) => form.setValue('city', value)}
                       value={form.watch('city')}
                     >
-                      <SelectTrigger className="bg-white">
+                      <SelectTrigger className="bg-white border-purple-200 focus:border-purple-500 focus:ring-purple-500">
                         <SelectValue placeholder="📍 Select a city" />
                       </SelectTrigger>
                       <SelectContent className="bg-white">
@@ -460,8 +502,13 @@ export default function EditEventPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="startDate">Event Date *</Label>
-                    <Input id="startDate" type="date" {...form.register('startDate')} />
+                    <Label htmlFor="startDate" className="text-gray-700 font-medium">Event Date *</Label>
+                    <Input
+                      id="startDate"
+                      type="date"
+                      {...form.register('startDate')}
+                      className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                    />
                     {form.formState.errors.startDate && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
                         <AlertCircle className="h-3 w-3" /> {form.formState.errors.startDate.message}
@@ -469,8 +516,13 @@ export default function EditEventPage() {
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="startTime">Event Time *</Label>
-                    <Input id="startTime" type="time" {...form.register('startTime')} />
+                    <Label htmlFor="startTime" className="text-gray-700 font-medium">Event Time *</Label>
+                    <Input
+                      id="startTime"
+                      type="time"
+                      {...form.register('startTime')}
+                      className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                    />
                     {form.formState.errors.startTime && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
                         <AlertCircle className="h-3 w-3" /> {form.formState.errors.startTime.message}
@@ -478,40 +530,40 @@ export default function EditEventPage() {
                     )}
                   </div>
                 </div>
-              </form>
-            </CardContent>
-            <CardFooter>
-              <Button form="event-form" type="submit" disabled={isSaving}>
-                <Save className="h-4 w-4 mr-2" />
-                {isSaving ? 'Saving...' : 'Save Changes 💾'}
-              </Button>
-            </CardFooter>
+              </CardContent>
+              <CardFooter>
+                <Button type="submit" disabled={isSaving} className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600">
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSaving ? 'Saving...' : 'Save Changes 💾'}
+                </Button>
+              </CardFooter>
+            </form>
           </Card>
-        </TabsContent>
+        )}
 
         {/* Ticket Types Tab */}
-        <TabsContent value="tickets">
-          <Card>
+        {activeTab === 'tickets' && (
+          <Card className="w-full border-l-4 border-l-blue-500 shadow-md">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Ticket className="h-5 w-5 text-primary" />
+              <CardTitle className="flex items-center gap-2 text-blue-700">
+                <Ticket className="h-5 w-5 text-blue-500" />
                 Ticket Types
               </CardTitle>
               <CardDescription>
                 Manage ticket categories and pricing
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <form id="ticket-form" onSubmit={ticketForm.handleSubmit(handleSaveTickets)} className="space-y-4">
+            <form id="ticket-form" onSubmit={ticketForm.handleSubmit(handleSaveTickets)}>
+              <CardContent className="space-y-4">
                 <div className="space-y-3">
                   {fields.map((field, index) => {
                     const originalTicket = ticketTypes.find(t => t.id === field.id)
                     const soldCount = originalTicket?.quantitySold || 0
                     
                     return (
-                      <div key={field.id} className="border rounded-lg p-4 space-y-3">
+                      <div key={field.id} className="border-2 border-blue-100 rounded-xl p-4 space-y-3 hover:border-blue-200 transition-colors">
                         <div className="flex justify-between items-center">
-                          <Badge variant="outline" className="flex items-center gap-1">
+                          <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 border-blue-200 flex items-center gap-1">
                             <Ticket className="h-3 w-3" />
                             Ticket {index + 1}
                           </Badge>
@@ -521,7 +573,7 @@ export default function EditEventPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => remove(index)}
-                              className="text-red-600"
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -530,24 +582,27 @@ export default function EditEventPage() {
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
-                            <Label>Ticket Name</Label>
+                            <Label className="text-gray-700 font-medium">Ticket Name</Label>
                             <Input
                               placeholder="e.g., VIP"
                               {...ticketForm.register(`ticketTypes.${index}.name`)}
+                              className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
                             />
                           </div>
                           <div>
-                            <Label>Price (XAF)</Label>
+                            <Label className="text-gray-700 font-medium">Price (XAF)</Label>
                             <Input
                               type="number"
                               {...ticketForm.register(`ticketTypes.${index}.price`, { valueAsNumber: true })}
+                              className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
                             />
                           </div>
                           <div>
-                            <Label>Quantity Available</Label>
+                            <Label className="text-gray-700 font-medium">Quantity Available</Label>
                             <Input
                               type="number"
                               {...ticketForm.register(`ticketTypes.${index}.quantityAvailable`, { valueAsNumber: true })}
+                              className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
                             />
                           </div>
                         </div>
@@ -567,22 +622,22 @@ export default function EditEventPage() {
                   type="button"
                   variant="outline"
                   onClick={() => append({ name: '', price: 0, quantityAvailable: 0 })}
-                  className="w-full"
+                  className="w-full border-dashed border-2 border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Another Ticket Type ➕
                 </Button>
-              </form>
-            </CardContent>
-            <CardFooter>
-              <Button form="ticket-form" type="submit" disabled={isSaving}>
-                <Save className="h-4 w-4 mr-2" />
-                Save Ticket Types 💾
-              </Button>
-            </CardFooter>
+              </CardContent>
+              <CardFooter>
+                <Button type="submit" disabled={isSaving} className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600">
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Ticket Types 💾
+                </Button>
+              </CardFooter>
+            </form>
           </Card>
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
 
       {/* Publish Confirmation Dialog */}
       <ConfirmationDialog
@@ -596,15 +651,15 @@ export default function EditEventPage() {
         variant="success"
         isLoading={isSaving}
       >
-        <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-          <div className="flex items-center gap-2 text-green-700 mb-2">
-            <CheckCircle className="h-4 w-4" />
-            <span className="font-medium">Once published:</span>
+        <div className="mt-4 p-4 bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl border border-emerald-200">
+          <div className="flex items-center gap-2 text-emerald-700 mb-2">
+            <CheckCircle className="h-5 w-5" />
+            <span className="font-semibold">Once published:</span>
           </div>
-          <ul className="space-y-1 text-sm text-green-600">
-            <li>✓ The event will be visible to the public</li>
-            <li>✓ Attendees can start purchasing tickets</li>
-            <li>✓ The shareable link will become active</li>
+          <ul className="space-y-1 text-sm text-emerald-600 ml-6 list-disc">
+            <li>The event will be visible to the public</li>
+            <li>Attendees can start purchasing tickets</li>
+            <li>The shareable link will become active</li>
           </ul>
         </div>
       </ConfirmationDialog>
@@ -621,15 +676,15 @@ export default function EditEventPage() {
         variant="warning"
         isLoading={isSaving}
       >
-        <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+        <div className="mt-4 p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200">
           <div className="flex items-center gap-2 text-amber-700 mb-2">
-            <AlertCircle className="h-4 w-4" />
-            <span className="font-medium">Warning!</span>
+            <AlertCircle className="h-5 w-5" />
+            <span className="font-semibold">Warning!</span>
           </div>
-          <ul className="space-y-1 text-sm text-amber-600">
-            <li>⚠️ The event will be hidden from the public</li>
-            <li>⚠️ No new ticket sales will be possible</li>
-            <li>⚠️ Existing tickets remain valid</li>
+          <ul className="space-y-1 text-sm text-amber-600 ml-6 list-disc">
+            <li>The event will be hidden from the public</li>
+            <li>No new ticket sales will be possible</li>
+            <li>Existing tickets remain valid</li>
           </ul>
         </div>
       </ConfirmationDialog>
