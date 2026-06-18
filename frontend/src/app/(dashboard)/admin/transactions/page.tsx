@@ -187,12 +187,12 @@ export default function AdminTransactionsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
-        return <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
+        return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 flex items-center gap-1">
           <CheckCircle className="h-3 w-3" />
           Paid ✅
         </Badge>
       case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800 flex items-center gap-1">
+        return <Badge className="bg-amber-100 text-amber-800 border-amber-200 flex items-center gap-1">
           <Clock className="h-3 w-3" />
           Pending ⏳
         </Badge>
@@ -202,7 +202,7 @@ export default function AdminTransactionsPage() {
           Failed ❌
         </Badge>
       case 'refunded':
-        return <Badge className="bg-gray-100 text-gray-800 flex items-center gap-1">
+        return <Badge className="bg-gray-100 text-gray-600 border-gray-200 flex items-center gap-1">
           <RefreshCw className="h-3 w-3" />
           Refunded 🔄
         </Badge>
@@ -216,12 +216,12 @@ export default function AdminTransactionsPage() {
    */
   const getMethodBadge = (method: string) => {
     if (method === 'mtn_momo') {
-      return <Badge className="bg-yellow-100 text-yellow-800 flex items-center gap-1">
+      return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 flex items-center gap-1">
         <Smartphone className="h-3 w-3" />
         MTN Momo 💛
       </Badge>
     }
-    return <Badge className="bg-orange-100 text-orange-800 flex items-center gap-1">
+    return <Badge className="bg-orange-100 text-orange-800 border-orange-200 flex items-center gap-1">
       <Smartphone className="h-3 w-3" />
       Orange Money 🧡
     </Badge>
@@ -261,31 +261,35 @@ export default function AdminTransactionsPage() {
         showHome
       />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* Header with Purple/Blue Gradient */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 p-5 rounded-xl shadow-lg text-white">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Wallet className="h-6 w-6 text-primary" />
+          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+            <Wallet className="h-7 w-7" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">Transaction History 💰</h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-white/80 text-sm mt-0.5">
               View and manage all payment transactions on the platform
             </p>
           </div>
         </div>
-        <Button variant="outline" onClick={() => fetchTransactions()}>
+        <Button 
+          variant="outline" 
+          onClick={() => fetchTransactions()} 
+          className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:text-white backdrop-blur-sm"
+        >
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh 🔄
         </Button>
       </div>
 
-      {/* Search and Filters */}
-      <Card>
+      {/* Search and Filters Card with Purple Border */}
+      <Card className="border-l-4 border-l-purple-500 shadow-md">
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-500" />
               <Input
                 placeholder="🔍 Search by transaction ID, attendee name, or event..."
                 value={searchTerm}
@@ -293,17 +297,17 @@ export default function AdminTransactionsPage() {
                   setSearchTerm(e.target.value)
                   setPage(1)
                 }}
-                className="pl-10"
+                className="pl-10 border-purple-200 focus:border-purple-500 focus:ring-purple-500"
               />
             </div>
             <Select value={statusFilter} onValueChange={(value) => {
               setStatusFilter(value)
               setPage(1)
             }}>
-              <SelectTrigger className="w-full sm:w-40">
+              <SelectTrigger className="w-full sm:w-40 border-purple-200 focus:ring-purple-500">
                 <SelectValue placeholder="Status 📊" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="paid">✅ Paid</SelectItem>
                 <SelectItem value="pending">⏳ Pending</SelectItem>
@@ -315,17 +319,21 @@ export default function AdminTransactionsPage() {
               setMethodFilter(value)
               setPage(1)
             }}>
-              <SelectTrigger className="w-full sm:w-40">
+              <SelectTrigger className="w-full sm:w-40 border-purple-200 focus:ring-purple-500">
                 <SelectValue placeholder="Payment Method 💳" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 <SelectItem value="all">All Methods</SelectItem>
                 <SelectItem value="mtn_momo">💛 MTN Momo</SelectItem>
                 <SelectItem value="orange_money">🧡 Orange Money</SelectItem>
               </SelectContent>
             </Select>
             {(searchTerm || statusFilter !== 'all' || methodFilter !== 'all') && (
-              <Button variant="ghost" onClick={handleResetFilters} className="sm:w-auto">
+              <Button 
+                variant="ghost" 
+                onClick={handleResetFilters} 
+                className="text-purple-600 hover:text-purple-800 hover:bg-purple-50"
+              >
                 Reset Filters ✕
               </Button>
             )}
@@ -333,26 +341,26 @@ export default function AdminTransactionsPage() {
         </CardContent>
       </Card>
 
-      {/* Results Count */}
+      {/* Results Count with Color */}
       <div className="text-sm text-gray-500 flex items-center gap-2">
-        <CreditCard className="h-4 w-4" />
-        Showing {filteredTransactions.length} of {totalCount} transaction{totalCount !== 1 ? 's' : ''}
+        <CreditCard className="h-4 w-4 text-purple-500" />
+        Showing <span className="font-semibold text-purple-700">{filteredTransactions.length}</span> of <span className="font-semibold">{totalCount}</span> transaction{totalCount !== 1 ? 's' : ''}
       </div>
 
-      {/* Transactions Table */}
-      <Card>
+      {/* Transactions Table Card with Blue Accent */}
+      <Card className="border-t-4 border-t-blue-500 shadow-md overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-gradient-to-r from-purple-50 to-blue-50">
                 <TableRow>
-                  <TableHead>🔑 Transaction ID</TableHead>
-                  <TableHead>👤 Attendee</TableHead>
-                  <TableHead>📋 Event / Organizer</TableHead>
-                  <TableHead>💰 Amount</TableHead>
-                  <TableHead>💳 Method</TableHead>
-                  <TableHead>📅 Date</TableHead>
-                  <TableHead>📊 Status</TableHead>
+                  <TableHead className="text-purple-800">🔑 Transaction ID</TableHead>
+                  <TableHead className="text-purple-800">👤 Attendee</TableHead>
+                  <TableHead className="text-purple-800">📋 Event / Organizer</TableHead>
+                  <TableHead className="text-purple-800">💰 Amount</TableHead>
+                  <TableHead className="text-purple-800">💳 Method</TableHead>
+                  <TableHead className="text-purple-800">📅 Date</TableHead>
+                  <TableHead className="text-purple-800">📊 Status</TableHead>
                   <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -367,6 +375,7 @@ export default function AdminTransactionsPage() {
                           <Button
                             variant="link"
                             onClick={handleResetFilters}
+                            className="text-purple-600"
                           >
                             Clear filters
                           </Button>
@@ -376,33 +385,33 @@ export default function AdminTransactionsPage() {
                   </TableRow>
                 ) : (
                   filteredTransactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
+                    <TableRow key={transaction.id} className="hover:bg-purple-50/50 transition-colors">
                       <TableCell>
-                        <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">
+                        <code className="text-xs bg-purple-50 px-2 py-1 rounded font-mono text-purple-700 border border-purple-100">
                           {transaction.transactionId.slice(0, 12)}...
                         </code>
                       </TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{transaction.attendeeName}</p>
+                          <p className="font-medium text-gray-800">{transaction.attendeeName}</p>
                           <p className="text-xs text-gray-500">{transaction.attendeePhone}</p>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div>
-                          <p className="text-sm">{transaction.eventTitle}</p>
+                          <p className="text-sm font-medium text-gray-700">{transaction.eventTitle}</p>
                           <p className="text-xs text-gray-500">by {transaction.organizerName}</p>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="font-semibold text-green-600">
+                        <span className="font-semibold text-emerald-600">
                           {formatCurrency(transaction.amount)}
                         </span>
                       </TableCell>
                       <TableCell>{getMethodBadge(transaction.paymentMethod)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3 text-gray-400" />
+                          <Clock className="h-3 w-3 text-purple-400" />
                           <span className="text-sm">{formatDate(transaction.createdAt)}</span>
                         </div>
                       </TableCell>
@@ -411,14 +420,14 @@ export default function AdminTransactionsPage() {
                         {transaction.status === 'paid' && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
+                              <Button variant="ghost" size="icon" className="text-purple-500 hover:text-purple-700 hover:bg-purple-50">
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
+                            <DropdownMenuContent align="end" className="border-purple-200">
                               <DropdownMenuItem
                                 onClick={() => setTransactionToRefund(transaction)}
-                                className="text-red-600"
+                                className="text-red-600 hover:bg-red-50"
                               >
                                 <RefreshCw className="h-4 w-4 mr-2" />
                                 Refund Payment 🔄
@@ -438,71 +447,73 @@ export default function AdminTransactionsPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
-          pageSizeOptions={[10, 25, 50, 100]}
-          totalItems={totalCount}
-          showFirstLast
-        />
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-purple-100">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[10, 25, 50, 100]}
+            totalItems={totalCount}
+            showFirstLast
+          />
+        </div>
       )}
 
-      {/* Stats Summary */}
+      {/* Stats Summary with Colorful Gradients */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card>
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-md hover:shadow-lg transition-shadow">
           <CardContent className="pt-6">
             <div className="text-center">
-              <CreditCard className="h-6 w-6 text-primary mx-auto mb-2" />
-              <p className="text-2xl font-bold">{transactions.length}</p>
-              <p className="text-sm text-gray-500">Total Transactions 📊</p>
+              <CreditCard className="h-7 w-7 text-purple-600 mx-auto mb-2" />
+              <p className="text-2xl font-bold text-purple-700">{transactions.length}</p>
+              <p className="text-sm text-purple-600">Total Transactions 📊</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 shadow-md hover:shadow-lg transition-shadow">
           <CardContent className="pt-6">
             <div className="text-center">
-              <CheckCircle className="h-6 w-6 text-green-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-green-600">
+              <CheckCircle className="h-7 w-7 text-emerald-600 mx-auto mb-2" />
+              <p className="text-2xl font-bold text-emerald-700">
                 {transactions.filter(t => t.status === 'paid').length}
               </p>
-              <p className="text-sm text-gray-500">Successful Payments ✅</p>
+              <p className="text-sm text-emerald-600">Successful Payments ✅</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-md hover:shadow-lg transition-shadow">
           <CardContent className="pt-6">
             <div className="text-center">
-              <TrendingUp className="h-6 w-6 text-primary mx-auto mb-2" />
-              <p className="text-2xl font-bold text-primary">
+              <TrendingUp className="h-7 w-7 text-blue-600 mx-auto mb-2" />
+              <p className="text-2xl font-bold text-blue-700">
                 {formatCurrency(transactions.filter(t => t.status === 'paid').reduce((sum, t) => sum + t.amount, 0))}
               </p>
-              <p className="text-sm text-gray-500">Total Revenue 💰</p>
+              <p className="text-sm text-blue-600">Total Revenue 💰</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200 shadow-md hover:shadow-lg transition-shadow">
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="flex justify-center gap-2 mb-2">
                 <Smartphone className="h-5 w-5 text-yellow-600" />
-                <span className="text-sm">+</span>
+                <span className="text-sm text-gray-400">+</span>
                 <Smartphone className="h-5 w-5 text-orange-600" />
               </div>
-              <p className="text-2xl font-bold text-amber-600">
+              <p className="text-2xl font-bold text-amber-700">
                 {transactions.filter(t => t.paymentMethod === 'mtn_momo').length}
                 <span className="text-sm text-gray-500 mx-1">/</span>
                 {transactions.filter(t => t.paymentMethod === 'orange_money').length}
               </p>
-              <p className="text-sm text-gray-500">MTN Momo / Orange Money 💛🧡</p>
+              <p className="text-sm text-amber-600">MTN Momo / Orange Money 💛🧡</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Refund Confirmation Dialog */}
+      {/* Refund Confirmation Dialog with Warning Styling */}
       <ConfirmationDialog
         open={!!transactionToRefund}
         onOpenChange={() => setTransactionToRefund(null)}
@@ -514,36 +525,38 @@ export default function AdminTransactionsPage() {
         variant="warning"
         isLoading={isProcessing}
       >
-        <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
-          <div className="flex items-center gap-2 text-amber-700 mb-2">
-            <AlertCircle className="h-4 w-4" />
-            <span className="font-medium">Warning! This action is permanent.</span>
+        <div className="mt-4 p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+          <div className="flex items-center gap-2 text-amber-700 mb-3">
+            <AlertCircle className="h-5 w-5" />
+            <span className="font-semibold">Warning! This action is permanent.</span>
           </div>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between py-1">
+          <div className="space-y-2 text-sm bg-white/60 p-3 rounded-lg">
+            <div className="flex justify-between py-1 border-b border-gray-100">
               <span className="text-gray-600">Transaction ID:</span>
-              <code className="text-xs font-mono">{transactionToRefund?.transactionId}</code>
+              <code className="text-xs font-mono text-purple-700 bg-purple-50 px-2 py-0.5 rounded">
+                {transactionToRefund?.transactionId}
+              </code>
             </div>
-            <div className="flex justify-between py-1">
+            <div className="flex justify-between py-1 border-b border-gray-100">
               <span className="text-gray-600">Attendee:</span>
-              <span>{transactionToRefund?.attendeeName}</span>
+              <span className="font-medium">{transactionToRefund?.attendeeName}</span>
             </div>
-            <div className="flex justify-between py-1">
+            <div className="flex justify-between py-1 border-b border-gray-100">
               <span className="text-gray-600">Amount:</span>
               <span className="font-semibold text-red-600">{formatCurrency(transactionToRefund?.amount || 0)}</span>
             </div>
             <div className="flex justify-between py-1">
               <span className="text-gray-600">Event:</span>
-              <span>{transactionToRefund?.eventTitle}</span>
+              <span className="font-medium">{transactionToRefund?.eventTitle}</span>
             </div>
-            <div className="border-t pt-2 mt-2 text-red-600">
-              <p>⚠️ Refunding will:</p>
-              <ul className="list-disc list-inside ml-2 text-xs">
-                <li>Mark the ticket as invalid</li>
-                <li>Prevent check-in access</li>
-                <li>This action cannot be reversed</li>
-              </ul>
-            </div>
+          </div>
+          <div className="mt-3 text-red-600 text-sm bg-red-50 p-2 rounded-lg border border-red-100">
+            <p className="font-medium">⚠️ Refunding will:</p>
+            <ul className="list-disc list-inside ml-2 text-xs space-y-0.5 mt-1">
+              <li>Mark the ticket as invalid</li>
+              <li>Prevent check-in access</li>
+              <li>This action cannot be reversed</li>
+            </ul>
           </div>
         </div>
       </ConfirmationDialog>

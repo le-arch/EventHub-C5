@@ -1,13 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Dashboard Layout Component
- * 
- * This layout wraps all authenticated pages (organizer dashboard and admin panel).
+ * * This layout wraps all authenticated pages (organizer dashboard and admin panel).
  * It provides a responsive layout with:
- * - Desktop: Fixed sidebar navigation
- * - Mobile: Hamburger menu + bottom tab bar
+ * - Desktop: Fixed glassmorphism sidebar navigation
+ * - Mobile: Frosted header + role-aware bottom tab bar
  * - Shared header with user menu
- * 
- * @module DashboardLayout
+ * * @module DashboardLayout
  */
 
 'use client'
@@ -16,7 +15,6 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  Home,
   Calendar,
   Users,
   BarChart3,
@@ -24,7 +22,6 @@ import {
   LogOut,
   Menu,
   X,
-  Shield,
   CreditCard,
   FileText,
   ChevronDown,
@@ -53,7 +50,7 @@ const organizerNavItems = [
   { href: '/organizer/events', label: 'Events', icon: Calendar },
   { href: '/organizer/attendees', label: 'Attendees', icon: Users },
   { href: '/organizer/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/organizer/settings', label: 'Settings', icon: Settings },
+  // { href: '/organizer/settings', label: 'Settings', icon: Settings },
 ]
 
 // Navigation items for admin role
@@ -62,6 +59,7 @@ const adminNavItems = [
   { href: '/admin/events', label: 'Events', icon: Calendar },
   { href: '/admin/transactions', label: 'Transactions', icon: CreditCard },
   { href: '/admin/logs', label: 'Logs', icon: FileText },
+  // { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
 /**
@@ -119,8 +117,8 @@ export default function DashboardLayout({
   // Show loading state while checking authentication
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     )
   }
@@ -130,11 +128,12 @@ export default function DashboardLayout({
 
   return (
     <ProtectedRoute redirectTo="/login">
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-50/50 via-slate-50 to-blue-50/50 text-slate-900 antialiased selection:bg-indigo-500/10">
+        
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            className="fixed inset-0 bg-slate-950/30 backdrop-blur-sm z-40 lg:hidden transition-all duration-300"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -142,35 +141,139 @@ export default function DashboardLayout({
         {/* Desktop sidebar */}
         <aside
           className={`
-            fixed top-0 left-0 z-50 h-full w-64 bg-white border-r transition-transform duration-300
+            fixed top-0 left-0 z-50 h-full w-64 
+            bg-white/60 backdrop-blur-xl border-r border-slate-200/50
+            flex flex-col justify-between transition-transform duration-300 ease-out shadow-[4px_0_24px_rgba(0,0,0,0.02)]
             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
           `}
         >
-          {/* Logo Section */}
-          <div className="flex items-center justify-between p-4 border-b">
-            <Link href={isAdmin ? '/admin/users' : '/organizer/events'} className="text-xl font-bold text-primary">
-             <Image 
-              src="/images/logo.svg" 
-              alt="EventHub Icon" 
-              width={32} 
-              height={32}
-              className="w-8 h-8"
-            />
-            <span className="text-2xl font-bold text-primary hidden sm:inline">
-              EventHub
-            </span>
-            </Link>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-gray-500 hover:text-gray-700"
-              aria-label="Close menu"
-            >
-              <X className="h-5 w-5" />
-            </button>
+          <div>
+            {/* Logo Section */}
+            <div className="flex items-center justify-between p-5 border-b border-slate-200/40">
+              <Link href={isAdmin ? '/admin/users' : '/organizer/events'} className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
+                <Image 
+                  src="/images/logo.svg" 
+                  alt="EventHub Icon" 
+                  width={32} 
+                  height={32}
+                  className="w-8 h-8 drop-shadow-sm"
+                />
+                <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                  EventHub
+                </span>
+              </Link>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden p-1 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
+                aria-label="Close menu"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Navigation Menu */}
+            <nav className="p-4 space-y-1">
+              {navItems.map((item) => {
+                const isActive = pathname?.startsWith(item.href)
+                const Icon = item.icon
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`
+                      flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                      ${isActive
+                        ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/10'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                      }
+                    `}
+                  >
+                    <Icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+                    <span>{item.label}</span>
+                  </Link>
+                )
+              })}
+            </nav>
           </div>
 
-          {/* Navigation Menu */}
-          <nav className="flex-1 p-4 space-y-1">
+          {/* User Profile Footer Section */}
+          <div className="p-4 border-t border-slate-200/40 bg-slate-50/40 backdrop-blur-sm">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-3 w-full p-2 rounded-xl hover:bg-white/80 border border-transparent hover:border-slate-200/60 transition-all text-left group">
+                  <Avatar className="h-9 w-9 border border-indigo-100 shadow-sm">
+                    <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-violet-500 text-white text-xs font-semibold">
+                      {getInitials(user?.fullName || 'User')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="text-sm font-semibold text-slate-800 truncate group-hover:text-indigo-600 transition-colors">
+                      {user?.fullName}
+                    </p>
+                    <p className="text-xs text-slate-500 truncate mt-0.5 capitalize bg-slate-200/50 inline-block px-1.5 py-0.5 rounded-md font-medium">
+                      {user?.role}
+                    </p>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-slate-400 group-hover:text-slate-600 transition-colors shrink-0" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" side="top" className="w-56 rounded-xl p-1.5 shadow-xl border-slate-200/60 bg-white/95 backdrop-blur-md">
+                <DropdownMenuLabel className="text-xs text-slate-400 px-2 py-1.5">👤 My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-slate-100" />
+                
+                {/* Dynamically matching current layout authorization route pathways */}
+                <DropdownMenuItem 
+                  onClick={() => router.push(isAdmin ? '/admin/settings' : '/organizer/settings')}
+                  className="rounded-lg py-2 cursor-pointer focus:bg-slate-50"
+                >
+                  <Settings className="h-4 w-4 mr-2 text-slate-500" />
+                  <span>Settings ⚙️</span>
+                </DropdownMenuItem>
+                
+                <DropdownMenuSeparator className="bg-slate-100" />
+                <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50 rounded-lg py-2 cursor-pointer" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  <span>Logout 🚪</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </aside>
+
+        {/* Main content wrapper */}
+        <div className="lg:ml-64 flex flex-col min-h-screen">
+          
+          {/* Mobile Header */}
+          <header className="lg:hidden bg-white/70 backdrop-blur-md border-b border-slate-200/50 sticky top-0 z-30 shadow-[0_2px_12px_rgba(0,0,0,0.01)]">
+            <div className="flex items-center justify-between p-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Open menu"
+                className="hover:bg-slate-100 rounded-xl"
+              >
+                <Menu className="h-5 w-5 text-slate-600" />
+              </Button>
+              
+              <div className="flex items-center gap-2">
+                <Image 
+                  src="/images/logo.svg" 
+                  alt="EventHub Icon" 
+                  width={28} 
+                  height={28}
+                  className="w-7 h-7"
+                />
+                <span className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                  EventHub
+                </span>
+              </div>
+              <div className="w-10" />
+            </div>
+          </header>
+
+          {/* Mobile Bottom Tab Bar */}
+          <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-200/60 flex justify-around py-1.5 z-40 shadow-[0_-4px_16px_rgba(0,0,0,0.03)] px-2">
             {navItems.map((item) => {
               const isActive = pathname?.startsWith(item.href)
               const Icon = item.icon
@@ -179,106 +282,22 @@ export default function DashboardLayout({
                   key={item.href}
                   href={item.href}
                   className={`
-                    flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
-                    ${isActive
-                      ? 'bg-primary text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
+                    flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200 min-w-[64px]
+                    ${isActive 
+                      ? 'text-indigo-600 font-medium scale-105' 
+                      : 'text-slate-400 hover:text-slate-600'
                     }
                   `}
                 >
-                  <Icon className="h-5 w-5" />
-                  <span>{item.label}</span>
+                  <Icon className={`h-5 w-5 ${isActive ? 'stroke-[2.5px]' : 'stroke-[2px]'}`} />
+                  <span className="text-[10px] tracking-wide">{item.label}</span>
                 </Link>
               )
             })}
           </nav>
 
-          {/* User Profile Section */}
-          <div className="p-4 border-t">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                  <Avatar className="h-9 w-9">
-                    <AvatarFallback className="bg-primary text-white">
-                      {getInitials(user?.fullName || 'User')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium truncate">{user?.fullName}</p>
-                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-                  </div>
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>👤 My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/organizer/settings')}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  ⚙️ Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-600" onClick={handleLogout}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  🚪 Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </aside>
-
-        {/* Main content */}
-        <div className="lg:ml-64">
-          {/* Mobile Header */}
-          <header className="lg:hidden bg-white border-b sticky top-0 z-30">
-            <div className="flex items-center justify-between p-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSidebarOpen(true)}
-                aria-label="Open menu"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-              <Image 
-              src="/images/logo.svg" 
-              alt="EventHub Icon" 
-              width={32} 
-              height={32}
-              className="w-8 h-8"
-            />
-            <span className="text-2xl font-bold text-primary hidden sm:inline">
-              EventHub
-            </span>
-              <div className="w-10" /> {/* Spacer for alignment */}
-            </div>
-          </header>
-
-          {/* Mobile Bottom Tab Bar (for organizer only) */}
-          {!isAdmin && (
-            <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around py-2 z-40">
-              {organizerNavItems.map((item) => {
-                const isActive = pathname?.startsWith(item.href)
-                const Icon = item.icon
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`
-                      flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors
-                      ${isActive ? 'text-primary' : 'text-gray-500'}
-                    `}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span className="text-xs">{item.label}</span>
-                  </Link>
-                )
-              })}
-            </nav>
-          )}
-
-          {/* Page Content with bottom padding for mobile tab bar */}
-          <main className={`p-4 md:p-6 ${!isAdmin ? 'pb-20 lg:pb-6' : ''}`}>
+          {/* Page Content Window context view wrapper */}
+          <main className={`flex-1 p-4 md:p-8 pb-24 lg:pb-8 max-w-[1600px] w-full mx-auto transition-all duration-300`}>
             {children}
           </main>
         </div>

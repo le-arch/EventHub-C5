@@ -10,6 +10,7 @@
  * - Manual ticket ID entry as fallback
  * - Check-in history display
  * - Breadcrumb navigation
+ * - Purple/Blue theme
  * 
  * @module CheckinPage
  */
@@ -28,7 +29,8 @@ import {
   MapPin,
   Clock,
   QrCode,
-  Smartphone
+  Smartphone,
+  RefreshCw,
 } from 'lucide-react'
 
 // shadcn/ui components
@@ -121,7 +123,6 @@ export default function CheckinPage() {
           checkedInAt: response.data.checked_in_at,
         })
         
-        // Add to recent checkins
         setRecentCheckins(prev => [
           {
             attendeeName: response.data.attendee_name,
@@ -131,7 +132,6 @@ export default function CheckinPage() {
           ...prev.slice(0, 9),
         ])
         
-        // Update stats
         setStats(prev => ({
           ...prev,
           checkedIn: prev.checkedIn + 1,
@@ -140,7 +140,6 @@ export default function CheckinPage() {
         
         toast.success(`✅ ${response.data.attendee_name} checked in successfully!`)
         
-        // Clear result after 3 seconds
         setTimeout(() => setLastResult(null), 3000)
       } catch (error: any) {
         const errorMessage = error.response?.data?.error || '❌ Invalid or already used ticket'
@@ -164,7 +163,6 @@ export default function CheckinPage() {
   // Fetch event details and stats
   useEffect(() => {
     fetchEventAndStats()
-    // Refresh stats every 30 seconds
     const interval = setInterval(fetchEventAndStats, 30000)
     return () => clearInterval(interval)
   }, [params.eventId])
@@ -193,7 +191,6 @@ export default function CheckinPage() {
         percentage: statsRes.data.summary.checkInPercentage,
       })
       
-      // Fetch recent check-ins
       const historyRes = await api.get(`/checkin/event/${params.eventId}/history?limit=10`)
       setRecentCheckins(historyRes.data.checkins)
     } catch (error) {
@@ -231,7 +228,7 @@ export default function CheckinPage() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-6 w-64" />
-        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-24 w-full" />
         <div className="grid grid-cols-3 gap-4">
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />
@@ -257,26 +254,15 @@ export default function CheckinPage() {
         showHome
       />
 
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push('/organizer/events')}
-            className="-ml-2"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Events
-          </Button>
-        </div>
+      {/* Header with Purple/Blue Gradient */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 p-5 rounded-xl shadow-lg text-white">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <QrCode className="h-6 w-6 text-primary" />
+          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+            <QrCode className="h-7 w-7" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">Check-in Scanner 📷</h1>
-            <p className="text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
+            <p className="text-white/80 text-sm mt-0.5 flex items-center gap-2 flex-wrap">
               <Calendar className="h-3 w-3" />
               {formatDate(event.startDate)} at {formatTime(event.startTime)}
               <span className="mx-1">•</span>
@@ -285,32 +271,40 @@ export default function CheckinPage() {
             </p>
           </div>
         </div>
+        <Button
+          variant="outline"
+          onClick={() => fetchEventAndStats()}
+          className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:text-white backdrop-blur-sm"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh 🔄
+        </Button>
       </div>
 
-      {/* Stats Bar */}
+      {/* Stats Bar with Gradients */}
       <div className="grid grid-cols-3 gap-4">
-        <Card className="bg-green-50 border-green-200">
+        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 shadow-md hover:shadow-lg transition-shadow">
           <CardContent className="pt-4 text-center">
-            <CheckCircle className="h-6 w-6 text-green-600 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-green-600">{stats.checkedIn}</p>
-            <p className="text-xs text-gray-500">Checked In ✅</p>
+            <CheckCircle className="h-6 w-6 text-emerald-600 mx-auto mb-2" />
+            <p className="text-2xl font-bold text-emerald-700">{stats.checkedIn}</p>
+            <p className="text-xs text-emerald-600">Checked In ✅</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-md hover:shadow-lg transition-shadow">
           <CardContent className="pt-4 text-center">
-            <Users className="h-6 w-6 text-gray-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold">{stats.total}</p>
-            <p className="text-xs text-gray-500">Total Tickets 🎟️</p>
+            <Users className="h-6 w-6 text-blue-600 mx-auto mb-2" />
+            <p className="text-2xl font-bold text-blue-700">{stats.total}</p>
+            <p className="text-xs text-blue-600">Total Tickets 🎟️</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-md hover:shadow-lg transition-shadow">
           <CardContent className="pt-4 text-center">
             <div className="mx-auto mb-2">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-primary font-bold">{stats.percentage}%</span>
+              <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                <span className="text-purple-700 font-bold">{stats.percentage}%</span>
               </div>
             </div>
-            <p className="text-xs text-gray-500">Check-in Rate 📊</p>
+            <p className="text-xs text-purple-600">Check-in Rate 📊</p>
           </CardContent>
         </Card>
       </div>
@@ -319,11 +313,11 @@ export default function CheckinPage() {
       <div className="space-y-1">
         <div className="flex justify-between text-sm">
           <span className="text-gray-500">Check-in Progress</span>
-          <span className="font-medium">{stats.percentage}% complete</span>
+          <span className="font-medium text-purple-700">{stats.percentage}% complete</span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-3">
           <div
-            className="bg-green-600 h-3 rounded-full transition-all duration-500"
+            className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full transition-all duration-500"
             style={{ width: `${stats.percentage}%` }}
           />
         </div>
@@ -333,10 +327,10 @@ export default function CheckinPage() {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* QR Scanner - Main Area */}
         <div className="lg:col-span-2">
-          <Card>
+          <Card className="border-l-4 border-l-blue-500 shadow-md">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Camera className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg flex items-center gap-2 text-blue-700">
+                <Camera className="h-5 w-5 text-blue-500" />
                 Scan QR Code
               </CardTitle>
               <CardDescription>
@@ -345,29 +339,29 @@ export default function CheckinPage() {
             </CardHeader>
             <CardContent>
               {scannerError ? (
-                <div className="text-center py-12">
-                  <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">Camera Error 📷</p>
-                  <p className="text-sm text-red-500 mt-2">{scannerError}</p>
+                <div className="text-center py-12 bg-red-50 rounded-xl border border-red-200">
+                  <Camera className="h-12 w-12 text-red-400 mx-auto mb-4" />
+                  <p className="text-red-700 font-medium">Camera Error 📷</p>
+                  <p className="text-sm text-red-600 mt-2">{scannerError}</p>
                   <Button
                     variant="outline"
                     onClick={requestCameraPermission}
-                    className="mt-4"
+                    className="mt-4 border-red-300 text-red-700 hover:bg-red-50"
                   >
                     Request Camera Permission
                   </Button>
                 </div>
               ) : hasCamera === false ? (
-                <div className="text-center py-12">
-                  <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">Camera not available 📷</p>
-                  <p className="text-sm text-gray-400 mt-2">
+                <div className="text-center py-12 bg-amber-50 rounded-xl border border-amber-200">
+                  <Camera className="h-12 w-12 text-amber-400 mx-auto mb-4" />
+                  <p className="text-amber-700 font-medium">Camera not available 📷</p>
+                  <p className="text-sm text-amber-600 mt-2">
                     Please allow camera access to scan QR codes.
                   </p>
                   <Button
                     variant="outline"
                     onClick={requestCameraPermission}
-                    className="mt-4"
+                    className="mt-4 border-amber-300 text-amber-700 hover:bg-amber-50"
                   >
                     Enable Camera
                   </Button>
@@ -379,40 +373,38 @@ export default function CheckinPage() {
                     className="aspect-square max-w-md mx-auto bg-black rounded-lg overflow-hidden"
                   />
                   <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                    <div className="w-64 h-64 border-2 border-primary rounded-lg shadow-lg">
-                      {/* Corner brackets for scanning guide */}
-                      <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-lg" />
-                      <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-lg" />
-                      <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-lg" />
-                      <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-lg" />
+                    <div className="w-64 h-64 border-2 border-blue-500 rounded-lg shadow-lg">
+                      <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-500 rounded-tl-lg" />
+                      <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-500 rounded-tr-lg" />
+                      <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-500 rounded-bl-lg" />
+                      <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-500 rounded-br-lg" />
                     </div>
                   </div>
-                  {/* Scanning line animation */}
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 w-64 h-0.5 bg-primary animate-pulse" 
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 w-64 h-0.5 bg-blue-500 animate-pulse" 
                        style={{ transform: 'translate(-50%, -50%)' }} />
                 </div>
               )}
 
               {/* Scan Result Feedback */}
               {lastResult && (
-                <div className={`mt-4 p-4 rounded-lg animate-slide-up ${
+                <div className={`mt-4 p-4 rounded-xl animate-slide-up ${
                   lastResult.success
-                    ? 'bg-green-50 border border-green-200'
+                    ? 'bg-emerald-50 border border-emerald-200'
                     : 'bg-red-50 border border-red-200'
                 }`}>
                   <div className="flex items-center gap-3">
                     {lastResult.success ? (
-                      <CheckCircle className="h-6 w-6 text-green-600" />
+                      <CheckCircle className="h-6 w-6 text-emerald-600" />
                     ) : (
                       <XCircle className="h-6 w-6 text-red-600" />
                     )}
                     <div className="flex-1">
                       {lastResult.success ? (
                         <>
-                          <p className="font-semibold text-green-800">
+                          <p className="font-semibold text-emerald-800">
                             ✅ {lastResult.attendeeName} checked in!
                           </p>
-                          <p className="text-sm text-green-600">
+                          <p className="text-sm text-emerald-600">
                             🎟️ {lastResult.ticketType} • {lastResult.checkedInAt && formatTime(lastResult.checkedInAt)}
                           </p>
                         </>
@@ -430,7 +422,7 @@ export default function CheckinPage() {
                 <Button
                   variant="outline"
                   onClick={() => setShowManualEntry(true)}
-                  className="mt-2"
+                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
                 >
                   <Smartphone className="h-4 w-4 mr-2" />
                   Manual Ticket Entry 📝
@@ -442,10 +434,10 @@ export default function CheckinPage() {
 
         {/* Recent Check-ins Sidebar */}
         <div>
-          <Card>
+          <Card className="border-l-4 border-l-purple-500 shadow-md h-full">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Clock className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg flex items-center gap-2 text-purple-700">
+                <Clock className="h-5 w-5 text-purple-500" />
                 Recent Check-ins
               </CardTitle>
               <CardDescription>
@@ -466,16 +458,16 @@ export default function CheckinPage() {
                   {recentCheckins.map((checkin, index) => (
                     <div 
                       key={index} 
-                      className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex justify-between items-center p-3 bg-purple-50/50 rounded-xl hover:bg-purple-100 transition-colors border border-purple-100"
                     >
                       <div className="flex-1">
-                        <p className="font-medium text-sm">{checkin.attendeeName}</p>
+                        <p className="font-medium text-sm text-gray-800">{checkin.attendeeName}</p>
                         <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
                           <span>🎟️</span> {checkin.ticketType}
                         </p>
                       </div>
                       <div className="text-right">
-                        <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+                        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">
                           <CheckCircle className="h-3 w-3 mr-1" />
                           {formatTime(checkin.checkedInAt)}
                         </Badge>
@@ -493,8 +485,8 @@ export default function CheckinPage() {
       <Dialog open={showManualEntry} onOpenChange={setShowManualEntry}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Smartphone className="h-5 w-5 text-primary" />
+            <DialogTitle className="flex items-center gap-2 text-purple-700">
+              <Smartphone className="h-5 w-5 text-purple-500" />
               Manual Ticket Entry 📝
             </DialogTitle>
             <DialogDescription>
@@ -510,6 +502,7 @@ export default function CheckinPage() {
                 value={manualTicketId}
                 onChange={(e) => setManualTicketId(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleManualCheckin()}
+                className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
               />
               <p className="text-xs text-gray-400 mt-1">
                 You can find the ticket ID on the attendee&apos;s QR code or email
@@ -520,7 +513,7 @@ export default function CheckinPage() {
             <Button variant="outline" onClick={() => setShowManualEntry(false)}>
               Cancel
             </Button>
-            <Button onClick={handleManualCheckin} disabled={isProcessing}>
+            <Button onClick={handleManualCheckin} disabled={isProcessing} className="bg-purple-600 hover:bg-purple-700">
               {isProcessing ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

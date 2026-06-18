@@ -150,23 +150,27 @@ export default function CreateEventPage() {
     <div className="flex items-center justify-center mb-8">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-            step === 'basic' ? 'bg-primary text-white' : 'bg-green-100 text-green-600'
+          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+            step === 'basic' 
+              ? 'bg-gradient-to-r from-purple-600 to-blue-500 text-white shadow-lg shadow-purple-500/25' 
+              : 'bg-emerald-100 text-emerald-700 border-2 border-emerald-300'
           }`}>
             {step === 'basic' ? '1' : <Check className="h-4 w-4" />}
           </div>
-          <span className={step === 'basic' ? 'font-medium' : 'text-gray-500'}>
+          <span className={`${step === 'basic' ? 'font-semibold text-purple-700' : 'text-gray-500'}`}>
             📝 Basic Info
           </span>
         </div>
-        <div className="w-16 h-px bg-gray-300" />
+        <div className={`w-12 h-0.5 ${step === 'basic' ? 'bg-gradient-to-r from-purple-500 to-blue-500' : 'bg-gray-300'}`} />
         <div className="flex items-center gap-2">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-            step === 'tickets' ? 'bg-primary text-white' : 'text-gray-400'
+          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+            step === 'tickets' 
+              ? 'bg-gradient-to-r from-purple-600 to-blue-500 text-white shadow-lg shadow-purple-500/25' 
+              : 'bg-gray-100 text-gray-400 border-2 border-gray-200'
           }`}>
             2
           </div>
-          <span className={step === 'tickets' ? 'font-medium' : 'text-gray-500'}>
+          <span className={`${step === 'tickets' ? 'font-semibold text-purple-700' : 'text-gray-400'}`}>
             🎟️ Ticket Types
           </span>
         </div>
@@ -186,16 +190,18 @@ export default function CreateEventPage() {
         showHome
       />
 
-      {/* Page Header */}
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-primary/10 rounded-lg">
-          <Calendar className="h-6 w-6 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold">Create New Event ✨</h1>
-          <p className="text-gray-500 mt-1">
-            Fill in the details below to create your event and start selling tickets
-          </p>
+      {/* Header with Purple/Blue Gradient */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 p-5 rounded-xl shadow-lg text-white">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+            <Calendar className="h-7 w-7" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Create New Event ✨</h1>
+            <p className="text-white/80 text-sm mt-0.5">
+              Fill in the details below to create your event and start selling tickets
+            </p>
+          </div>
         </div>
       </div>
 
@@ -206,10 +212,10 @@ export default function CreateEventPage() {
         {/* Step 1: Basic Information */}
         {step === 'basic' && (
           <form onSubmit={basicForm.handleSubmit(onBasicInfoSubmit)}>
-            <Card>
+            <Card className="border-l-4 border-l-purple-500 shadow-md">
               <CardHeader>
-                <CardTitle className="text-xl flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-primary" />
+                <CardTitle className="text-xl flex items-center gap-2 text-purple-700">
+                  <Calendar className="h-5 w-5 text-purple-500" />
                   Event Details 📅
                 </CardTitle>
                 <CardDescription>
@@ -219,11 +225,12 @@ export default function CreateEventPage() {
               <CardContent className="space-y-4">
                 {/* Title */}
                 <div>
-                  <Label htmlFor="title">Event Title *</Label>
+                  <Label htmlFor="title" className="text-gray-700 font-medium">Event Title *</Label>
                   <Input
                     id="title"
                     placeholder="e.g., Douala Music Fest 2025"
                     {...basicForm.register('title')}
+                    className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                   />
                   {basicForm.formState.errors.title && (
                     <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
@@ -234,63 +241,68 @@ export default function CreateEventPage() {
 
                 {/* Description */}
                 <div>
-                  <Label htmlFor="description">Description 📝</Label>
+                  <Label htmlFor="description" className="text-gray-700 font-medium">Description 📝</Label>
                   <Textarea
                     id="description"
                     placeholder="Describe your event..."
                     rows={4}
                     {...basicForm.register('description')}
+                    className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                   />
                 </div>
 
-                {/* Venue Name */}
-                <div>
-                  <Label htmlFor="venueName">Venue Name *</Label>
-                  <Input
-                    id="venueName"
-                    placeholder="e.g., Palais des Congrès"
-                    {...basicForm.register('venueName')}
-                  />
-                  {basicForm.formState.errors.venueName && (
-                    <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                      <span>⚠️</span> {basicForm.formState.errors.venueName.message}
-                    </p>
-                  )}
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Venue Name */}
+                  <div>
+                    <Label htmlFor="venueName" className="text-gray-700 font-medium">Venue Name *</Label>
+                    <Input
+                      id="venueName"
+                      placeholder="e.g., Palais des Congrès"
+                      {...basicForm.register('venueName')}
+                      className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                    />
+                    {basicForm.formState.errors.venueName && (
+                      <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                        <span>⚠️</span> {basicForm.formState.errors.venueName.message}
+                      </p>
+                    )}
+                  </div>
 
-                {/* City */}
-                <div>
-                  <Label htmlFor="city">City *</Label>
-                  <Select
-                    onValueChange={(value) => basicForm.setValue('city', value)}
-                    value={basicForm.watch('city')}
-                  >
-                    <SelectTrigger className="bg-white border-gray-300"> 
-                      <SelectValue placeholder="📍 Select a city" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      {CAMEROON_CITIES.map((city) => (
-                        <SelectItem key={city} value={city}>
-                          {city}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {basicForm.formState.errors.city && (
-                    <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                      <span>⚠️</span> {basicForm.formState.errors.city.message}
-                    </p>
-                  )}
+                  {/* City */}
+                  <div>
+                    <Label htmlFor="city" className="text-gray-700 font-medium">City *</Label>
+                    <Select
+                      onValueChange={(value) => basicForm.setValue('city', value)}
+                      value={basicForm.watch('city')}
+                    >
+                      <SelectTrigger className="bg-white border-purple-200 focus:border-purple-500 focus:ring-purple-500"> 
+                        <SelectValue placeholder="📍 Select a city" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        {CAMEROON_CITIES.map((city) => (
+                          <SelectItem key={city} value={city}>
+                            {city}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {basicForm.formState.errors.city && (
+                      <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                        <span>⚠️</span> {basicForm.formState.errors.city.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Date and Time */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="startDate">Event Date *</Label>
+                    <Label htmlFor="startDate" className="text-gray-700 font-medium">Event Date *</Label>
                     <Input
                       id="startDate"
                       type="date"
                       {...basicForm.register('startDate')}
+                      className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                     />
                     {basicForm.formState.errors.startDate && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
@@ -299,11 +311,12 @@ export default function CreateEventPage() {
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="startTime">Event Time *</Label>
+                    <Label htmlFor="startTime" className="text-gray-700 font-medium">Event Time *</Label>
                     <Input
                       id="startTime"
                       type="time"
                       {...basicForm.register('startTime')}
+                      className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                     />
                     {basicForm.formState.errors.startTime && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
@@ -318,10 +331,11 @@ export default function CreateEventPage() {
                   type="button"
                   variant="outline"
                   onClick={() => router.push('/organizer/events')}
+                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
                 >
                   Cancel
                 </Button>
-                <Button type="submit">
+                <Button type="submit" className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600">
                   Continue to Ticket Types
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
@@ -333,10 +347,10 @@ export default function CreateEventPage() {
         {/* Step 2: Ticket Types */}
         {step === 'tickets' && (
           <form onSubmit={ticketForm.handleSubmit(onCreateEvent)}>
-            <Card>
+            <Card className="border-l-4 border-l-blue-500 shadow-md">
               <CardHeader>
-                <CardTitle className="text-xl flex items-center gap-2">
-                  <Ticket className="h-5 w-5 text-primary" />
+                <CardTitle className="text-xl flex items-center gap-2 text-blue-700">
+                  <Ticket className="h-5 w-5 text-blue-500" />
                   Ticket Types 🎟️
                 </CardTitle>
                 <CardDescription>
@@ -347,9 +361,9 @@ export default function CreateEventPage() {
                 {/* Ticket Types List */}
                 <div className="space-y-3">
                   {fields.map((field, index) => (
-                    <div key={field.id} className="border rounded-lg p-4 space-y-3 relative">
+                    <div key={field.id} className="border-2 border-purple-100 rounded-xl p-4 space-y-3 relative hover:border-purple-200 transition-colors">
                       <div className="flex justify-between items-center">
-                        <Badge variant="outline" className="flex items-center gap-1">
+                        <Badge className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 border-purple-200 flex items-center gap-1">
                           <Ticket className="h-3 w-3" />
                           Ticket {index + 1}
                         </Badge>
@@ -359,7 +373,7 @@ export default function CreateEventPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => remove(index)}
-                            className="text-red-600 h-8 w-8 p-0"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -368,30 +382,33 @@ export default function CreateEventPage() {
                       
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <Label>Ticket Name</Label>
+                          <Label className="text-gray-700 font-medium">Ticket Name</Label>
                           <Input
                             placeholder="e.g., Early Bird"
                             {...ticketForm.register(`ticketTypes.${index}.name`)}
+                            className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                           />
                         </div>
                         <div>
-                          <Label>Price (XAF)</Label>
+                          <Label className="text-gray-700 font-medium">Price (XAF)</Label>
                           <Input
                             type="number"
                             placeholder="5000"
                             {...ticketForm.register(`ticketTypes.${index}.price`, {
                               valueAsNumber: true,
                             })}
+                            className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                           />
                         </div>
                         <div>
-                          <Label>Quantity Available</Label>
+                          <Label className="text-gray-700 font-medium">Quantity Available</Label>
                           <Input
                             type="number"
                             placeholder="100"
                             {...ticketForm.register(`ticketTypes.${index}.quantityAvailable`, {
                               valueAsNumber: true,
                             })}
+                            className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                           />
                         </div>
                       </div>
@@ -404,7 +421,7 @@ export default function CreateEventPage() {
                   type="button"
                   variant="outline"
                   onClick={() => append({ name: '', price: 0, quantityAvailable: 0 })}
-                  className="w-full"
+                  className="w-full border-dashed border-2 border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Another Ticket Type ➕
@@ -421,11 +438,12 @@ export default function CreateEventPage() {
                   type="button"
                   variant="outline"
                   onClick={() => setStep('basic')}
+                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600">
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

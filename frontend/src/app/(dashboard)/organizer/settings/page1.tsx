@@ -17,7 +17,7 @@ import {
   Bell,
   Shield,
   AlertCircle,
-  User as UserIcon,
+  User,
   Mail,
   Phone,
   Lock,
@@ -25,7 +25,7 @@ import {
   EyeOff,
   Trash2,
   Settings,
-  RefreshCw,
+  RefreshCw, // ✅ Fixed: Cleaned up and added to standard imports block
 } from 'lucide-react'
 
 // shadcn/ui components
@@ -56,7 +56,7 @@ import { useAuthStore } from '@/store/authStore'
 const profileSchema = z.object({
   fullName: z.string().min(3, 'Name must be at least 3 characters'),
   email: z.string().email('Invalid email address'),
-  phone: z.string().min(6, 'Phone number must be provided'),
+  phone: z.string().min(12, 'Phone number must be at least 12 digits'),
 })
 
 // Password change schema
@@ -72,7 +72,7 @@ const passwordSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>
 type PasswordFormValues = z.infer<typeof passwordSchema>
 
-interface UserProfileData {
+interface User {
   id: string
   fullName: string
   email: string
@@ -86,16 +86,7 @@ type TabKey = 'profile' | 'security' | 'notifications'
 export default function SettingsPage() {
   const router = useRouter()
   const { user: authUser, logout } = useAuthStore()
-  
-  // Initialize with fallback layout to prevent page rendering failure crashes
-  const [user, setUser] = useState<UserProfileData>({
-    id: '',
-    fullName: '',
-    email: '',
-    phone: '',
-    isEmailVerified: true,
-    createdAt: new Date().toISOString()
-  })
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isChangingPassword, setIsChangingPassword] = useState(false)
@@ -135,41 +126,20 @@ export default function SettingsPage() {
 
   const fetchUserProfile = async () => {
     try {
-      setLoading(true)
       const response = await api.get('/auth/me')
-      
-      // Defensively parse data handling both raw axios layouts and unwrapped interceptor payloads
-      const rawData = response?.data !== undefined ? response.data : response
-      
-      if (!rawData) {
-        throw new Error('No user profile data payload received')
-      }
-
-      const cleanProfile: UserProfileData = {
-        id: rawData.id || rawData.user?.id || '',
-        fullName: rawData.fullName || rawData.user?.fullName || rawData.full_name || 'Organizer',
-        email: rawData.email || rawData.user?.email || '',
-        phone: rawData.phone || rawData.user?.phone || '',
-        isEmailVerified: rawData.isEmailVerified ?? rawData.user?.isEmailVerified ?? true,
-        createdAt: rawData.createdAt || rawData.user?.createdAt || new Date().toISOString()
-      }
-
-      setUser(cleanProfile)
-      
+      setUser(response.data)
       profileForm.reset({
-        fullName: cleanProfile.fullName,
-        email: cleanProfile.email,
-        phone: cleanProfile.phone,
+        fullName: response.data.fullName,
+        email: response.data.email,
+        phone: response.data.phone,
       })
-
       // Load preferences from localStorage
       const savedPrefs = localStorage.getItem('notification_preferences')
       if (savedPrefs) {
         setEmailNotifications(JSON.parse(savedPrefs).emailNotifications)
       }
     } catch (error) {
-      console.error('Settings Profile Fetch Error:', error)
-      toast.error('❌ Failed to load complete profile information')
+      toast.error('❌ Failed to load profile')
     } finally {
       setLoading(false)
     }
@@ -183,9 +153,7 @@ export default function SettingsPage() {
     try {
       await api.put('/auth/profile', data)
       toast.success('✅ Profile updated successfully')
-      
-      setUser(prev => ({ ...prev, ...data }))
-      
+      // Update auth store user
       if (authUser) {
         authUser.fullName = data.fullName
         authUser.email = data.email
@@ -232,7 +200,7 @@ export default function SettingsPage() {
   const handleDeleteAccount = async () => {
     try {
       await api.delete('/auth/account')
-      toast.success('🗑️ Account deleted successfully.')
+      toast.success('🗑️ Account deleted. We are sad to see you go!')
       logout()
       router.push('/')
     } catch (error) {
@@ -242,7 +210,7 @@ export default function SettingsPage() {
 
   // Tab configuration
   const tabs: { key: TabKey; label: string; icon: React.ReactNode; accent: string }[] = [
-    { key: 'profile', label: 'Profile', icon: <UserIcon className="h-4 w-4" />, accent: 'purple' },
+    { key: 'profile', label: 'Profile', icon: <User className="h-4 w-4" />, accent: 'purple' },
     { key: 'security', label: 'Security', icon: <Lock className="h-4 w-4" />, accent: 'blue' },
     { key: 'notifications', label: 'Notifications', icon: <Bell className="h-4 w-4" />, accent: 'amber' },
   ]
@@ -262,6 +230,8 @@ export default function SettingsPage() {
       </div>
     )
   }
+
+  if (!user) return null
 
   return (
     <div className="space-y-6">
@@ -290,7 +260,7 @@ export default function SettingsPage() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={fetchUserProfile}
+            onClick={() => window.location.reload()}
             className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:text-white backdrop-blur-sm"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -315,6 +285,7 @@ export default function SettingsPage() {
                   flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200
                   border-b-2 border-transparent whitespace-nowrap flex-1 justify-center
                   ${activeClass}
+                  ${isActive ? `border-b-${tab.accent === 'purple' ? 'purple' : tab.accent}-600` : 'hover:border-gray-300'}
                 `}
               >
                 {tab.icon}
@@ -332,7 +303,7 @@ export default function SettingsPage() {
           <Card className="w-full border-l-4 border-l-purple-500 shadow-md">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <UserIcon className="h-5 w-5 text-purple-600" />
+                <User className="h-5 w-5 text-purple-600" />
                 Profile Information
               </CardTitle>
               <CardDescription>
@@ -343,7 +314,7 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="fullName" className="flex items-center gap-2">
-                    <UserIcon className="h-3 w-3 text-purple-500" />
+                    <User className="h-3 w-3 text-purple-500" />
                     Full Name
                   </Label>
                   <Input
@@ -405,7 +376,7 @@ export default function SettingsPage() {
                 <div className="pt-2 border-t">
                   <p className="text-sm text-gray-500 flex items-center gap-1">
                     <Shield className="h-3 w-3 text-purple-500" />
-                    Member since {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                    Member since {new Date(user.createdAt).toLocaleDateString()}
                   </p>
                 </div>
               </CardContent>
@@ -433,6 +404,7 @@ export default function SettingsPage() {
             </CardHeader>
             <form onSubmit={passwordForm.handleSubmit(handleChangePassword)}>
               <CardContent className="space-y-4">
+                {/* Current Password */}
                 <div>
                   <Label htmlFor="currentPassword">Current Password</Label>
                   <div className="relative mt-1">
@@ -458,6 +430,7 @@ export default function SettingsPage() {
                   )}
                 </div>
 
+                {/* New Password */}
                 <div>
                   <Label htmlFor="newPassword">New Password</Label>
                   <div className="relative mt-1">
@@ -481,8 +454,12 @@ export default function SettingsPage() {
                       <AlertCircle className="h-3 w-3" /> {passwordForm.formState.errors.newPassword.message}
                     </p>
                   )}
+                  <p className="text-xs text-gray-400 mt-1">
+                    Must be at least 8 characters with one uppercase letter and one number
+                  </p>
                 </div>
 
+                {/* Confirm Password */}
                 <div>
                   <Label htmlFor="confirmPassword">Confirm New Password</Label>
                   <div className="relative mt-1">
@@ -516,21 +493,32 @@ export default function SettingsPage() {
               </CardFooter>
             </form>
 
+            {/* Danger Zone */}
             <Card className="border-red-200 mt-6">
               <CardHeader>
                 <CardTitle className="text-red-600 flex items-center gap-2">
                   <AlertCircle className="h-5 w-5" />
                   Danger Zone ⚠️
                 </CardTitle>
+                <CardDescription>
+                  Irreversible account actions
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div>
                     <p className="font-medium">Delete Account 🗑️</p>
-                    <p className="text-sm text-gray-500">Permanently delete your account data</p>
+                    <p className="text-sm text-gray-500">
+                      Permanently delete your account and all associated data
+                    </p>
                   </div>
-                  <Button variant="destructive" onClick={() => setShowDeleteDialog(true)} className="w-full sm:w-auto">
-                    <Trash2 className="h-4 w-4 mr-2" /> Delete Account
+                  <Button
+                    variant="destructive"
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="w-full sm:w-auto"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Account
                   </Button>
                 </div>
               </CardContent>
@@ -546,26 +534,38 @@ export default function SettingsPage() {
                 <Bell className="h-5 w-5 text-amber-600" />
                 Notification Preferences
               </CardTitle>
+              <CardDescription>
+                Choose how you want to receive notifications 🔔
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                 <div>
                   <p className="font-medium flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-amber-600" /> Email Notifications
+                    <Mail className="h-4 w-4 text-amber-600" />
+                    Email Notifications
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Receive event updates and ticket sale alerts via email
                   </p>
                 </div>
-                <Switch checked={emailNotifications} onCheckedChange={setEmailNotifications} />
+                <Switch
+                  checked={emailNotifications}
+                  onCheckedChange={setEmailNotifications}
+                />
               </div>
             </CardContent>
             <CardFooter>
               <Button onClick={handleSavePreferences} className="bg-amber-600 hover:bg-amber-700">
-                <Bell className="h-4 w-4 mr-2" /> Save Preferences 💾
+                <Bell className="h-4 w-4 mr-2" />
+                Save Preferences 💾
               </Button>
             </CardFooter>
           </Card>
         )}
       </div>
 
+      {/* Delete Account Confirmation Dialog */}
       <ConfirmationDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
@@ -577,7 +577,16 @@ export default function SettingsPage() {
         variant="danger"
       >
         <div className="mt-4 p-4 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border border-red-200">
-          <p className="text-sm text-red-600 font-medium">This action completely removes your organizer credentials.</p>
+          <div className="flex items-center gap-2 text-red-700 mb-2">
+            <AlertCircle className="h-5 w-5" />
+            <span className="font-semibold">Warning! This action cannot be undone.</span>
+          </div>
+          <ul className="space-y-1 text-sm text-red-600 ml-6 list-disc">
+            <li>All your events will be permanently deleted</li>
+            <li>All ticket sales and attendee data will be removed</li>
+            <li>You will lose access to your organizer account</li>
+            <li>Your email and phone cannot be used to register again immediately</li>
+          </ul>
         </div>
       </ConfirmationDialog>
     </div>

@@ -11,6 +11,7 @@
  * - Real-time check-in status
  * - Pagination for large attendee lists
  * - Breadcrumb navigation
+ * - Purple/Blue theme
  * 
  * @module AttendeeListPage
  */
@@ -28,6 +29,7 @@ import {
   MapPin,
   Ticket,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react'
 
 // shadcn/ui components
@@ -103,7 +105,7 @@ export default function AttendeeListPage() {
   const router = useRouter()
   const eventId = params.eventId as string
 
-  // Redirect if no eventId is provided (handle direct access without ID)
+  // Redirect if no eventId is provided
   useEffect(() => {
     if (!eventId) {
       router.replace('/organizer/events')
@@ -160,14 +162,12 @@ export default function AttendeeListPage() {
 
       setEvent(eventRes.data.event)
       
-      // ✅ Safe fallback for attendees array
       const attendeesList = attendeesRes.data?.attendees || []
       setAttendees(attendeesList)
       setFilteredAttendees(attendeesList)
       setTotalCount(attendeesRes.data?.total || 0)
       setTotalPages(attendeesRes.data?.totalPages || Math.ceil((attendeesRes.data?.total || 0) / pageSize))
       
-      // ✅ Safe summary
       const summaryData = summaryRes.data?.summary || {
         totalAttendees: 0,
         totalRevenue: 0,
@@ -177,7 +177,6 @@ export default function AttendeeListPage() {
       }
       setSummary(summaryData)
 
-      // Extract unique ticket types
       const types = [...new Set(attendeesList.map((a: Attendee) => a.ticketType))]
       setTicketTypes(types)
     } catch (error) {
@@ -194,7 +193,6 @@ export default function AttendeeListPage() {
   const applyFiltersAndSearch = () => {
     let filtered = [...attendees]
 
-    // Apply search (name or phone)
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
       filtered = filtered.filter(
@@ -204,19 +202,16 @@ export default function AttendeeListPage() {
       )
     }
 
-    // Apply ticket type filter
     if (filters.ticketType !== 'all') {
       filtered = filtered.filter((a) => a.ticketType === filters.ticketType)
     }
 
-    // Apply check-in status filter
     if (filters.checkInStatus !== 'all') {
       filtered = filtered.filter((a) =>
         filters.checkInStatus === 'checked_in' ? a.checkedIn : !a.checkedIn
       )
     }
 
-    // Apply date range filter (purchase date)
     if (filters.dateFrom) {
       const fromDate = new Date(filters.dateFrom)
       filtered = filtered.filter((a) => new Date(a.purchasedAt) >= fromDate)
@@ -230,14 +225,10 @@ export default function AttendeeListPage() {
     setFilteredAttendees(filtered)
   }
 
-  /**
-   * Handle check-in of an attendee
-   */
   const handleCheckIn = useCallback(async (attendeeId: string) => {
     try {
       const response = await api.post(`/attendees/${attendeeId}/checkin`)
       
-      // Update local state
       setAttendees((prev) =>
         prev.map((a) =>
           a.id === attendeeId
@@ -246,7 +237,6 @@ export default function AttendeeListPage() {
         )
       )
       
-      // Update summary
       if (summary) {
         setSummary({
           ...summary,
@@ -261,9 +251,6 @@ export default function AttendeeListPage() {
     }
   }, [summary])
 
-  /**
-   * Handle export of attendee list
-   */
   const handleExport = async (format: 'csv' | 'excel') => {
     setIsExporting(true)
     try {
@@ -295,9 +282,6 @@ export default function AttendeeListPage() {
     }
   }
 
-  /**
-   * Reset all filters
-   */
   const handleResetFilters = () => {
     setSearchTerm('')
     setFilters({
@@ -309,9 +293,6 @@ export default function AttendeeListPage() {
     setPage(1)
   }
 
-  /**
-   * Calculate active filter count for badge
-   */
   const getActiveFilterCount = (): number => {
     let count = 0
     if (filters.ticketType !== 'all') count++
@@ -365,33 +346,23 @@ export default function AttendeeListPage() {
         showHome
       />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push('/organizer/events')}
-              className="-ml-2"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Events
-            </Button>
+      {/* Header with Purple/Blue Gradient */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 p-5 rounded-xl shadow-lg text-white">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+            <Users className="h-7 w-7" />
           </div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Users className="h-6 w-6 text-primary" />
-            Attendees 👥
-          </h1>
-          <p className="text-gray-500 mt-1 flex items-center gap-2">
-            <Calendar className="h-3 w-3" />
-            {formatDate(event.startDate)} at {formatTime(event.startTime)}
-            <span className="mx-1">•</span>
-            <MapPin className="h-3 w-3" />
-            {event.venueName}, {event.city}
-          </p>
+          <div>
+            <h1 className="text-2xl font-bold">Attendees 👥</h1>
+            <p className="text-white/80 text-sm mt-0.5 flex items-center gap-2 flex-wrap">
+              <Calendar className="h-3 w-3" />
+              {formatDate(event.startDate)} at {formatTime(event.startTime)}
+              <span className="mx-1">•</span>
+              <MapPin className="h-3 w-3" />
+              {event.venueName}, {event.city}
+            </p>
+          </div>
         </div>
-        
         <ExportButton
           attendees={filteredAttendees}
           eventName={event.title}
@@ -400,59 +371,59 @@ export default function AttendeeListPage() {
         />
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards with Gradients */}
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card>
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-md hover:shadow-lg transition-shadow">
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm text-gray-500">Total Attendees</p>
-                  <p className="text-2xl font-bold">{summary.totalAttendees}</p>
+                  <p className="text-sm text-purple-600">Total Attendees</p>
+                  <p className="text-2xl font-bold text-purple-700">{summary.totalAttendees}</p>
                 </div>
-                <Users className="h-5 w-5 text-gray-400" />
+                <Users className="h-5 w-5 text-purple-500" />
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 shadow-md hover:shadow-lg transition-shadow">
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm text-gray-500">Total Revenue</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-sm text-emerald-600">Total Revenue</p>
+                  <p className="text-2xl font-bold text-emerald-700">
                     {formatCurrency(summary.totalRevenue)}
                   </p>
                 </div>
-                <TrendingUp className="h-5 w-5 text-gray-400" />
+                <TrendingUp className="h-5 w-5 text-emerald-500" />
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-md hover:shadow-lg transition-shadow">
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm text-gray-500">Checked In ✅</p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-sm text-blue-600">Checked In ✅</p>
+                  <p className="text-2xl font-bold text-blue-700">
                     {summary.checkedInCount} / {summary.totalAttendees}
                   </p>
                 </div>
-                <CheckCircle className="h-5 w-5 text-green-600" />
+                <CheckCircle className="h-5 w-5 text-blue-500" />
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200 shadow-md hover:shadow-lg transition-shadow">
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm text-gray-500">Check-in Rate 📊</p>
-                  <p className="text-2xl font-bold">{summary.checkInPercentage}%</p>
+                  <p className="text-sm text-amber-600">Check-in Rate 📊</p>
+                  <p className="text-2xl font-bold text-amber-700">{summary.checkInPercentage}%</p>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                   <div
-                    className="bg-green-600 h-2 rounded-full transition-all duration-500"
+                    className="bg-amber-500 h-2 rounded-full transition-all duration-500"
                     style={{ width: `${summary.checkInPercentage}%` }}
                   />
                 </div>
@@ -464,10 +435,10 @@ export default function AttendeeListPage() {
 
       {/* Ticket Breakdown */}
       {summary && summary.ticketBreakdown.length > 0 && (
-        <Card>
+        <Card className="border-l-4 border-l-purple-500 shadow-md">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Ticket className="h-4 w-4 text-primary" />
+            <CardTitle className="text-lg flex items-center gap-2 text-purple-700">
+              <Ticket className="h-4 w-4 text-purple-500" />
               Ticket Sales Breakdown 🎟️
             </CardTitle>
           </CardHeader>
@@ -476,13 +447,13 @@ export default function AttendeeListPage() {
               {summary.ticketBreakdown.map((ticket) => (
                 <div
                   key={ticket.name}
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                  className="flex justify-between items-center p-3 bg-purple-50/50 rounded-xl border border-purple-100"
                 >
                   <div>
-                    <p className="font-medium">{ticket.name}</p>
+                    <p className="font-medium text-gray-800">{ticket.name}</p>
                     <p className="text-sm text-gray-500">{ticket.sold} sold</p>
                   </div>
-                  <p className="font-semibold text-primary">
+                  <p className="font-semibold text-purple-600">
                     {formatCurrency(ticket.revenue)}
                   </p>
                 </div>
@@ -492,37 +463,41 @@ export default function AttendeeListPage() {
         </Card>
       )}
 
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <AttendeeSearch
-            value={searchTerm}
-            onChange={setSearchTerm}
-            placeholder="🔍 Search by name or phone number..."
-          />
-        </div>
-        
-        <AttendeeFilters
-          ticketTypes={ticketTypes}
-          filters={filters}
-          onFiltersChange={setFilters}
-          activeFilterCount={activeFilterCount}
-        />
-        
-        {activeFilterCount > 0 && (
-          <Button variant="ghost" onClick={handleResetFilters} className="sm:w-auto">
-            Reset Filters ✕
-          </Button>
-        )}
-      </div>
+      {/* Search and Filters Card */}
+      <Card className="border-l-4 border-l-blue-500 shadow-md">
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <AttendeeSearch
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder="🔍 Search by name or phone number..."
+              />
+            </div>
+            
+            <AttendeeFilters
+              ticketTypes={ticketTypes}
+              filters={filters}
+              onFiltersChange={setFilters}
+              activeFilterCount={activeFilterCount}
+            />
+            
+            {activeFilterCount > 0 && (
+              <Button variant="ghost" onClick={handleResetFilters} className="text-purple-600 hover:text-purple-800 hover:bg-purple-50">
+                Reset Filters ✕
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Results Count - with safe fallbacks */}
+      {/* Results Count */}
       <div className="text-sm text-gray-500 flex items-center justify-between flex-wrap gap-2">
         <span>
-          Showing {filteredAttendees?.length || 0} of {attendees?.length || 0} attendees
+          Showing <span className="font-semibold text-purple-700">{filteredAttendees?.length || 0}</span> of <span className="font-semibold">{attendees?.length || 0}</span> attendees
         </span>
         {filteredAttendees?.length > 0 && (
-          <span className="text-xs">
+          <span className="text-xs bg-blue-50 px-3 py-1 rounded-full text-blue-700">
             📊 Check-in progress: {summary?.checkedInCount || 0}/{summary?.totalAttendees || 0}
           </span>
         )}
@@ -539,12 +514,12 @@ export default function AttendeeListPage() {
       {/* Mobile Card View */}
       <div className="block md:hidden space-y-3">
         {filteredAttendees.length === 0 ? (
-          <Card>
+          <Card className="border-dashed border-2 border-gray-200">
             <CardContent className="py-12 text-center">
               <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
               <p className="text-gray-500">No attendees found 📭</p>
               {(searchTerm || activeFilterCount > 0) && (
-                <Button variant="link" onClick={handleResetFilters} className="mt-2">
+                <Button variant="link" onClick={handleResetFilters} className="text-purple-600">
                   Clear filters
                 </Button>
               )}
@@ -563,26 +538,28 @@ export default function AttendeeListPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
-          pageSizeOptions={[10, 20, 50, 100]}
-          totalItems={totalCount}
-          showFirstLast
-        />
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-purple-100">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[10, 20, 50, 100]}
+            totalItems={totalCount}
+            showFirstLast
+          />
+        </div>
       )}
 
       {/* Empty State for No Results */}
       {filteredAttendees.length === 0 && attendees.length > 0 && (
-        <Card>
+        <Card className="border-dashed border-2 border-amber-200 bg-amber-50/30">
           <CardContent className="py-12 text-center">
             <div className="flex flex-col items-center gap-3">
-              <AlertCircle className="h-12 w-12 text-gray-300" />
+              <AlertCircle className="h-12 w-12 text-amber-400" />
               <p className="text-gray-500">No attendees match your search criteria 🔍</p>
-              <Button variant="link" onClick={handleResetFilters} className="mt-2">
+              <Button variant="link" onClick={handleResetFilters} className="text-purple-600">
                 Clear all filters
               </Button>
             </div>
