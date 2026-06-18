@@ -55,7 +55,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
             Tickets Sold: <span className="font-semibold">{payload[0]?.value || 0}</span>
           </p>
           <p className="text-green-600">
-            Revenue: <span className="font-semibold">{formatCurrency(payload[1?.value || 0])}</span>
+            Revenue: <span className="font-semibold">{formatCurrency(payload[1?.valueOf() || 0])}</span>
           </p>
         </div>
       </div>

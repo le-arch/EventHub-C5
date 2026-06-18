@@ -70,9 +70,14 @@ export default function TicketPage() {
     }
   }
 
-  const downloadQRCode = () => {
+    const downloadQRCode = () => {
     const canvas = document.getElementById('qr-code-canvas') as HTMLCanvasElement
-    if (canvas) {
+    if (!canvas) {
+      toast.error('QR code not found')
+      return
+    }
+
+    try {
       const pngUrl = canvas.toDataURL('image/png')
       const downloadLink = document.createElement('a')
       const filename = `ticket_${order?.eventTitle?.replace(/\s/g, '_')}_${order?.attendeeName?.replace(/\s/g, '_')}.png`
@@ -80,10 +85,19 @@ export default function TicketPage() {
       downloadLink.download = filename
       document.body.appendChild(downloadLink)
       downloadLink.click()
-      document.body.removeChild(downloadLink)
+      
+      // Remove after a short delay to ensure download starts
+      setTimeout(() => {
+        if (downloadLink.parentNode) {
+          downloadLink.parentNode.removeChild(downloadLink)
+        }
+      }, 100)
       
       setDownloadCount(prev => prev + 1)
       toast.success('✅ QR code downloaded successfully!')
+    } catch (error) {
+      console.error('Download failed:', error)
+      toast.error('❌ Failed to download QR code')
     }
   }
 
@@ -92,7 +106,7 @@ export default function TicketPage() {
     
     try {
       const canvas = document.getElementById('qr-code-canvas') as HTMLCanvasElement
-      if (canvas && navigator.share) {
+      if (canvas && typeof navigator.share === 'function') {
         const blob = await new Promise<Blob>((resolve) => {
           canvas.toBlob((blob) => resolve(blob!), 'image/png')
         })
@@ -232,12 +246,12 @@ export default function TicketPage() {
             Download QR Code (PNG) 📥
           </Button>
           
-          {navigator.share && (
+          
             <Button variant="outline" onClick={shareTicket} className="w-full">
               <Share2 className="h-4 w-4 mr-2" />
               Share Ticket 📤
             </Button>
-          )}
+          
           
           <Button variant="ghost" onClick={() => router.push('/')} className="w-full">
             <Home className="h-4 w-4 mr-2" />

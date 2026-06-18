@@ -12,7 +12,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { QrScanner } from '@yudiel/react-qr-scanner'
+import { Scanner } from '@yudiel/react-qr-scanner'
 import { Camera, AlertCircle, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -75,12 +75,14 @@ export function CheckinScanner({
   /**
    * Handle QR code scan result
    */
-  const handleScan = useCallback(async (result: string) => {
-    if (!result || isProcessing) return
+  const handleScan = useCallback(async (result: any) => {
+    // Extract the text from the Scanner result
+    const qrText = result?.rawValue || result
+    if (!qrText || isProcessing) return
     
     // Prevent duplicate scans
-    if (lastScanned === result) return
-    setLastScanned(result)
+    if (lastScanned === qrText) return
+    setLastScanned(qrText)
     
     // Simulate API call - replace with actual API call
     try {
@@ -168,13 +170,9 @@ export function CheckinScanner({
       {cameraPermission === true && (
         <div className="relative">
           <div className="aspect-square max-w-md mx-auto bg-black rounded-lg overflow-hidden">
-            <QrScanner
-              onDecode={handleScan}
+            <Scanner
+              onScan={handleScan}
               onError={handleError}
-              constraints={{
-                facingMode: "environment",
-              }}
-              className="w-full h-full"
             />
           </div>
           

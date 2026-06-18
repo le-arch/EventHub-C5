@@ -9,7 +9,7 @@
 
 'use client'
 
-import { ReactNode } from 'react'
+import { JSX, ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
 interface ContainerProps {

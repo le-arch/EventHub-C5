@@ -9,6 +9,7 @@
  * - Status badges and ticket sales summary
  * - Breadcrumb navigation
  * - Confirmation dialog for delete actions
+ * - Purple/Blue theme
  * 
  * @module EventsDashboardPage
  */
@@ -34,10 +35,9 @@ import {
   TrendingUp,
   CheckCircle,
   XCircle,
-  Clock,
   FileText,
+  RefreshCw,
 } from 'lucide-react'
-import Image from 'next/image'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
@@ -108,9 +108,6 @@ export default function EventsDashboardPage() {
     fetchEvents()
   }, [page, pageSize, searchTerm])
 
-  /**
-   * Fetch all events for the logged-in organizer with pagination
-   */
   const fetchEvents = async () => {
     setLoading(true)
     try {
@@ -121,9 +118,9 @@ export default function EventsDashboardPage() {
           search: searchTerm || undefined,
         },
       })
-      setEvents(response.data.events)
-      setTotalCount(response.data.total)
-      setTotalPages(response.data.totalPages || Math.ceil(response.data.total / pageSize))
+      setEvents(response.data.events || [])
+      setTotalCount(response.data.total || 0)
+      setTotalPages(response.data.totalPages || Math.ceil((response.data.total || 0) / pageSize))
     } catch (error) {
       toast.error('❌ Failed to load events')
       console.error(error)
@@ -132,9 +129,6 @@ export default function EventsDashboardPage() {
     }
   }
 
-  /**
-   * Delete an event
-   */
   const handleDeleteEvent = async () => {
     if (!eventToDelete) return
     
@@ -144,7 +138,6 @@ export default function EventsDashboardPage() {
       toast.success(`✅ "${eventToDelete.title}" has been deleted`)
       setEvents(events.filter(e => e.id !== eventToDelete.id))
       setEventToDelete(null)
-      // Refresh to update pagination counts
       fetchEvents()
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to delete event'
@@ -154,14 +147,11 @@ export default function EventsDashboardPage() {
     }
   }
 
-  /**
-   * Get status badge for event with icon
-   */
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'published':
         return (
-          <Badge className="bg-green-100 text-green-800 border-green-200">
+          <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">
             <CheckCircle className="h-3 w-3 mr-1" />
             Published ✅
           </Badge>
@@ -182,7 +172,7 @@ export default function EventsDashboardPage() {
         )
       case 'completed':
         return (
-          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+          <Badge className="bg-sky-100 text-sky-800 border-sky-200">
             <CheckCircle className="h-3 w-3 mr-1" />
             Completed 🏁
           </Badge>
@@ -192,17 +182,11 @@ export default function EventsDashboardPage() {
     }
   }
 
-  /**
-   * Handle search input change
-   */
   const handleSearch = (term: string) => {
     setSearchTerm(term)
-    setPage(1) // Reset to first page when searching
+    setPage(1)
   }
 
-  /**
-   * Clear search
-   */
   const clearSearch = () => {
     setSearchTerm('')
     setPage(1)
@@ -212,10 +196,7 @@ export default function EventsDashboardPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        {/* Breadcrumb Skeleton */}
         <Skeleton className="h-6 w-64" />
-        
-        {/* Header Skeleton */}
         <div className="flex justify-between items-center">
           <div>
             <Skeleton className="h-8 w-48 mb-2" />
@@ -223,11 +204,7 @@ export default function EventsDashboardPage() {
           </div>
           <Skeleton className="h-10 w-40" />
         </div>
-        
-        {/* Search Skeleton */}
         <Skeleton className="h-10 w-full" />
-        
-        {/* Events Grid Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i}>
@@ -244,8 +221,6 @@ export default function EventsDashboardPage() {
             </Card>
           ))}
         </div>
-        
-        {/* Pagination Skeleton */}
         <div className="flex justify-center">
           <Skeleton className="h-10 w-80" />
         </div>
@@ -264,19 +239,21 @@ export default function EventsDashboardPage() {
         showHome
       />
 
-      {/* Header*/}
-      <div className="flex flex-col sm:flex-rowm justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Calendar className="h-6 w-6 text-primary" />
-            My Events 📅
-          </h1>
-          <p className="text-gray-500 mt-1">
-            Manage all your events, track sales, and check in attendees
-          </p>
+      {/* Header with Purple/Blue Gradient */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 p-5 rounded-xl shadow-lg text-white">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+            <Calendar className="h-7 w-7" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">My Events 📅</h1>
+            <p className="text-white/80 text-sm mt-0.5">
+              Manage all your events, track sales, and check in attendees
+            </p>
+          </div>
         </div>
         <Link href="/organizer/create">
-          <Button className="w-full sm:w-auto btn-press">
+          <Button className="bg-white text-purple-600 hover:bg-gray-100">
             <Plus className="h-4 w-4 mr-2" />
             Create New Event ✨
           </Button>
@@ -284,13 +261,13 @@ export default function EventsDashboardPage() {
       </div>
 
       {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <div className="relative bg-white rounded-lg shadow-sm border border-purple-100">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-400" />
         <Input
           placeholder="🔍 Search events by title, venue, or city..."
           value={searchTerm}
           onChange={(e) => handleSearch(e.target.value)}
-          className="pl-10 pr-24"
+          className="pl-10 pr-24 border-0 focus:ring-0"
         />
         {searchTerm && (
           <button
@@ -302,28 +279,23 @@ export default function EventsDashboardPage() {
         )}
       </div>
 
-      {/* Result Count */}
+      {/* Results Count */}
       {!loading && events.length > 0 && (
         <div className="text-sm text-gray-500 flex items-center gap-2">
-          <Ticket className="h-4 w-4" />
-          Showing {events.length} of {totalCount} event{totalCount !== 1 ? 's' : ''}
+          <Ticket className="h-4 w-4 text-purple-500" />
+          Showing <span className="font-semibold text-purple-700">{events.length}</span> of <span className="font-semibold">{totalCount}</span> event{totalCount !== 1 ? 's' : ''}
         </div>
       )}
 
-      {/* Event Grid */}
+      {/* Events Grid */}
       {events.length === 0 ? (
-        <Card className="text-center py-12">
+        <Card className="text-center py-12 border-dashed border-2 border-gray-200">
           <CardContent>
             <div className="flex flex-col items-center gap-4">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
                 <Calendar className="h-8 w-8 text-gray-400" />
               </div>
               <h3 className="font-semibold text-lg flex items-center gap-2">
-                <Image src="/images/empty-events.svg" 
-                      alt="Empty Events Icon" 
-                      width={32} 
-                      height={32}
-                      className="w-8 h-8"/>
                 <AlertCircle className="h-5 w-5 text-gray-400" />
                 No events found 📭
               </h3>
@@ -334,10 +306,7 @@ export default function EventsDashboardPage() {
               </p>
               {!searchTerm && (
                 <Link href="/organizer/create">
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Your First Event ✨
-                  </Button>
+                  <Button className="bg-purple-600 hover:bg-purple-700">Create Your First Event ✨</Button>
                 </Link>
               )}
             </div>
@@ -347,9 +316,9 @@ export default function EventsDashboardPage() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {events.map((event) => (
-              <Card key={event.id} className="overflow-hidden group hover:shadow-lg transition-shadow card-hover">
+              <Card key={event.id} className="overflow-hidden group hover:shadow-xl transition-shadow card-hover border-t-4 border-t-purple-500">
                 {/* Cover Image */}
-                <div className="relative h-40 bg-gradient-to-br from-primary/20 to-primary/10">
+                <div className="relative h-40 bg-gradient-to-br from-purple-100 to-blue-100">
                   {event.coverImageUrl ? (
                     <img
                       src={event.coverImageUrl}
@@ -358,7 +327,7 @@ export default function EventsDashboardPage() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <Calendar className="h-12 w-12 text-primary/40" />
+                      <Calendar className="h-12 w-12 text-purple-300/50" />
                     </div>
                   )}
                   <div className="absolute top-2 right-2">
@@ -374,34 +343,34 @@ export default function EventsDashboardPage() {
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
+                    <DropdownMenuContent align="start" className="border-purple-200">
                       <DropdownMenuItem asChild>
-                        <Link href={`/organizer/events/${event.id}`} className="cursor-pointer">
-                          <Edit className="h-4 w-4 mr-2" />
+                        <Link href={`/organizer/events/${event.id}`} className="cursor-pointer hover:bg-purple-50">
+                          <Edit className="h-4 w-4 mr-2 text-purple-600" />
                           ✏️ Edit Event
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href={`/organizer/attendees/${event.id}`} className="cursor-pointer">
-                          <Users className="h-4 w-4 mr-2" />
+                        <Link href={`/organizer/attendees/${event.id}`} className="cursor-pointer hover:bg-purple-50">
+                          <Users className="h-4 w-4 mr-2 text-purple-600" />
                           👥 View Attendees
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href={`/organizer/checkin/${event.id}`} className="cursor-pointer">
-                          <QrCode className="h-4 w-4 mr-2" />
+                        <Link href={`/organizer/checkin/${event.id}`} className="cursor-pointer hover:bg-purple-50">
+                          <QrCode className="h-4 w-4 mr-2 text-purple-600" />
                           📷 Check-in Scanner
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href={`/organizer/analytics/${event.id}`} className="cursor-pointer">
-                          <Eye className="h-4 w-4 mr-2" />
+                        <Link href={`/organizer/analytics/${event.id}`} className="cursor-pointer hover:bg-purple-50">
+                          <Eye className="h-4 w-4 mr-2 text-purple-600" />
                           📊 Analytics
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => setEventToDelete(event)}
-                        className="text-red-600 cursor-pointer"
+                        className="text-red-600 cursor-pointer hover:bg-red-50"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         🗑️ Delete Event
@@ -412,33 +381,33 @@ export default function EventsDashboardPage() {
 
                 {/* Event Info */}
                 <CardContent className="p-4">
-                  <h3 className="font-semibold text-lg mb-1 line-clamp-1">
+                  <h3 className="font-semibold text-lg mb-1 line-clamp-1 text-gray-800">
                     {event.title}
                   </h3>
                   <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                    <Calendar className="h-3 w-3" />
+                    <Calendar className="h-3 w-3 text-purple-400" />
                     <span>{formatDate(event.startDate)}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-                    <MapPin className="h-3 w-3" />
+                    <MapPin className="h-3 w-3 text-purple-400" />
                     <span className="line-clamp-1">{event.venueName}, {event.city}</span>
                   </div>
 
                   {/* Stats */}
                   <div className="grid grid-cols-2 gap-2 pt-3 border-t">
-                    <div className="text-center">
-                      <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
+                    <div className="text-center p-2 bg-purple-50 rounded-lg">
+                      <div className="flex items-center justify-center gap-1 text-xs text-purple-600">
                         <Ticket className="h-3 w-3" />
                         <span>Tickets Sold</span>
                       </div>
-                      <p className="font-semibold text-lg">{event.ticketStats.totalSold}</p>
+                      <p className="font-semibold text-lg text-purple-700">{event.ticketStats.totalSold}</p>
                     </div>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
+                    <div className="text-center p-2 bg-emerald-50 rounded-lg">
+                      <div className="flex items-center justify-center gap-1 text-xs text-emerald-600">
                         <TrendingUp className="h-3 w-3" />
                         <span>Revenue</span>
                       </div>
-                      <p className="font-semibold text-primary">
+                      <p className="font-semibold text-lg text-emerald-700">
                         {formatCurrency(event.ticketStats.totalRevenue)}
                       </p>
                     </div>
@@ -447,13 +416,13 @@ export default function EventsDashboardPage() {
 
                 <CardFooter className="p-4 pt-0 flex gap-2">
                   <Link href={`/organizer/checkin/${event.id}`} className="flex-1">
-                    <Button variant="outline" size="sm" className="w-full">
+                    <Button variant="outline" size="sm" className="w-full border-purple-300 text-purple-700 hover:bg-purple-50">
                       <QrCode className="h-3 w-3 mr-1" />
                       Check-in
                     </Button>
                   </Link>
                   <Link href={`/organizer/events/${event.id}`} className="flex-1">
-                    <Button size="sm" className="w-full">
+                    <Button size="sm" className="w-full bg-purple-600 hover:bg-purple-700">
                       Manage
                     </Button>
                   </Link>
@@ -464,21 +433,23 @@ export default function EventsDashboardPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-              pageSize={pageSize}
-              onPageSizeChange={setPageSize}
-              pageSizeOptions={[9, 18, 36]}
-              totalItems={totalCount}
-              showFirstLast
-            />
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-purple-100">
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                pageSize={pageSize}
+                onPageSizeChange={setPageSize}
+                pageSizeOptions={[9, 18, 36]}
+                totalItems={totalCount}
+                showFirstLast
+              />
+            </div>
           )}
         </>
       )}
 
-      {/* Delete dialog */}
+      {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
         open={!!eventToDelete}
         onOpenChange={(open) => !open && setEventToDelete(null)}
@@ -490,12 +461,12 @@ export default function EventsDashboardPage() {
         variant="danger"
         isLoading={isDeleting}
       >
-        <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
-          <div className="flex items-center gap-2 text-red-600 mb-2">
-            <AlertCircle className="h-4 w-4" />
-            <span className="font-medium">Warning!</span>
+        <div className="mt-4 p-4 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border border-red-200">
+          <div className="flex items-center gap-2 text-red-700 mb-2">
+            <AlertCircle className="h-5 w-5" />
+            <span className="font-semibold">Warning!</span>
           </div>
-          <p className="text-sm text-red-700">
+          <p className="text-sm text-red-600">
             This action cannot be undone. All ticket sales and attendee data will be permanently removed.
           </p>
         </div>

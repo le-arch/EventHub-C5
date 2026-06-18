@@ -1,4 +1,6 @@
 CREATE TYPE user_role AS ENUM ('organizer', 'admin');
+CREATE TYPE event_status AS ENUM ('draft', 'published', 'cancelled', 'suspended', 'archived');
+
 -- Enable required UUID generation extensions
 CREATE EXTENSION "uuid-ossp";
 
@@ -29,9 +31,10 @@ CREATE TABLE events (
     start_time TIME NOT NULL,
     end_time TIME,
     cover_image_url TEXT,
-    status VARCHAR(20) DEFAULT 'draft',
+    status event_status NOT NULL DEFAULT 'draft',
     sales_start_date DATE,
     sales_end_date DATE,
+    capacity_range int4range,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -46,7 +49,8 @@ CREATE TABLE ticket_types (
     quantity_available INT NOT NULL,
     quantity_sold INT NOT NULL DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 4. ORDERS TABLE (Developer C's Core Task Feature)

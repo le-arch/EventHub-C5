@@ -1,6 +1,6 @@
 # Docker Compose for EventHub Frontend
 
-version: '3.8'
+#version: '3.8'
 
 services:
   # Development service with hot reload
@@ -42,11 +42,11 @@ services:
     networks:
       - eventhub-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 5s
 
 networks:
   eventhub-network:

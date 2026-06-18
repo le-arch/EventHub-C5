@@ -1,11 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Email Verification (OTP) Page Component
- * 
- * After registration, users enter the 6-digit OTP sent to their email.
+ * * After registration, users enter the 6-digit OTP sent to their email.
  * Uses the reusable OTPInput component with auto-focus, paste support,
  * and resend functionality with cooldown.
- * 
- * @module VerifyOTPPage
+ * * @module VerifyOTPPage
  */
 
 'use client'
@@ -13,7 +12,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Mail, CheckCircle, RefreshCw, ArrowLeft } from 'lucide-react'
+import { Mail, CheckCircle, RefreshCw, ArrowLeft, Loader2 } from 'lucide-react'
+import Image from 'next/image'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
@@ -100,99 +100,116 @@ export default function VerifyOTPPage() {
   /**
    * Handle complete OTP entry
    */
-  const handleOTPComplete = (otpString: string) => {
+  const handleOTPComplete = () => {
     // Auto-submit when all digits are entered
     handleVerify()
   }
 
   return (
-    <Card className="shadow-lg border-0">
-      <CardHeader className="space-y-1 text-center">
-        <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
-          <Mail className="h-6 w-6 text-primary" />
+    <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-50/50 via-slate-50 to-blue-50/50 antialiased selection:bg-indigo-500/10">
+      <div className="w-full max-w-md space-y-6">
+        
+        {/* App Branding Top Header */}
+        <div className="flex flex-col items-center text-center space-y-2">
+          <div className="p-3 bg-white border border-slate-200/60 rounded-2xl shadow-sm backdrop-blur-md">
+            <Image src="/images/logo.svg" alt="Logo" width={40} height={40} className="w-10 h-10" />
+          </div>
+          <h1 className="text-2xl font-black tracking-tight text-slate-900">EventHub</h1>
         </div>
-        <CardTitle className="text-2xl font-bold">Verify Your Email 📧</CardTitle>
-        <CardDescription>
-          We sent a 6-digit verification code to
-          <br />
-          <span className="font-medium text-gray-900">{email}</span>
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent>
-        <div className="space-y-6">
-          {/* OTP Input Component */}
-          <OTPInput
-            length={6}
-            value={otp}
-            onChange={setOtp}
-            onComplete={handleOTPComplete}
-            isDisabled={isLoading}
-            autoFocus={true}
-          />
 
-          {/* Verification Button */}
-          <Button 
-            onClick={handleVerify} 
-            className="w-full" 
-            disabled={isLoading || otp.some(digit => digit === '')}
-          >
-            {isLoading ? (
-              <span className="flex items-center gap-2">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Verifying...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4" />
-                Verify Email
-              </span>
-            )}
-          </Button>
+        {/* Premium Glassmorphism Container Panel */}
+        <Card className="shadow-[0_8px_32px_rgba(0,0,0,0.04)] border-white/40 bg-white/60 backdrop-blur-xl rounded-2xl">
+          <CardHeader className="space-y-2 pb-6 text-center">
+            <div className="mx-auto w-12 h-12 bg-indigo-50 border border-indigo-100/80 shadow-sm rounded-2xl flex items-center justify-center mb-1 animate-pulse">
+              <Mail className="h-5 w-5 text-indigo-600" />
+            </div>
+            <CardTitle className="text-xl font-bold text-slate-800">Verify Your Email</CardTitle>
+            <CardDescription className="text-slate-500 text-sm leading-relaxed">
+              We sent a 6-digit verification code to
+              <br />
+              <span className="font-semibold text-slate-800 break-all bg-slate-200/50 px-2 py-0.5 rounded-md inline-block mt-1">{email}</span>
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent>
+            <div className="space-y-6">
+              
+              {/* OTP Input UI Component Block Wrapper */}
+              <div className="flex justify-center py-2">
+                <OTPInput
+                  length={6}
+                  value={otp}
+                  onChange={setOtp}
+                  onComplete={handleOTPComplete}
+                  isDisabled={isLoading}
+                  autoFocus={true}
+                />
+              </div>
 
-          {/* Resend Code Section */}
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Didn&apos;t receive the code?{' '}
-              <button
-                onClick={handleResend}
-                disabled={resendCooldown > 0 || isResending}
-                className={`text-primary hover:underline font-medium inline-flex items-center gap-1 ${
-                  resendCooldown > 0 ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+              {/* Verification Submit Trigger Action Button */}
+              <Button 
+                onClick={handleVerify} 
+                className="w-full h-11 rounded-xl font-medium bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 transition-all text-white shadow-md shadow-indigo-600/10" 
+                disabled={isLoading || otp.some(digit => digit === '')}
               >
-                {isResending ? (
-                  <>
-                    <RefreshCw className="h-3 w-3 animate-spin" />
-                    Sending...
-                  </>
-                ) : resendCooldown > 0 ? (
-                  <>
-                    <RefreshCw className="h-3 w-3" />
-                    Resend in {resendCooldown}s
-                  </>
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-white" />
+                    Verifying security token...
+                  </span>
                 ) : (
-                  <>
-                    <RefreshCw className="h-3 w-3" />
-                    Resend Code
-                  </>
+                  <span className="flex items-center justify-center gap-2">
+                    <CheckCircle className="h-4 w-4" />
+                    Verify & Continue
+                  </span>
                 )}
-              </button>
-            </p>
-          </div>
+              </Button>
 
-          {/* Back to Login Link */}
-          <div className="text-center pt-2">
-            <Link 
-              href="/login" 
-              className="text-sm text-gray-500 hover:text-gray-700 inline-flex items-center gap-1"
-            >
-              <ArrowLeft className="h-3 w-3" />
-              Back to Login
-            </Link>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+              {/* Resend Code Section Area Controls */}
+              <div className="text-center pt-2 border-t border-slate-200/40">
+                <p className="text-sm text-slate-600">
+                  Didn&apos;t receive the code?{' '}
+                  <button
+                    onClick={handleResend}
+                    disabled={resendCooldown > 0 || isResending}
+                    className={`text-indigo-600 hover:text-indigo-700 font-semibold inline-flex items-center gap-1.5 transition-all focus:outline-none ${
+                      resendCooldown > 0 ? 'opacity-50 cursor-not-allowed text-slate-400' : ''
+                    }`}
+                  >
+                    {isResending ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Sending...
+                      </>
+                    ) : resendCooldown > 0 ? (
+                      <>
+                        <RefreshCw className="h-3 w-3 animate-spin duration-[3s]" />
+                        Resend in {resendCooldown}s
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-3 w-3" />
+                        Resend Code
+                      </>
+                    )}
+                  </button>
+                </p>
+              </div>
+
+              {/* Back to Login Anchor Navigation Link */}
+              <div className="text-center">
+                <Link 
+                  href="/login" 
+                  className="text-xs font-semibold text-slate-500 hover:text-slate-800 inline-flex items-center gap-1.5 transition-colors group"
+                >
+                  <ArrowLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
+                  Back to Login
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   )
 }

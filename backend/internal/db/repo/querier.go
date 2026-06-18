@@ -7,13 +7,34 @@ package repo
 import (
 	"context"
 
-	"github.com/google/uuid"
+	uuid "github.com/google/uuid"
 )
 
 type Querier interface {
+	CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error)
+	CreateTicketType(ctx context.Context, arg CreateTicketTypeParams) (TicketType, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteEvent(ctx context.Context, arg DeleteEventParams) error
+	DeleteTicketType(ctx context.Context, arg DeleteTicketTypeParams) error
+	GetAllUsers(ctx context.Context, role UserRole) ([]User, error)
+	GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
+	GetEventByIDPublic(ctx context.Context, id uuid.UUID) (Event, error)
+	GetEventBySlugPublic(ctx context.Context, slug string) (GetEventBySlugPublicRow, error)
+	GetEventsBySlug(ctx context.Context, slug string) (Event, error)
+	GetTicketTypeByID(ctx context.Context, id uuid.UUID) (TicketType, error)
+	GetTicketTypesByEvent(ctx context.Context, eventID uuid.UUID) ([]TicketType, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
+	ListEvents(ctx context.Context) ([]ListEventsRow, error)
+	ListEventsByCity(ctx context.Context, city string) ([]Event, error)
+	ListEventsByStatus(ctx context.Context, status EventStatus) ([]Event, error)
+	ListOrganizerEvent(ctx context.Context, arg ListOrganizerEventParams) (Event, error)
+	ListOrganizerEvents(ctx context.Context, organizerID uuid.UUID) ([]Event, error)
+	PartialEventUpdate(ctx context.Context, arg PartialEventUpdateParams) (Event, error)
+	UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event, error)
+	UpdateEventCoverImage(ctx context.Context, arg UpdateEventCoverImageParams) (Event, error)
+	UpdateEventStatus(ctx context.Context, arg UpdateEventStatusParams) (Event, error)
+	UpdateTicketType(ctx context.Context, arg UpdateTicketTypeParams) (TicketType, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 }
 

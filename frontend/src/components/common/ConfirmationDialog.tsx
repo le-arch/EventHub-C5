@@ -2,7 +2,7 @@
  * ConfirmationDialog Component
  * 
  * Reusable confirmation modal for destructive actions or important decisions.
- * Supports different variants (danger, warning, info) and custom content.
+ * Supports different variants (danger, warning, info, question, success) and custom content.
  * 
  * @module ConfirmationDialog
  */
@@ -19,10 +19,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { AlertTriangle, Trash2, Info, HelpCircle } from 'lucide-react'
+import { AlertTriangle, Trash2, Info, HelpCircle, CheckCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-type DialogVariant = 'danger' | 'warning' | 'info' | 'question'
+type DialogVariant = 'danger' | 'warning' | 'info' | 'question' | 'success'
 
 interface ConfirmationDialogProps {
   open: boolean
@@ -36,6 +36,7 @@ interface ConfirmationDialogProps {
   variant?: DialogVariant
   isLoading?: boolean
   destructive?: boolean
+  children?: React.ReactNode
 }
 
 const variantConfig = {
@@ -63,6 +64,12 @@ const variantConfig = {
     bgColor: 'bg-primary/10',
     confirmButtonClass: 'bg-primary hover:bg-primary/90',
   },
+  success: {
+    icon: CheckCircle,
+    iconColor: 'text-green-600',
+    bgColor: 'bg-green-100',
+    confirmButtonClass: 'bg-green-600 hover:bg-green-700',
+  },
 }
 
 export function ConfirmationDialog({
@@ -77,8 +84,30 @@ export function ConfirmationDialog({
   variant = 'danger',
   isLoading = false,
   destructive = true,
+  children,
 }: ConfirmationDialogProps) {
   const config = variantConfig[variant]
+  // If variant is not found (should never happen), fallback to danger config
+  if (!config) {
+    console.warn(`Unknown variant "${variant}", falling back to "danger"`)
+    return (
+      <ConfirmationDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+        title={title}
+        description={description}
+        confirmText={confirmText}
+        cancelText={cancelText}
+        variant="danger"
+        isLoading={isLoading}
+        destructive={destructive}
+        children={children}
+      />
+    )
+  }
+
   const Icon = config.icon
 
   const handleConfirm = () => {
@@ -104,6 +133,7 @@ export function ConfirmationDialog({
             {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {children && <div className="px-6 py-4">{children}</div>}
         <AlertDialogFooter>
           <AlertDialogCancel onClick={handleCancel} disabled={isLoading}>
             {cancelText}

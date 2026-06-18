@@ -16,6 +16,7 @@ import { Inter } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
+// import { DataInitializer } from '@/components/DataInitializer'
 import './globals.css'
 
 // Initialize Inter font with optimized loading
@@ -48,9 +49,9 @@ export const metadata: Metadata = {
     'ticketing platform',
   ],
   authors: [
-    { name: 'Leonie Basil', role: 'Frontend Lead' },
-    { name: 'Fonyuy Verena', role: 'Backend Lead' },
-    { name: 'Rosine Achah', role: 'QA/Full Stack' },
+    { name: 'Leonie Basil' },
+    { name: 'Fonyuy Verena' },
+    { name: 'Rosine Achah' },
   ],
   creator: 'EventHub Team',
   publisher: 'EventHub',
@@ -130,6 +131,7 @@ export default function RootLayout({
         >
           {/* Auth Provider - manages authentication state */}
           <AuthProvider>
+            {/*<DataInitializer />*/}
             {/* Main application content */}
             {children}
             

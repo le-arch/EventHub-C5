@@ -2,6 +2,7 @@
  * Individual Blog Post Page
  * 
  * Displays a single blog post with full content.
+ * Purple/Blue theme with consistent styling.
  * 
  * @module BlogPostPage
  */
@@ -11,7 +12,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Calendar, User, Clock, ArrowLeft, Mail } from 'lucide-react'
+import { Calendar, User, Clock, ArrowLeft, Mail, Share2 } from 'lucide-react'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
@@ -255,18 +256,30 @@ export default function BlogPostPage() {
     }
   }
 
+  // Get category color for badges
+  const getCategoryColor = (category: string) => {
+    const colors: Record<string, string> = {
+      'Tutorial': 'bg-blue-100 text-blue-700 border-blue-200',
+      'Technology': 'bg-indigo-100 text-indigo-700 border-indigo-200',
+      'Trends': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+      'News': 'bg-amber-100 text-amber-700 border-amber-200',
+      'Case Studies': 'bg-rose-100 text-rose-700 border-rose-200',
+    }
+    return colors[category] || 'bg-purple-100 text-purple-700 border-purple-200'
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <Skeleton className="h-6 w-48 mb-4" />
-          <Skeleton className="h-64 w-full rounded-lg mb-8" />
           <Skeleton className="h-8 w-3/4 mb-4" />
-          <Skeleton className="h-4 w-1/2 mb-8" />
+          <Skeleton className="h-64 w-full rounded-xl mb-8" />
           <div className="space-y-4">
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
           </div>
         </div>
       </div>
@@ -275,12 +288,13 @@ export default function BlogPostPage() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-4">
         <div className="text-center">
           <div className="text-6xl mb-4">📭</div>
-          <h1 className="text-2xl font-bold mb-4">Post Not Found</h1>
+          <h1 className="text-2xl font-bold mb-4 text-gray-800">Post Not Found</h1>
+          <p className="text-gray-500 mb-6">The article you're looking for doesn't exist.</p>
           <Link href="/blog">
-            <Button>Back to Blog</Button>
+            <Button className="bg-purple-600 hover:bg-purple-700">Back to Blog</Button>
           </Link>
         </div>
       </div>
@@ -288,7 +302,7 @@ export default function BlogPostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Breadcrumb */}
         <Breadcrumb 
@@ -301,43 +315,47 @@ export default function BlogPostPage() {
 
         {/* Header */}
         <div className="mt-8 mb-6">
-          <div className="flex gap-2 mb-4">
-            <Badge className="bg-primary/10 text-primary">
+          <div className="flex gap-2 mb-4 flex-wrap">
+            <Badge className={`${getCategoryColor(post.category)}`}>
               {getCategoryEmoji(post.category)} {post.category}
             </Badge>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">{post.title}</h1>
-          <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 leading-tight">
+            {post.title}
+          </h1>
+          <div className="flex flex-wrap gap-6 text-sm text-gray-500">
             <div className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              <span>{post.author}</span>
+              <div className="w-7 h-7 bg-purple-100 rounded-full flex items-center justify-center">
+                <User className="h-3.5 w-3.5 text-purple-600" />
+              </div>
+              <span className="font-medium text-gray-700">{post.author}</span>
             </div>
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
+              <Calendar className="h-4 w-4 text-purple-400" />
               <span>{formatDate(post.publishedAt)}</span>
             </div>
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
+              <Clock className="h-4 w-4 text-purple-400" />
               <span>{post.readTime} min read</span>
             </div>
           </div>
         </div>
 
         {/* Cover Image Placeholder */}
-        <div className="h-64 md:h-96 rounded-lg overflow-hidden mb-8 bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-          <span className="text-8xl">{getCategoryEmoji(post.category)}</span>
+        <div className={`h-64 md:h-96 rounded-xl overflow-hidden mb-8 bg-gradient-to-r from-${post.category === 'Tutorial' ? 'blue' : post.category === 'Technology' ? 'indigo' : post.category === 'Trends' ? 'emerald' : post.category === 'News' ? 'amber' : 'rose'}-400 to-purple-500 flex items-center justify-center shadow-lg`}>
+          <span className="text-8xl md:text-9xl opacity-80 drop-shadow-lg">{getCategoryEmoji(post.category)}</span>
         </div>
 
         {/* Content */}
         <div 
-          className="prose prose-lg max-w-none mb-8 prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-600 prose-a:text-primary prose-strong:text-gray-900 prose-li:text-gray-600"
+          className="prose prose-lg max-w-none mb-8 prose-headings:font-bold prose-headings:text-gray-900 prose-headings:mt-8 prose-headings:mb-4 prose-p:text-gray-600 prose-p:leading-relaxed prose-a:text-purple-600 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-800 prose-li:text-gray-600 prose-ul:my-4 prose-li:my-1 prose-h2:text-2xl prose-h2:border-b prose-h2:border-gray-200 prose-h2:pb-2"
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
 
         {/* Tags */}
         <div className="flex flex-wrap gap-2 mb-8">
           {post.tags.map((tag) => (
-            <Badge key={tag} variant="outline" className="text-sm">
+            <Badge key={tag} variant="outline" className="text-sm border-purple-200 text-purple-700 bg-purple-50/50 hover:bg-purple-100">
               #{tag}
             </Badge>
           ))}
@@ -345,45 +363,103 @@ export default function BlogPostPage() {
 
         <Separator className="my-8" />
 
-        {/* Author Bio */}
-        <Card>
+        {/* Author Bio - Enhanced */}
+        <Card className="border-l-4 border-l-purple-500 shadow-md">
           <CardContent className="pt-6">
             <div className="flex gap-4">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-xl font-bold text-primary">{post.author.charAt(0)}</span>
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center flex-shrink-0 border-2 border-purple-200">
+                <span className="text-xl font-bold text-purple-700">{post.author.charAt(0)}</span>
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold mb-1">About {post.author}</h3>
-                <p className="text-sm text-gray-600 mb-1">{post.authorRole}</p>
-                <p className="text-sm text-gray-600 mb-3">{post.authorBio}</p>
+                <h3 className="font-semibold text-lg text-gray-800">About {post.author}</h3>
+                <p className="text-sm text-purple-600 font-medium mb-1">{post.authorRole}</p>
+                <p className="text-sm text-gray-600 leading-relaxed">{post.authorBio}</p>
+                <div className="flex gap-3 mt-2">
+                  <span className="text-xs text-gray-400">📅 Published on {formatDate(post.publishedAt)}</span>
+                  <span className="text-xs text-gray-400">•</span>
+                  <span className="text-xs text-gray-400">⏱️ {post.readTime} min read</span>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Share Section */}
-        <div className="flex items-center justify-between flex-wrap gap-4 mt-8">
+        <div className="flex flex-col sm:flex-row items-center justify-between flex-wrap gap-4 mt-8 p-4 bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">Share this article:</span>
-            <div className="flex gap-2">
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={shareOnFacebook}>
-                <FacebookIcon className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={shareOnTwitter}>
-                <TwitterIcon className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={shareOnLinkedIn}>
-                <LinkedinIcon className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={shareByEmail}>
-                <Mail className="h-4 w-4" />
-              </Button>
-            </div>
+            <Share2 className="h-4 w-4 text-purple-500" />
+            <span className="text-sm font-medium text-gray-700">Share this article:</span>
           </div>
-          <Button variant="ghost" onClick={() => router.push('/blog')}>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="h-9 w-9 border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-colors rounded-full"
+              onClick={shareOnFacebook}
+            >
+              <FacebookIcon href="" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="h-9 w-9 border-sky-200 text-sky-600 hover:bg-sky-50 hover:text-sky-700 hover:border-sky-300 transition-colors rounded-full"
+              onClick={shareOnTwitter}
+            >
+              <TwitterIcon href="" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="h-9 w-9 border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800 hover:border-blue-300 transition-colors rounded-full"
+              onClick={shareOnLinkedIn}
+            >
+              <LinkedinIcon href="" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="h-9 w-9 border-purple-200 text-purple-600 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300 transition-colors rounded-full"
+              onClick={shareByEmail}
+            >
+              <Mail className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => router.push('/blog')}
+            className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Blog
           </Button>
+        </div>
+
+        {/* Related Posts (optional - show 2 related posts) */}
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <span className="text-2xl">📚</span> More Articles You Might Like
+          </h3>
+          <div className="grid md:grid-cols-2 gap-4">
+            <Link 
+              href="/blog/how-to-sell-tickets-online-in-cameroon" 
+              className="block p-4 bg-white rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-md transition-all group"
+            >
+              <p className="font-medium text-gray-800 group-hover:text-purple-700 transition-colors">
+                How to Sell Tickets Online in Cameroon: A Complete Guide
+              </p>
+              <p className="text-sm text-gray-500 mt-1">📚 Tutorial • 5 min read</p>
+            </Link>
+            <Link 
+              href="/blog/qr-code-check-in-benefits" 
+              className="block p-4 bg-white rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-md transition-all group"
+            >
+              <p className="font-medium text-gray-800 group-hover:text-purple-700 transition-colors">
+                Why QR Code Check-in is a Game Changer for Events
+              </p>
+              <p className="text-sm text-gray-500 mt-1">💻 Technology • 4 min read</p>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

@@ -16,7 +16,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Search,
   Filter,
@@ -26,7 +26,6 @@ import {
   Shield,
   Mail,
   Phone,
-  Calendar,
   AlertCircle,
   Users,
   UserCheck,
@@ -103,47 +102,45 @@ export default function AdminUsersPage() {
   const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
 
-  // Fetch users on component mount or when page/pageSize changes
-  useEffect(() => {
-    fetchUsers()
-  }, [page, pageSize])
-
   /**
    * Fetch all users from API with pagination
    */
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true)
     try {
       const response = await api.get('/admin/users', {
         params: {
           page,
           limit: pageSize,
-          search: searchTerm || undefined,
-          status: statusFilter !== 'all' ? statusFilter : undefined,
         },
       })
-      setUsers(response.data.users)
-      setTotalCount(response.data.total)
-      setTotalPages(response.data.totalPages || Math.ceil(response.data.total / pageSize))
+      setUsers(response.data.users || [])
+      setTotalCount(response.data.total || 0)
+      setTotalPages(response.data.totalPages || Math.ceil((response.data.total || 0) / pageSize))
     } catch (error) {
+      console.error('Failed to load users:', error)
       toast.error('❌ Failed to load users')
+      setUsers([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, pageSize])
+
+  // Fetch users on component mount or when page/pageSize changes
+  useEffect(() => {
+    fetchUsers()
+  }, [fetchUsers])
 
   /**
    * Filter users based on search term and status filter (client-side after fetch)
    */
-  const filteredUsers = users.filter((user) => {
-    // Search filter
+  const filteredUsers = (users || []).filter((user) => {
     const matchesSearch =
       searchTerm === '' ||
       user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.phone.includes(searchTerm)
 
-    // Status filter
     let matchesStatus = true
     if (statusFilter === 'verified') {
       matchesStatus = user.isEmailVerified && user.isActive
@@ -192,6 +189,7 @@ export default function AdminUsersPage() {
       toast.success(`✅ ${userToVerify.fullName} verified successfully`)
       fetchUsers()
     } catch (error) {
+      console.error('Failed to verify user:', error)
       toast.error('❌ Failed to verify user')
     } finally {
       setIsProcessing(false)
@@ -211,6 +209,7 @@ export default function AdminUsersPage() {
       toast.success(`⛔ ${userToSuspend.fullName} suspended successfully`)
       fetchUsers()
     } catch (error) {
+      console.error('Failed to suspend user:', error)
       toast.error('❌ Failed to suspend user')
     } finally {
       setIsProcessing(false)
@@ -228,6 +227,7 @@ export default function AdminUsersPage() {
       toast.success(`✅ User restored successfully`)
       fetchUsers()
     } catch (error) {
+      console.error('Failed to restore user:', error)
       toast.error('❌ Failed to restore user')
     } finally {
       setIsProcessing(false)
@@ -246,6 +246,7 @@ export default function AdminUsersPage() {
       setSelectedUsers(new Set())
       fetchUsers()
     } catch (error) {
+      console.error('Failed to batch verify users:', error)
       toast.error('❌ Failed to verify users')
     } finally {
       setIsProcessing(false)
@@ -264,6 +265,7 @@ export default function AdminUsersPage() {
       setSelectedUsers(new Set())
       fetchUsers()
     } catch (error) {
+      console.error('Failed to batch suspend users:', error)
       toast.error('❌ Failed to suspend users')
     } finally {
       setIsProcessing(false)
@@ -280,7 +282,7 @@ export default function AdminUsersPage() {
   }
 
   /**
-   * Get status badge for user
+   * Get status badge for user with color
    */
   const getStatusBadge = (user: User) => {
     if (!user.isActive) {
@@ -290,14 +292,14 @@ export default function AdminUsersPage() {
       </Badge>
     }
     if (user.isEmailVerified) {
-      return <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
+      return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 flex items-center gap-1">
         <CheckCircle className="h-3 w-3" />
-        Verified
+        Verified ✅
       </Badge>
     }
-    return <Badge variant="secondary" className="flex items-center gap-1">
+    return <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-200 flex items-center gap-1">
       <AlertCircle className="h-3 w-3" />
-      Pending
+      Pending ⏳
     </Badge>
   }
 
@@ -335,27 +337,27 @@ export default function AdminUsersPage() {
         showHome
       />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* Header with Purple/Blue Gradient */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 p-5 rounded-xl shadow-lg text-white">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Shield className="h-6 w-6 text-primary" />
+          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+            <Shield className="h-7 w-7" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">User Management 👥</h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-white/80 text-sm mt-0.5">
               Manage all organizer accounts on the platform
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {selectedUsers.size > 0 && (
             <>
               <Button
                 variant="outline"
                 onClick={handleBatchVerify}
                 disabled={isProcessing}
-                className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:text-white backdrop-blur-sm"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Verify Selected ({selectedUsers.size})
@@ -364,7 +366,7 @@ export default function AdminUsersPage() {
                 variant="outline"
                 onClick={handleBatchSuspend}
                 disabled={isProcessing}
-                className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:text-white backdrop-blur-sm"
               >
                 <XCircle className="h-4 w-4 mr-2" />
                 Suspend Selected ({selectedUsers.size})
@@ -374,12 +376,12 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Search and Filter */}
-      <Card>
+      {/* Search and Filter Card with Purple Border */}
+      <Card className="border-l-4 border-l-purple-500 shadow-md">
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-500" />
               <Input
                 placeholder="🔍 Search by name, email, or phone..."
                 value={searchTerm}
@@ -387,18 +389,18 @@ export default function AdminUsersPage() {
                   setSearchTerm(e.target.value)
                   setPage(1)
                 }}
-                className="pl-10"
+                className="pl-10 border-purple-200 focus:border-purple-500 focus:ring-purple-500"
               />
             </div>
             <Select value={statusFilter} onValueChange={(value) => {
               setStatusFilter(value)
               setPage(1)
             }}>
-              <SelectTrigger className="w-full sm:w-48">
-                <Filter className="h-4 w-4 mr-2" />
+              <SelectTrigger className="w-full sm:w-48 border-purple-200 focus:ring-purple-500">
+                <Filter className="h-4 w-4 mr-2 text-purple-500" />
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 <SelectItem value="all">All Users</SelectItem>
                 <SelectItem value="verified">✅ Verified Only</SelectItem>
                 <SelectItem value="pending">⏳ Pending Verification</SelectItem>
@@ -406,7 +408,11 @@ export default function AdminUsersPage() {
               </SelectContent>
             </Select>
             {(searchTerm || statusFilter !== 'all') && (
-              <Button variant="ghost" onClick={handleResetFilters} className="sm:w-auto">
+              <Button 
+                variant="ghost" 
+                onClick={handleResetFilters} 
+                className="text-purple-600 hover:text-purple-800 hover:bg-purple-50"
+              >
                 Reset Filters ✕
               </Button>
             )}
@@ -414,32 +420,32 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      {/* Result Count */}
+      {/* Results Count with Color */}
       <div className="text-sm text-gray-500 flex items-center gap-2">
-        <Users className="h-4 w-4" />
-        Showing {filteredUsers.length} of {totalCount} user{totalCount !== 1 ? 's' : ''}
+        <Users className="h-4 w-4 text-purple-500" />
+        Showing <span className="font-semibold text-purple-700">{filteredUsers.length}</span> of <span className="font-semibold">{totalCount}</span> user{totalCount !== 1 ? 's' : ''}
       </div>
 
-      {/* Users table */}
-      <Card>
+      {/* Users Table Card with Blue Accent */}
+      <Card className="border-t-4 border-t-blue-500 shadow-md overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-gradient-to-r from-purple-50 to-blue-50">
                 <TableRow>
-                  <TableHead className="w-12">
+                  <TableHead className="text-purple-800 w-12">
                     <input
                       type="checkbox"
                       checked={selectedUsers.size === filteredUsers.length && filteredUsers.length > 0}
                       onChange={handleSelectAll}
-                      className="rounded border-gray-300"
+                      className="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
                     />
                   </TableHead>
-                  <TableHead>👤 User</TableHead>
-                  <TableHead>📧 Contact</TableHead>
-                  <TableHead>🎟️ Events</TableHead>
-                  <TableHead>📊 Status</TableHead>
-                  <TableHead>📅 Joined</TableHead>
+                  <TableHead className="text-purple-800">👤 User</TableHead>
+                  <TableHead className="text-purple-800">📧 Contact</TableHead>
+                  <TableHead className="text-purple-800">🎟️ Events</TableHead>
+                  <TableHead className="text-purple-800">📊 Status</TableHead>
+                  <TableHead className="text-purple-800">📅 Joined</TableHead>
                   <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -454,6 +460,7 @@ export default function AdminUsersPage() {
                           <Button
                             variant="link"
                             onClick={handleResetFilters}
+                            className="text-purple-600"
                           >
                             Clear filters
                           </Button>
@@ -463,25 +470,25 @@ export default function AdminUsersPage() {
                   </TableRow>
                 ) : (
                   filteredUsers.map((user) => (
-                    <TableRow key={user.id} className={!user.isActive ? 'bg-red-50/50' : ''}>
+                    <TableRow key={user.id} className={!user.isActive ? 'bg-red-50/30' : 'hover:bg-purple-50/50 transition-colors'}>
                       <TableCell>
                         <input
                           type="checkbox"
                           checked={selectedUsers.has(user.id)}
                           onChange={() => handleSelectUser(user.id)}
-                          className="rounded border-gray-300"
+                          className="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
                           disabled={user.role === 'admin'}
                         />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                            <Shield className="h-4 w-4 text-primary" />
+                          <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full flex items-center justify-center">
+                            <Shield className="h-4 w-4 text-purple-600" />
                           </div>
                           <div>
-                            <p className="font-medium">{user.fullName}</p>
+                            <p className="font-medium text-gray-800">{user.fullName}</p>
                             {user.role === 'admin' && (
-                              <Badge variant="outline" className="text-xs bg-purple-50">
+                              <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700 border-purple-300">
                                 👑 Admin
                               </Badge>
                             )}
@@ -491,17 +498,17 @@ export default function AdminUsersPage() {
                       <TableCell>
                         <div className="space-y-1">
                           <div className="flex items-center gap-1 text-sm">
-                            <Mail className="h-3 w-3 text-gray-400" />
-                            <span>{user.email}</span>
+                            <Mail className="h-3 w-3 text-purple-400" />
+                            <span className="text-gray-700">{user.email}</span>
                           </div>
                           <div className="flex items-center gap-1 text-sm">
-                            <Phone className="h-3 w-3 text-gray-400" />
-                            <span>{user.phone}</span>
+                            <Phone className="h-3 w-3 text-purple-400" />
+                            <span className="text-gray-700">{user.phone}</span>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="font-medium">{user.eventsCount}</span>
+                        <span className="font-medium text-blue-600">{user.eventsCount}</span>
                         <span className="text-gray-500 text-sm ml-1">events</span>
                       </TableCell>
                       <TableCell>{getStatusBadge(user)}</TableCell>
@@ -512,21 +519,21 @@ export default function AdminUsersPage() {
                         {user.role !== 'admin' && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
+                              <Button variant="ghost" size="icon" className="text-purple-500 hover:text-purple-700 hover:bg-purple-50">
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
+                            <DropdownMenuContent align="end" className="border-purple-200">
                               {!user.isEmailVerified && (
-                                <DropdownMenuItem onClick={() => setUserToVerify(user)}>
-                                  <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                                <DropdownMenuItem onClick={() => setUserToVerify(user)} className="hover:bg-purple-50">
+                                  <CheckCircle className="h-4 w-4 mr-2 text-emerald-600" />
                                   ✅ Verify Account
                                 </DropdownMenuItem>
                               )}
                               {user.isActive ? (
                                 <DropdownMenuItem
                                   onClick={() => setUserToSuspend(user)}
-                                  className="text-red-600"
+                                  className="text-red-600 hover:bg-red-50"
                                 >
                                   <XCircle className="h-4 w-4 mr-2" />
                                   ⛔ Suspend Account
@@ -534,8 +541,9 @@ export default function AdminUsersPage() {
                               ) : (
                                 <DropdownMenuItem
                                   onClick={() => handleRestoreUser(user.id)}
+                                  className="hover:bg-purple-50"
                                 >
-                                  <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                                  <CheckCircle className="h-4 w-4 mr-2 text-emerald-600" />
                                   🔄 Restore Account
                                 </DropdownMenuItem>
                               )}
@@ -554,48 +562,50 @@ export default function AdminUsersPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
-          pageSizeOptions={[10, 25, 50, 100]}
-          totalItems={totalCount}
-          showFirstLast
-        />
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-purple-100">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[10, 25, 50, 100]}
+            totalItems={totalCount}
+            showFirstLast
+          />
+        </div>
       )}
 
-      {/* Stats Summary */}
+      {/* Stats Summary with Colorful Gradients */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-md hover:shadow-lg transition-shadow">
           <CardContent className="pt-6">
             <div className="text-center">
-              <Users className="h-6 w-6 text-primary mx-auto mb-2" />
-              <p className="text-2xl font-bold">{users.length}</p>
-              <p className="text-sm text-gray-500">Total Users 👥</p>
+              <Users className="h-7 w-7 text-purple-600 mx-auto mb-2" />
+              <p className="text-2xl font-bold text-purple-700">{users.length}</p>
+              <p className="text-sm text-purple-600">Total Users 👥</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 shadow-md hover:shadow-lg transition-shadow">
           <CardContent className="pt-6">
             <div className="text-center">
-              <UserCheck className="h-6 w-6 text-green-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-green-600">
+              <UserCheck className="h-7 w-7 text-emerald-600 mx-auto mb-2" />
+              <p className="text-2xl font-bold text-emerald-700">
                 {users.filter(u => u.isEmailVerified && u.isActive).length}
               </p>
-              <p className="text-sm text-gray-500">Verified Users ✅</p>
+              <p className="text-sm text-emerald-600">Verified Users ✅</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 shadow-md hover:shadow-lg transition-shadow">
           <CardContent className="pt-6">
             <div className="text-center">
-              <UserX className="h-6 w-6 text-red-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-red-600">
+              <UserX className="h-7 w-7 text-red-600 mx-auto mb-2" />
+              <p className="text-2xl font-bold text-red-700">
                 {users.filter(u => !u.isActive).length}
               </p>
-              <p className="text-sm text-gray-500">Suspended Users ⛔</p>
+              <p className="text-sm text-red-600">Suspended Users ⛔</p>
             </div>
           </CardContent>
         </Card>
@@ -613,15 +623,15 @@ export default function AdminUsersPage() {
         variant="success"
         isLoading={isProcessing}
       >
-        <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-          <div className="flex items-center gap-2 text-green-700 mb-2">
-            <CheckCircle className="h-4 w-4" />
-            <span className="font-medium">Verification effects:</span>
+        <div className="mt-4 p-4 bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl border border-emerald-200">
+          <div className="flex items-center gap-2 text-emerald-700 mb-2">
+            <CheckCircle className="h-5 w-5" />
+            <span className="font-semibold">Verification effects:</span>
           </div>
-          <ul className="space-y-1 text-sm text-green-600">
-            <li>✓ Mark email as verified</li>
-            <li>✓ Allow user to create events</li>
-            <li>✓ User will have full access to organizer features</li>
+          <ul className="space-y-1 text-sm text-emerald-600 ml-6 list-disc">
+            <li>Mark email as verified</li>
+            <li>Allow user to create events</li>
+            <li>User will have full access to organizer features</li>
           </ul>
         </div>
       </ConfirmationDialog>
@@ -638,16 +648,16 @@ export default function AdminUsersPage() {
         variant="danger"
         isLoading={isProcessing}
       >
-        <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
+        <div className="mt-4 p-4 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border border-red-200">
           <div className="flex items-center gap-2 text-red-700 mb-2">
-            <AlertCircle className="h-4 w-4" />
-            <span className="font-medium">Suspension effects:</span>
+            <AlertCircle className="h-5 w-5" />
+            <span className="font-semibold">Suspension effects:</span>
           </div>
-          <ul className="space-y-1 text-sm text-red-600">
-            <li>⚠️ User cannot access their dashboard</li>
-            <li>⚠️ User cannot create new events</li>
-            <li>⚠️ Existing events remain visible</li>
-            <li>🔄 This action can be reversed</li>
+          <ul className="space-y-1 text-sm text-red-600 ml-6 list-disc">
+            <li>User cannot access their dashboard</li>
+            <li>User cannot create new events</li>
+            <li>Existing events remain visible</li>
+            <li>This action can be reversed</li>
           </ul>
         </div>
       </ConfirmationDialog>
