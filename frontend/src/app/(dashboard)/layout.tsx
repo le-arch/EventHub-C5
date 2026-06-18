@@ -273,7 +273,7 @@ export default function DashboardLayout({
           </header>
 
           {/* Mobile Bottom Tab Bar */}
-          <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-200/60 flex justify-around py-1.5 z-40 shadow-[0_-4px_16px_rgba(0,0,0,0.03)] px-2">
+          {/*<nav className="lg:hidden bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-200/60 flex justify-around py-1.5 z-40 shadow-[0_-4px_16px_rgba(0,0,0,0.03)] px-2">
             {navItems.map((item) => {
               const isActive = pathname?.startsWith(item.href)
               const Icon = item.icon
@@ -294,7 +294,7 @@ export default function DashboardLayout({
                 </Link>
               )
             })}
-          </nav>
+          </nav>*/}
 
           {/* Page Content Window context view wrapper */}
           <main className={`flex-1 p-4 md:p-8 pb-24 lg:pb-8 max-w-[1600px] w-full mx-auto transition-all duration-300`}>

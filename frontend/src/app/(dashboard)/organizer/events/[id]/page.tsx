@@ -28,6 +28,7 @@ import {
   EyeOff,
   RefreshCw,
 } from 'lucide-react'
+import { ShareEventButton } from '@/components/events/ShareEventButton'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
@@ -301,42 +302,54 @@ export default function EditEventPage() {
       />
 
       {/* Header with Purple/Blue Gradient */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 p-5 rounded-xl shadow-lg text-white">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-            <Calendar className="h-7 w-7" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Edit Event ✏️</h1>
-            <p className="text-white/80 text-sm mt-0.5">
-              Update your event details and manage ticket types
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          {isPublished ? (
-            <Button 
-              variant="outline" 
-              onClick={() => setShowUnpublishDialog(true)} 
-              disabled={isSaving}
-              className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:text-white backdrop-blur-sm"
-            >
-              <EyeOff className="h-4 w-4 mr-2" />
-              Unpublish 📝
-            </Button>
-          ) : (
-            <Button 
-              onClick={() => setShowPublishDialog(true)} 
-              disabled={isSaving}
-              className="bg-white text-purple-600 hover:bg-gray-100"
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Publish Event 🚀
-            </Button>
-          )}
-        </div>
-      </div>
+<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 p-5 rounded-xl shadow-lg text-white">
+  <div className="flex items-center gap-3">
+    <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+      <Calendar className="h-7 w-7" />
+    </div>
+    <div>
+      <h1 className="text-2xl font-bold">Edit Event ✏️</h1>
+      <p className="text-white/80 text-sm mt-0.5">
+        Update your event details and manage ticket types
+      </p>
+    </div>
+  </div>
+  
+  <div className="flex flex-wrap gap-2">
+    {/* Only display the share button if the event is published */}
+    {isPublished && (
+      <ShareEventButton
+        eventId={event.id}
+        eventTitle={event.title}
+        eventDate={event.startDate}
+        venueName={event.venueName}
+        variant="outline"
+        className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:text-white backdrop-blur-sm"
+      />
+    )}
 
+    {isPublished ? (
+      <Button 
+        variant="outline" 
+        onClick={() => setShowUnpublishDialog(true)} 
+        disabled={isSaving}
+        className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:text-white backdrop-blur-sm"
+      >
+        <EyeOff className="h-4 w-4 mr-2" />
+        Unpublish 📝
+      </Button>
+    ) : (
+      <Button 
+        onClick={() => setShowPublishDialog(true)} 
+        disabled={isSaving}
+        className="bg-white text-purple-600 hover:bg-gray-100"
+      >
+        <Eye className="h-4 w-4 mr-2" />
+        Publish Event 🚀
+      </Button>
+    )}
+  </div>
+</div>
       {/* Stats Cards with Gradients */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-md">

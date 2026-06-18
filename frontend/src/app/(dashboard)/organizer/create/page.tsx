@@ -1,11 +1,9 @@
 /**
  * Create Event Page
- * 
- * Multi-step form for creating a new event:
- * Step 1: Basic event information (title, venue, date, time, etc.)
+ * * Multi-step form for creating a new event:
+ * Step 1: Basic event information (title, venue, date, time, cover image, etc.)
  * Step 2: Ticket types (name, price, quantity)
- * 
- * @module CreateEventPage
+ * * @module CreateEventPage
  */
 
 'use client'
@@ -15,7 +13,7 @@ import { useRouter } from 'next/navigation'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Trash2, ArrowLeft, ArrowRight, Check, Calendar, MapPin, Clock, Ticket } from 'lucide-react'
+import { Plus, Trash2, ArrowLeft, ArrowRight, Check, Calendar, Ticket, ImageIcon } from 'lucide-react'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
@@ -41,6 +39,7 @@ import {
 
 // Custom components
 import { Breadcrumb } from '@/components/common/Breadcrumb'
+import { EventCoverUpload } from '@/components/events/EventCoverUpload' // Adjusted path to match custom components location
 
 // Utilities
 import api from '@/lib/api'
@@ -61,6 +60,7 @@ const basicInfoSchema = z.object({
   city: z.string().min(2, 'City is required'),
   startDate: z.string().min(1, 'Start date is required'),
   startTime: z.string().min(1, 'Start time is required'),
+  coverImageUrl: z.string().nullable().optional(), // Preserved state tracking for cover image link
 })
 
 // Validation schema for ticket type
@@ -68,12 +68,6 @@ const ticketTypeSchema = z.object({
   name: z.string().min(1, 'Ticket name required'),
   price: z.number().min(0, 'Price must be 0 or more'),
   quantityAvailable: z.number().min(1, 'At least 1 ticket required'),
-})
-
-// Combined schema
-const eventSchema = z.object({
-  basicInfo: basicInfoSchema,
-  ticketTypes: z.array(ticketTypeSchema).min(1, 'At least one ticket type required'),
 })
 
 type BasicInfoForm = z.infer<typeof basicInfoSchema>
@@ -97,6 +91,7 @@ export default function CreateEventPage() {
       city: '',
       startDate: '',
       startTime: '',
+      coverImageUrl: null,
     },
   })
 
@@ -112,6 +107,19 @@ export default function CreateEventPage() {
     control: ticketForm.control,
     name: 'ticketTypes',
   })
+
+  /**
+   * Action handler invoked by EventCoverUpload component upon drop/browse selection
+   */
+  const handleCoverUploadAction = async (file: File): Promise<string> => {
+    try {
+      const response = await api.upload<{ url: string }>('/api/v1/upload', file)
+      return response.data.url
+    } catch (error) {
+      toast.error('Failed to upload image asset')
+      throw error
+    }
+  }
 
   /**
    * Handle basic info submission and move to ticket step
@@ -136,7 +144,7 @@ export default function CreateEventPage() {
       
       const response = await api.post('/events', eventData)
       toast.success('✅ Event created successfully!')
-      router.push(`/organizer/events/${response.data.event.id}`)
+      router.push(`/organizer/events`)
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to create event'
       toast.error(`❌ ${errorMessage}`)
@@ -222,7 +230,22 @@ export default function CreateEventPage() {
                   Tell us about your event. You can add ticket types in the next step.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-5">
+                {/* Custom Specialized Cover Image Uploader Module */}
+                <div className="space-y-2">
+                  <Label className="text-gray-700 font-medium flex items-center gap-1.5">
+                    <ImageIcon className="h-4 w-4 text-purple-500" />
+                    Event Cover Image
+                  </Label>
+                  <EventCoverUpload
+                    value={basicForm.watch('coverImageUrl') || undefined}
+                    onUpload={handleCoverUploadAction}
+                    onChange={(file, previewUrl) => {
+                      basicForm.setValue('coverImageUrl', previewUrl || null)
+                    }}
+                  />
+                </div>
+
                 {/* Title */}
                 <div>
                   <Label htmlFor="title" className="text-gray-700 font-medium">Event Title *</Label>
@@ -396,7 +419,7 @@ export default function CreateEventPage() {
                             placeholder="5000"
                             {...ticketForm.register(`ticketTypes.${index}.price`, {
                               valueAsNumber: true,
-                            })}
+                        })}
                             className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                           />
                         </div>
