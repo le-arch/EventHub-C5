@@ -19,7 +19,35 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-  
+
+  api:
+    container_name: go-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: go-api:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      
+    ports:
+      - 8085:8085
+    networks:
+      - go-network
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    develop:
+      watch:
+        - path: .
+          action: rebuild
+
   minio:
     image: quay.io/minio/minio:latest
     container_name: minio
@@ -42,32 +70,19 @@ services:
       timeout: 20s
       retries: 3
 
-  api:
-    container_name: go-api
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: go-api:latest
-    depends_on:
-      db:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    restart: unless-stopped
+    command: http api:8085
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
     ports:
-      - 8085:8085
+      - "4040:4040"
     networks:
       - go-network
-    env_file:
-      - .env
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8085/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    develop:
-      watch:
-        - path: .
-          action: rebuild
+    depends_on:
+      - api
       
   prometheus:
     container_name: prometheus

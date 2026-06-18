@@ -201,6 +201,7 @@ type Order struct {
 	IsUsed                 *bool            `json:"is_used"`
 	UsedAt                 pgtype.Timestamp `json:"used_at"`
 	CheckedInBy            *uuid.UUID       `json:"checked_in_by"`
+	PlatformFee            int32            `json:"platform_fee"`
 	DeviceInfo             string           `json:"device_info"`
 	IpAddress              *netip.Addr      `json:"ip_address"`
 	CreatedAt              pgtype.Timestamp `json:"created_at"`

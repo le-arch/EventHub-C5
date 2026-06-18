@@ -77,12 +77,13 @@ CREATE TABLE orders (
     payment_webhook_received BOOLEAN DEFAULT FALSE,
     
     qr_code_hash VARCHAR(255) UNIQUE NOT NULL,
-    qr_code_image_url TEXT,
-    qr_code_plaintext TEXT,
+    qr_code_image_url TEXT DEFAULT '',
+    qr_code_plaintext TEXT NOT NULL DEFAULT '',
     
     is_used BOOLEAN DEFAULT FALSE,
     used_at TIMESTAMP,
     checked_in_by UUID REFERENCES users(id),
+    platform_fee INT NOT NULL DEFAULT 0,
     
     device_info TEXT,
     ip_address INET,
