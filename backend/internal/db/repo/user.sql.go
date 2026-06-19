@@ -8,13 +8,13 @@ package repo
 import (
 	"context"
 
-	uuid "github.com/google/uuid"
+	"github.com/google/uuid"
 )
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO "users" (email, phone, password_hash, full_name, role, is_email_verified)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, email, phone, password_hash, full_name, role, is_email_verified, created_at, updated_at
+RETURNING id, email, phone, password_hash, full_name, role, is_email_verified, email_otp, email_otp_expires_at, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -44,6 +44,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.FullName,
 		&i.Role,
 		&i.IsEmailVerified,
+		&i.EmailOtp,
+		&i.EmailOtpExpiresAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -51,7 +53,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getAllUsers = `-- name: GetAllUsers :many
-SELECT id, email, phone, password_hash, full_name, role, is_email_verified, created_at, updated_at FROM users
+SELECT id, email, phone, password_hash, full_name, role, is_email_verified, email_otp, email_otp_expires_at, created_at, updated_at FROM users
 WHERE role = $1
 ORDER BY created_at DESC
 `
@@ -73,6 +75,8 @@ func (q *Queries) GetAllUsers(ctx context.Context, role UserRole) ([]User, error
 			&i.FullName,
 			&i.Role,
 			&i.IsEmailVerified,
+			&i.EmailOtp,
+			&i.EmailOtpExpiresAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -87,7 +91,7 @@ func (q *Queries) GetAllUsers(ctx context.Context, role UserRole) ([]User, error
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, phone, password_hash, full_name, role, is_email_verified, created_at, updated_at FROM users 
+SELECT id, email, phone, password_hash, full_name, role, is_email_verified, email_otp, email_otp_expires_at, created_at, updated_at FROM users 
 WHERE email = $1
 `
 
@@ -102,6 +106,8 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.FullName,
 		&i.Role,
 		&i.IsEmailVerified,
+		&i.EmailOtp,
+		&i.EmailOtpExpiresAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -109,7 +115,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, phone, password_hash, full_name, role, is_email_verified, created_at, updated_at FROM users 
+SELECT id, email, phone, password_hash, full_name, role, is_email_verified, email_otp, email_otp_expires_at, created_at, updated_at FROM users 
 WHERE id = $1
 `
 
@@ -124,6 +130,8 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.FullName,
 		&i.Role,
 		&i.IsEmailVerified,
+		&i.EmailOtp,
+		&i.EmailOtpExpiresAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

@@ -31,15 +31,8 @@ import { toast } from 'sonner'
 
 const loginSchema = z.object({
   identifier: z.string()
-    .min(1, 'Email or phone number is required')
-    .refine(
-      (value) => {
-        const isEmail = value.includes('@')
-        const isPhone = /^[0-9]{9}$/.test(value)
-        return isEmail || isPhone
-      },
-      { message: 'Enter a valid email or phone number (e.g., 612345678)' }
-    ),
+    .min(1, 'Email is required')
+    .email('Please enter a valid email address'),
   password: z.string()
     .min(1, 'Password is required')
     .min(6, 'Password must be at least 6 characters'),

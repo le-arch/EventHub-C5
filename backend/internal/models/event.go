@@ -18,7 +18,8 @@ type CreateEventRequest struct {
 	Title          string           `json:"title" binding:"required"`
 	Slug           string           `json:"slug" binding:"required"`
 	Description    string           `json:"description" binding:"required"`
-	Venue          string           `json:"venue" binding:"required"`
+	VenueName      string
+	VenueAddress   string           `json:"venue_name" binding:"required"`
 	City           string           `json:"city" binding:"required"`
 	StartDate      string           `json:"start_date" binding:"required"`
 	EndDate        string           `json:"end_date"`
@@ -36,7 +37,8 @@ type UpdateEventRequest struct {
     Title          *string `json:"title,omitempty"`
     Slug           *string `json:"slug,omitempty"`
     Description    string `json:"description,omitempty"`
-    Venue          string `json:"venue,omitempty"`
+    VenueName      *string `json:"venue_name,omitempty"`
+    VenueAddress   *string `json:"venue_address,omitempty"`
     City           *string `json:"city,omitempty"`
     StartDate      *string `json:"start_date,omitempty"`  
     EndDate        *string `json:"end_date,omitempty"`

@@ -7,7 +7,7 @@ package repo
 import (
 	"context"
 
-	uuid "github.com/google/uuid"
+	"github.com/google/uuid"
 )
 
 type Querier interface {
@@ -20,7 +20,7 @@ type Querier interface {
 	DeleteTicketType(ctx context.Context, arg DeleteTicketTypeParams) error
 	GetAllUsers(ctx context.Context, role UserRole) ([]User, error)
 	GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
-	GetEventByIDPublic(ctx context.Context, id uuid.UUID) (Event, error)
+	GetEventByIDPublic(ctx context.Context, id uuid.UUID) (GetEventByIDPublicRow, error)
 	GetEventBySlugPublic(ctx context.Context, slug string) (GetEventBySlugPublicRow, error)
 	GetEventsBySlug(ctx context.Context, slug string) (Event, error)
 	GetOrderByID(ctx context.Context, id uuid.UUID) (Order, error)
@@ -30,7 +30,7 @@ type Querier interface {
 	GetTicketTypesByEvent(ctx context.Context, eventID uuid.UUID) ([]TicketType, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
-	InsertWebhookLog(ctx context.Context, arg InsertWebhookLogParams) (WebhookLog, error)
+	InsertWebhookLog(ctx context.Context, arg InsertWebhookLogParams) (PaymentWebhookLog, error)
 	ListEvents(ctx context.Context) ([]ListEventsRow, error)
 	ListEventsByCity(ctx context.Context, city string) ([]Event, error)
 	ListEventsByStatus(ctx context.Context, status EventStatus) ([]Event, error)
@@ -41,7 +41,7 @@ type Querier interface {
 	UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event, error)
 	UpdateEventCoverImage(ctx context.Context, arg UpdateEventCoverImageParams) (Event, error)
 	UpdateEventStatus(ctx context.Context, arg UpdateEventStatusParams) (Event, error)
-	UpdateOrderPayment(ctx context.Context, arg UpdateOrderPaymentParams) error
+	UpdateOrderPayment(ctx context.Context, arg UpdateOrderPaymentParams) (Order, error)
 	UpdateOrderQRCode(ctx context.Context, arg UpdateOrderQRCodeParams) error
 	UpdateOrderQRImage(ctx context.Context, arg UpdateOrderQRImageParams) error
 	UpdateTicketType(ctx context.Context, arg UpdateTicketTypeParams) (TicketType, error)

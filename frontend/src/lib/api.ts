@@ -22,9 +22,39 @@ interface CustomRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean
 }
 
+// Helpers: convert object keys between camelCase and snake_case
+const isPlainObject = (val: any) => val && typeof val === 'object' && !Array.isArray(val) && !(val instanceof FormData)
+
+const toSnake = (obj: any): any => {
+  if (Array.isArray(obj)) return obj.map(toSnake)
+  if (!isPlainObject(obj)) return obj
+  const out: Record<string, any> = {}
+  for (const key of Object.keys(obj)) {
+    const val = obj[key]
+    const newKey = key.replace(/([A-Z])/g, '_$1').toLowerCase()
+    out[newKey] = isPlainObject(val) || Array.isArray(val) ? toSnake(val) : val
+  }
+  return out
+}
+
+const toCamel = (obj: any): any => {
+  if (Array.isArray(obj)) return obj.map(toCamel)
+  if (!isPlainObject(obj)) return obj
+  const out: Record<string, any> = {}
+  for (const key of Object.keys(obj)) {
+    const val = obj[key]
+    const newKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+    out[newKey] = isPlainObject(val) || Array.isArray(val) ? toCamel(val) : val
+  }
+  return out
+}
+
+// Base URL for backend API
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8085/api/v1'
+
 // Create axios instance with default configuration
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8085/api/v1',
+  baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -40,11 +70,26 @@ api.interceptors.request.use(
   (config: CustomRequestConfig) => {
     // Get token from localStorage
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
-    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
-    
+
+    // Convert params and JSON body to snake_case before sending
+    try {
+      const contentType = config.headers?.['Content-Type'] || config.headers?.['content-type']
+      if (config.params) {
+        config.params = toSnake(config.params)
+      }
+      if (config.data && contentType && contentType.includes('application/json')) {
+        // Leave FormData alone
+        if (!(config.data instanceof FormData)) {
+          config.data = toSnake(config.data)
+        }
+      }
+    } catch (e) {
+      // ignore conversion errors
+    }
+
     return config
   },
   (error: AxiosError) => {
@@ -57,7 +102,15 @@ api.interceptors.request.use(
  * Handles token refresh on 401 errors
  */
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Convert response data keys to camelCase for frontend convenience
+    try {
+      if (response && response.data) {
+        response.data = toCamel(response.data)
+      }
+    } catch (e) {}
+    return response
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomRequestConfig
     
@@ -75,7 +128,7 @@ api.interceptors.response.use(
         }
         
         const response = await axios.post<RefreshTokenResponse>(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+          `${BASE_URL}/auth/refresh`,
           { refresh_token: refreshToken }
         )
         
@@ -139,7 +192,7 @@ export const apiClient = {
   delete: <T>(url: string) => 
     api.delete<T>(url),
   
-  upload: <T>(url: string, file: File, fieldName: string = 'file') => {
+  upload: <T>(url: string, file: File, fieldName: string = 'image') => {
     const formData = new FormData()
     formData.append(fieldName, file)
     return api.post<T>(url, formData, {

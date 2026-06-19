@@ -25,8 +25,8 @@ export interface VerifyEmailPayload {
 }
 
 export interface LoginPayload {
-  identifier: string
-  password_hash: string  
+  email: string
+  password_hash: string
 }
 
 export interface RefreshTokenPayload {
@@ -60,7 +60,7 @@ export interface ForgotPasswordPayload {
 export interface ResetPasswordPayload {
   email: string
   otp: string
-  password: string  // Changed from password_hash to match backend
+  password_hash: string
 }
 
 // User types for admin functions
@@ -131,8 +131,13 @@ export const authService = {
    * @param password - User's password
    */
   login: async (identifier: string, password: string): Promise<AuthResponse> => {
+    // backend currently authenticates by email
+    if (!identifier.includes('@')) {
+      throw new Error('Please sign in with your email address')
+    }
+
     const payload: LoginPayload = {
-      identifier,
+      email: identifier,
       password_hash: password,
     }
 
@@ -198,7 +203,7 @@ export const authService = {
     const payload: ResetPasswordPayload = {
       email,
       otp,
-      password: newPassword,
+      password_hash: newPassword,
     }
 
     await api.post('/auth/reset-password', payload)

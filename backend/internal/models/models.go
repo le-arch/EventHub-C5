@@ -2,6 +2,7 @@ package models
 
 import (
 	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -56,26 +57,31 @@ type TicketType struct {
 
 // Order represents a ticket purchase (order)
 type Order struct {
-	ID                uuid.UUID  `json:"id"`
-	EventID           uuid.UUID  `json:"event_id"`
-	TicketTypeID      uuid.UUID  `json:"ticket_type_id"`
-	AttendeeName      string     `json:"attendee_name"`
-	AttendeePhone     string     `json:"attendee_phone"`
-	AttendeeEmail     *string    `json:"attendee_email,omitempty"`
-	Quantity          int        `json:"quantity"`
-	UnitPrice         int        `json:"unit_price"`
-	TotalAmount       int        `json:"total_amount"`
-	PaymentStatus     string     `json:"payment_status"`       // pending, paid, failed, refunded
-	PaymentMethod     string     `json:"payment_method"`       // campay, mtn_momo, orange_money
-	TransactionID     *string    `json:"transaction_id,omitempty"`
-	PaymentReceivedAt *time.Time `json:"payment_received_at,omitempty"`
-	QRCodeHash        string     `json:"qr_code_hash"`
-	QRCodeImageURL    *string    `json:"qr_code_image_url,omitempty"`
-	IsUsed            bool       `json:"is_used"`
-	UsedAt            *time.Time `json:"used_at,omitempty"`
-	CheckedInBy       *uuid.UUID `json:"checked_in_by,omitempty"`
-	CreatedAt         time.Time  `json:"created_at"`
-	UpdatedAt         time.Time  `json:"updated_at"`
+	ID                   uuid.UUID  `json:"id"`
+	EventID              uuid.UUID  `json:"event_id"`
+	TicketTypeID         uuid.UUID  `json:"ticket_type_id"`
+	AttendeeName         string     `json:"attendee_name"`
+	AttendeePhone        string     `json:"attendee_phone"`
+	AttendeeEmail        *string    `json:"attendee_email,omitempty"`
+	Quantity             int        `json:"quantity"`
+	UnitPrice            int        `json:"unit_price"`
+	TotalAmount          int        `json:"total_amount"`
+	PaymentStatus        string     `json:"payment_status"`       // pending, paid, failed, refunded
+	PaymentMethod        string     `json:"payment_method"`       // campay, mtn_momo, orange_money
+	TransactionID        *string    `json:"transaction_id,omitempty"`
+	PaymentReceivedAt    *time.Time `json:"payment_received_at,omitempty"`
+	PaymentWebhookReceived bool     `json:"payment_webhook_received"`
+	QRCodeHash           string     `json:"qr_code_hash"`
+	QRCodeImageURL       *string    `json:"qr_code_image_url,omitempty"`
+	QRCodePlaintext      string     `json:"qr_code_plaintext"`
+	IsUsed               bool       `json:"is_used"`
+	UsedAt               *time.Time `json:"used_at,omitempty"`
+	CheckedInBy          *uuid.UUID `json:"checked_in_by,omitempty"`
+	PlatformFee          int        `json:"platform_fee"`
+	DeviceInfo           *string    `json:"device_info,omitempty"`
+	IPAddress            *string    `json:"ip_address,omitempty"`
+	CreatedAt            time.Time  `json:"created_at"`
+	UpdatedAt            time.Time  `json:"updated_at"`
 }
 
 // CheckInLog records each QR code scan at the event entrance

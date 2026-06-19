@@ -111,10 +111,10 @@ export function useAuth() {
     }
   }, [])
 
-  // Reset password with token
-  const resetPassword = useCallback(async (token: string, newPassword: string) => {
+  // Reset password using email + otp + new password (backend expects password_hash)
+  const resetPassword = useCallback(async (email: string, otp: string, newPassword: string) => {
     try {
-      await api.post('/auth/reset-password', { token, new_password: newPassword })
+      await api.post('/auth/reset-password', { email, otp, password_hash: newPassword })
       toast.success('Password reset successfully! Please log in.')
       router.push('/login')
       return { success: true }
