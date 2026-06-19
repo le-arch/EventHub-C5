@@ -2,9 +2,9 @@
 package payment
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
+	// "crypto/hmac"
+	// "crypto/sha256"
+	// "encoding/hex"
 	"encoding/json"
 	"net/http"
 
@@ -23,21 +23,22 @@ func NewWebhookHandler(querier repo.Querier, secret string) *WebhookHandler {
 	return &WebhookHandler{querier: querier, secret: secret}
 }
 
-func (wh *WebhookHandler) verifySignature(body []byte, signatureHeader string) bool {
-	mac := hmac.New(sha256.New, []byte(wh.secret))
-	mac.Write(body)
-	expected := hex.EncodeToString(mac.Sum(nil))
-	return hmac.Equal([]byte(expected), []byte(signatureHeader))
-}
+// func (wh *WebhookHandler) verifySignature(body []byte, signatureHeader string) bool {
+// 	mac := hmac.New(sha256.New, []byte(wh.secret))
+// 	mac.Write(body)
+// 	expected := hex.EncodeToString(mac.Sum(nil))
+// 	return hmac.Equal([]byte(expected), []byte(signatureHeader))
+// }
 
 
 func (wh *WebhookHandler) HandleMomoWebhook(c *gin.Context) {
-	sig := c.GetHeader("X-Signature")
+	c.Header("ngrok-skip-browser-warning", "1")
+	// sig := c.GetHeader("X-Signature")
 	body, _ := c.GetRawData() // you need to read body once
-	if sig == "" || !wh.verifySignature(body, sig) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid signature"})
-		return
-	}
+	// if sig == "" || !wh.verifySignature(body, sig) {
+	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid signature"})
+	// 	return
+	// }
 
 	var payload models.MomoWebhookPayload
 	if err := json.Unmarshal(body, &payload); err != nil {

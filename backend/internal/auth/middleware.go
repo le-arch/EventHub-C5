@@ -36,3 +36,26 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 		c.Next()
 	}
 	}
+
+	// OptionalAuthMiddleware attempts to extract JWT and set claims in context, but does not abort on missing or invalid token.
+func OptionalAuthMiddleware(jwtSecret string) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        authHeader := c.GetHeader("Authorization")
+        if authHeader == "" {
+            c.Next()
+            return
+        }
+        parts := strings.SplitN(authHeader, " ", 2)
+        if len(parts) != 2 || parts[0] != "Bearer" {
+            c.Next()
+            return
+        }
+        claims, err := VerifyToken(parts[1], jwtSecret)
+        if err != nil {
+            c.Next()
+            return
+        }
+        c.Set("user", claims)
+        c.Next()
+    }
+}

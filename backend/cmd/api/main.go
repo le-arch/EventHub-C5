@@ -62,7 +62,7 @@ type PaymentConfig struct {
 type MomoConfig struct {
 	APIURL     string `conf:"env:MTN_MOMO_API_URL"`
 	SubscriptionKey string `conf:"env:MTN_MOMO_SUBSCRIPTION_KEY"`
-	APIUser		string `conf:"MTN_MOMO_API_USER"`
+	APIUser		string `conf:"env:MTN_MOMO_API_USER"`
 	APIKey string `conf:"env:MTN_MOMO_API_KEY"`
 	TargetEnvironment      string `conf:"env:MTN_MOMO_TARGET_ENVIRONMENT"`
     CallbackURL  string `conf:"env:MTN_MOMO_CALLBACK_URL"`

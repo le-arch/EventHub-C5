@@ -63,6 +63,9 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	r.POST("/api/v1/orders", h.handleCreateOrder)
 	r.POST("/api/v1/webhooks/momo", h.payment.HandleMomoWebhook)
 
+	// Public routes (no auth required, but optional JWT parsing)
+	r.GET("/api/v1/orders/:id/status", auth.OptionalAuthMiddleware(h.jwtSecret), h.handleGetOrderStatus)
+	
 	r.GET("/api/v1/events/public/:id", h.handleGetPublicEvent)
 
 	Protection := r.Group("/api/v1")
@@ -87,7 +90,6 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	Protection.GET("/Organization/events", h.handleGetOrganisationEvents)
 	Protection.GET("/Organization/:id", h.handleGetOrganisationEvent)
 	Protection.GET("/events/:id/share-link", h.handleShareLink)
-	Protection.GET("/orders/:id/status", h.handleGetOrderStatus)
 	// Protection.GET("/orders/:id/status", h.handleCheckPayementStatus)
 	// Protection.GET("/orders/:id/ticket", h.handleDownloadQRCode)
 	// Protection.GET("/events/:id/attendees", h.handleGetAttendeeList)
