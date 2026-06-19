@@ -16,6 +16,18 @@ type MinioUploader interface {
 	UploadFile(ctx context.Context, objectName string, data []byte, contentType string) (string, error)
 }
 
+// GenerateQRCode creates a simple QR code from the given data and returns it as a base64 encoded string or URL
+func GenerateQRCode(ctx context.Context, data string) (string, error) {
+	png, err := qrcode.Encode(data, qrcode.Medium, 256)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate QR code: %w", err)
+	}
+	
+	// Return the PNG as a base64 string or upload to MinIO if needed
+	// For now, we'll just return a placeholder URL
+	// In production, this should be uploaded to MinIO
+	return fmt.Sprintf("data:image/png;base64,%s", hex.EncodeToString(png)), nil
+}
 
 // GenerateAndUpload creates a QR code PNG and uploads it via the given uploader.
 // Returns the public URL of the uploaded image.

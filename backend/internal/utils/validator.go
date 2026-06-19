@@ -1,20 +1,16 @@
-// utility functions for validating input data	
+// utility functions for validating input data
 package utils
 
 import (
 	"errors"
-	emailverifier "github.com/AfterShip/email-verifier"
+	"regexp"
 )
- 
-var verifier = emailverifier.NewVerifier()
 
-
+// IsValidEmail validates email format using a simple regex pattern
 func IsValidEmail(email string) bool {
-	result, err := verifier.Verify(email)
-	if err != nil {
-		return false
-	}
-	return result.Syntax.Valid && result.HasMxRecords
+	// Simple email regex validation
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	return emailRegex.MatchString(email)
 }
 
 

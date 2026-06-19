@@ -9,7 +9,7 @@ import (
 	"context"
 	"net/netip"
 
-	uuid "github.com/google/uuid"
+	"github.com/google/uuid"
 )
 
 const createOrder = `-- name: CreateOrder :one
@@ -21,26 +21,26 @@ INSERT INTO orders (
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
 )
-RETURNING id, event_id, ticket_type_id, attendee_name, attendee_phone, attendee_email, quantity, unit_price, total_amount, payment_status, payment_method, transaction_id, payment_received_at, payment_webhook_received, qr_code_hash, qr_code_image_url, qr_code_plaintext, is_used, used_at, checked_in_by, platform_fee, device_info, ip_address, created_at
+RETURNING id, event_id, ticket_type_id, attendee_name, attendee_phone, attendee_email, quantity, unit_price, total_amount, payment_status, payment_method, transaction_id, payment_received_at, payment_webhook_received, qr_code_hash, qr_code_image_url, qr_code_plaintext, is_used, used_at, checked_in_by, platform_fee, device_info, ip_address, created_at, updated_at
 `
 
 type CreateOrderParams struct {
-	EventID         uuid.UUID     `json:"event_id"`
-	TicketTypeID    uuid.UUID     `json:"ticket_type_id"`
-	AttendeeName    string        `json:"attendee_name"`
-	AttendeePhone   string        `json:"attendee_phone"`
-	AttendeeEmail   *string       `json:"attendee_email"`
-	Quantity        int32         `json:"quantity"`
-	UnitPrice       int32         `json:"unit_price"`
-	TotalAmount     int32         `json:"total_amount"`
-	PaymentStatus   PaymentStatus `json:"payment_status"`
-	TransactionID   *string       `json:"transaction_id"`
-	QrCodeHash      string        `json:"qr_code_hash"`
-	QrCodePlaintext string        `json:"qr_code_plaintext"`
-	QrCodeImageUrl  string        `json:"qr_code_image_url"`
-	DeviceInfo      string        `json:"device_info"`
-	IpAddress       *netip.Addr   `json:"ip_address"`
-	PlatformFee     int32         `json:"platform_fee"`
+	EventID         uuid.UUID   `json:"event_id"`
+	TicketTypeID    uuid.UUID   `json:"ticket_type_id"`
+	AttendeeName    string      `json:"attendee_name"`
+	AttendeePhone   string      `json:"attendee_phone"`
+	AttendeeEmail   *string     `json:"attendee_email"`
+	Quantity        int32       `json:"quantity"`
+	UnitPrice       int32       `json:"unit_price"`
+	TotalAmount     int32       `json:"total_amount"`
+	PaymentStatus   *string     `json:"payment_status"`
+	TransactionID   *string     `json:"transaction_id"`
+	QrCodeHash      string      `json:"qr_code_hash"`
+	QrCodePlaintext string      `json:"qr_code_plaintext"`
+	QrCodeImageUrl  string      `json:"qr_code_image_url"`
+	DeviceInfo      string      `json:"device_info"`
+	IpAddress       *netip.Addr `json:"ip_address"`
+	PlatformFee     int32       `json:"platform_fee"`
 }
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
@@ -88,6 +88,7 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		&i.DeviceInfo,
 		&i.IpAddress,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -113,7 +114,7 @@ func (q *Queries) DecrementTicketQuantity(ctx context.Context, arg DecrementTick
 }
 
 const getOrderByID = `-- name: GetOrderByID :one
-SELECT id, event_id, ticket_type_id, attendee_name, attendee_phone, attendee_email, quantity, unit_price, total_amount, payment_status, payment_method, transaction_id, payment_received_at, payment_webhook_received, qr_code_hash, qr_code_image_url, qr_code_plaintext, is_used, used_at, checked_in_by, platform_fee, device_info, ip_address, created_at FROM orders WHERE id = $1
+SELECT id, event_id, ticket_type_id, attendee_name, attendee_phone, attendee_email, quantity, unit_price, total_amount, payment_status, payment_method, transaction_id, payment_received_at, payment_webhook_received, qr_code_hash, qr_code_image_url, qr_code_plaintext, is_used, used_at, checked_in_by, platform_fee, device_info, ip_address, created_at, updated_at FROM orders WHERE id = $1
 `
 
 func (q *Queries) GetOrderByID(ctx context.Context, id uuid.UUID) (Order, error) {
@@ -144,12 +145,13 @@ func (q *Queries) GetOrderByID(ctx context.Context, id uuid.UUID) (Order, error)
 		&i.DeviceInfo,
 		&i.IpAddress,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getOrderByQRHash = `-- name: GetOrderByQRHash :one
-SELECT id, event_id, ticket_type_id, attendee_name, attendee_phone, attendee_email, quantity, unit_price, total_amount, payment_status, payment_method, transaction_id, payment_received_at, payment_webhook_received, qr_code_hash, qr_code_image_url, qr_code_plaintext, is_used, used_at, checked_in_by, platform_fee, device_info, ip_address, created_at FROM orders
+SELECT id, event_id, ticket_type_id, attendee_name, attendee_phone, attendee_email, quantity, unit_price, total_amount, payment_status, payment_method, transaction_id, payment_received_at, payment_webhook_received, qr_code_hash, qr_code_image_url, qr_code_plaintext, is_used, used_at, checked_in_by, platform_fee, device_info, ip_address, created_at, updated_at FROM orders
 WHERE qr_code_hash = $1
 `
 
@@ -181,12 +183,13 @@ func (q *Queries) GetOrderByQRHash(ctx context.Context, qrCodeHash string) (Orde
 		&i.DeviceInfo,
 		&i.IpAddress,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getOrderByTransactionID = `-- name: GetOrderByTransactionID :one
-SELECT id, event_id, ticket_type_id, attendee_name, attendee_phone, attendee_email, quantity, unit_price, total_amount, payment_status, payment_method, transaction_id, payment_received_at, payment_webhook_received, qr_code_hash, qr_code_image_url, qr_code_plaintext, is_used, used_at, checked_in_by, platform_fee, device_info, ip_address, created_at FROM orders 
+SELECT id, event_id, ticket_type_id, attendee_name, attendee_phone, attendee_email, quantity, unit_price, total_amount, payment_status, payment_method, transaction_id, payment_received_at, payment_webhook_received, qr_code_hash, qr_code_image_url, qr_code_plaintext, is_used, used_at, checked_in_by, platform_fee, device_info, ip_address, created_at, updated_at FROM orders 
 WHERE transaction_id = $1
 `
 
@@ -218,39 +221,42 @@ func (q *Queries) GetOrderByTransactionID(ctx context.Context, transactionID *st
 		&i.DeviceInfo,
 		&i.IpAddress,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const insertWebhookLog = `-- name: InsertWebhookLog :one
-INSERT INTO webhook_logs (
-    gateway, payload, headers, signature_valid, processed,error_message, received_at
+INSERT INTO payment_webhook_logs (
+    provider, payload, headers, signature_valid, processed, error_message, received_at
 ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
-RETURNING id, gateway, payload, headers, signature_valid, processed, processed_at, error_message, received_at
+RETURNING id, transaction_id, order_id, provider, payload, headers, signature_valid, processed, processed_at, error_message, received_at
 `
 
 type InsertWebhookLogParams struct {
-	Gateway        string `json:"gateway"`
-	Payload        []byte `json:"payload"`
-	Headers        []byte `json:"headers"`
-	SignatureValid *bool  `json:"signature_valid"`
-	Processed      *bool  `json:"processed"`
-	ErrorMessage   string `json:"error_message"`
+	Provider       *string `json:"provider"`
+	Payload        []byte  `json:"payload"`
+	Headers        []byte  `json:"headers"`
+	SignatureValid *bool   `json:"signature_valid"`
+	Processed      *bool   `json:"processed"`
+	ErrorMessage   string  `json:"error_message"`
 }
 
-func (q *Queries) InsertWebhookLog(ctx context.Context, arg InsertWebhookLogParams) (WebhookLog, error) {
+func (q *Queries) InsertWebhookLog(ctx context.Context, arg InsertWebhookLogParams) (PaymentWebhookLog, error) {
 	row := q.db.QueryRow(ctx, insertWebhookLog,
-		arg.Gateway,
+		arg.Provider,
 		arg.Payload,
 		arg.Headers,
 		arg.SignatureValid,
 		arg.Processed,
 		arg.ErrorMessage,
 	)
-	var i WebhookLog
+	var i PaymentWebhookLog
 	err := row.Scan(
 		&i.ID,
-		&i.Gateway,
+		&i.TransactionID,
+		&i.OrderID,
+		&i.Provider,
 		&i.Payload,
 		&i.Headers,
 		&i.SignatureValid,
@@ -263,7 +269,7 @@ func (q *Queries) InsertWebhookLog(ctx context.Context, arg InsertWebhookLogPara
 }
 
 const listOrderByEvent = `-- name: ListOrderByEvent :many
-SELECT id, event_id, ticket_type_id, attendee_name, attendee_phone, attendee_email, quantity, unit_price, total_amount, payment_status, payment_method, transaction_id, payment_received_at, payment_webhook_received, qr_code_hash, qr_code_image_url, qr_code_plaintext, is_used, used_at, checked_in_by, platform_fee, device_info, ip_address, created_at FROM orders
+SELECT id, event_id, ticket_type_id, attendee_name, attendee_phone, attendee_email, quantity, unit_price, total_amount, payment_status, payment_method, transaction_id, payment_received_at, payment_webhook_received, qr_code_hash, qr_code_image_url, qr_code_plaintext, is_used, used_at, checked_in_by, platform_fee, device_info, ip_address, created_at, updated_at FROM orders
 WHERE event_id = $1
 ORDER BY created_at DESC
 `
@@ -302,6 +308,7 @@ func (q *Queries) ListOrderByEvent(ctx context.Context, eventID uuid.UUID) ([]Or
 			&i.DeviceInfo,
 			&i.IpAddress,
 			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -313,7 +320,7 @@ func (q *Queries) ListOrderByEvent(ctx context.Context, eventID uuid.UUID) ([]Or
 	return items, nil
 }
 
-const updateOrderPayment = `-- name: UpdateOrderPayment :exec
+const updateOrderPayment = `-- name: UpdateOrderPayment :one
 UPDATE orders
 SET
     payment_status = $2,
@@ -321,18 +328,46 @@ SET
     payment_received_at = CURRENT_TIMESTAMP,
     payment_webhook_received = TRUE
 WHERE id = $1
-RETURNING id, event_id, ticket_type_id, attendee_name, attendee_phone, attendee_email, quantity, unit_price, total_amount, payment_status, payment_method, transaction_id, payment_received_at, payment_webhook_received, qr_code_hash, qr_code_image_url, qr_code_plaintext, is_used, used_at, checked_in_by, platform_fee, device_info, ip_address, created_at
+RETURNING id, event_id, ticket_type_id, attendee_name, attendee_phone, attendee_email, quantity, unit_price, total_amount, payment_status, payment_method, transaction_id, payment_received_at, payment_webhook_received, qr_code_hash, qr_code_image_url, qr_code_plaintext, is_used, used_at, checked_in_by, platform_fee, device_info, ip_address, created_at, updated_at
 `
 
 type UpdateOrderPaymentParams struct {
-	ID            uuid.UUID     `json:"id"`
-	PaymentStatus PaymentStatus `json:"payment_status"`
-	TransactionID *string       `json:"transaction_id"`
+	ID            uuid.UUID `json:"id"`
+	PaymentStatus *string   `json:"payment_status"`
+	TransactionID *string   `json:"transaction_id"`
 }
 
-func (q *Queries) UpdateOrderPayment(ctx context.Context, arg UpdateOrderPaymentParams) error {
-	_, err := q.db.Exec(ctx, updateOrderPayment, arg.ID, arg.PaymentStatus, arg.TransactionID)
-	return err
+func (q *Queries) UpdateOrderPayment(ctx context.Context, arg UpdateOrderPaymentParams) (Order, error) {
+	row := q.db.QueryRow(ctx, updateOrderPayment, arg.ID, arg.PaymentStatus, arg.TransactionID)
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.EventID,
+		&i.TicketTypeID,
+		&i.AttendeeName,
+		&i.AttendeePhone,
+		&i.AttendeeEmail,
+		&i.Quantity,
+		&i.UnitPrice,
+		&i.TotalAmount,
+		&i.PaymentStatus,
+		&i.PaymentMethod,
+		&i.TransactionID,
+		&i.PaymentReceivedAt,
+		&i.PaymentWebhookReceived,
+		&i.QrCodeHash,
+		&i.QrCodeImageUrl,
+		&i.QrCodePlaintext,
+		&i.IsUsed,
+		&i.UsedAt,
+		&i.CheckedInBy,
+		&i.PlatformFee,
+		&i.DeviceInfo,
+		&i.IpAddress,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const updateOrderQRCode = `-- name: UpdateOrderQRCode :exec

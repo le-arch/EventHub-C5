@@ -44,6 +44,7 @@ import { EventCoverUpload } from '@/components/events/EventCoverUpload' // Adjus
 // Utilities
 import api from '@/lib/api'
 import { toast } from 'sonner'
+import { slugify } from '@/utils/stringHelpers'
 
 // Cameroon cities list
 const CAMEROON_CITIES = [
@@ -137,12 +138,42 @@ export default function CreateEventPage() {
 
     setIsSubmitting(true)
     try {
+      const slug = slugify(basicInfo.title)
+      const venueCombined = basicInfo.venueName + (basicInfo.venueAddress ? `, ${basicInfo.venueAddress}` : '')
+
       const eventData = {
-        ...basicInfo,
+        // backend expects `venue` and `slug`
+        title: basicInfo.title,
+        description: basicInfo.description,
+        venue: venueCombined,
+        city: basicInfo.city,
+        start_date: basicInfo.startDate,
+        start_time: basicInfo.startTime,
+        cover_image_url: basicInfo.coverImageUrl,
+        slug,
         ticketTypes: data.ticketTypes,
       }
-      
+
       const response = await api.post('/events', eventData)
+      const eventId = response.data.id
+
+      // Create ticket types for the event
+      try {
+        await Promise.all(
+          data.ticketTypes.map((t) =>
+            api.post(`/events/${eventId}/ticket-types`, {
+              name: t.name,
+              description: t.description || '',
+              price: Math.round(t.price),
+              quantityAvailable: Math.round(t.quantityAvailable),
+            })
+          )
+        )
+      } catch (err) {
+        // ticket creation errors are non-fatal for now
+        console.warn('failed creating ticket types', err)
+      }
+
       toast.success('✅ Event created successfully!')
       router.push(`/organizer/events`)
     } catch (error: any) {

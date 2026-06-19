@@ -2,10 +2,9 @@ package handlers
 
 import (
 	"io"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/le-arch/EventHub-C5/backend/internal/services"
+	"github.com/le-arch/EventHub-C5/internal/services"
 )
 
 type WebhookHandler struct {
@@ -21,7 +20,7 @@ func NewWebhookHandler(os *services.OrderService, ps *services.PaymentService) *
 }
 
 func (h *WebhookHandler) HandleCamPay(c *gin.Context) {
-	body, _ := io.ReadAll(c.Request.Body)
+	_, _ = io.ReadAll(c.Request.Body)
 	var webhook struct {
 		TransactionID string `json:"transaction_id"`
 		Status        string `json:"status"`
@@ -31,7 +30,7 @@ func (h *WebhookHandler) HandleCamPay(c *gin.Context) {
 		return
 	}
 	if webhook.Status == "completed" {
-		if err := h.orderService.ConfirmPayment(webhook.TransactionID); err != nil {
+		if err := h.orderService.ConfirmPayment(c, webhook.TransactionID); err != nil {
 			c.AbortWithStatusJSON(500, gin.H{"error": "failed to process"})
 			return
 		}

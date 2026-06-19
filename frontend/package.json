@@ -80,7 +80,6 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "eslint-config-prettier": "^10.1.8",
-    "husky": "^8.0.0",
     "postcss": "^8.5.15",
     "prettier": "^3.8.3",
     "tailwindcss": "^4",

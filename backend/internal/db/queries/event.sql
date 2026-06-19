@@ -1,5 +1,5 @@
 -- name: CreateEvent :one
-INSERT INTO events (organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date,capacity_range)
+INSERT INTO events (organizer_id, title, slug, description, venue_name, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 RETURNING *;
 
@@ -18,7 +18,6 @@ SELECT * FROM events
 WHERE organizer_id = $1
 ORDER BY start_date DESC, start_time DESC;
 
-
 -- name: ListOrganizerEvent :one
 SELECT * FROM events 
 WHERE id = $1 AND organizer_id = $2;
@@ -28,7 +27,6 @@ SELECT e.*, u.full_name as organizer_name
 FROM events e
 INNER JOIN users u ON e.organizer_id = u.id
 ORDER BY u.full_name, e.start_date;
-
 
 -- name: ListEventsByCity :many
 SELECT * FROM events 
@@ -42,7 +40,7 @@ ORDER BY start_date ASC, start_time ASC;
 
 -- name: UpdateEvent :one
 UPDATE events
-SET title = $2, slug = $3, description = $4, venue = $5, city = $6, start_date = $7, end_date = $8, start_time = $9, end_time = $10, cover_image_url = $11, status = $12, sales_start_date = $13, sales_end_date = $14, updated_at = CURRENT_TIMESTAMP
+SET title = $2, slug = $3, description = $4, venue_name = $5, city = $6, start_date = $7, end_date = $8, start_time = $9, end_time = $10, cover_image_url = $11, status = $12, sales_start_date = $13, sales_end_date = $14, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING *;
 
@@ -54,15 +52,15 @@ RETURNING *;
 
 -- name: GetEventByIDPublic :one
 SELECT 
-    id, organizer_id, title, slug, description, venue, city,
+    id, organizer_id, title, slug, description, venue_name, city,
     start_date, end_date, start_time, end_time, cover_image_url,
-    status, sales_start_date, sales_end_date,capacity_range, created_at, updated_at
+    status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at
 FROM events
 WHERE id = $1 AND status = 'published';
 
 -- name: GetEventBySlugPublic :one
 SELECT 
-    id, organizer_id, title, slug, description, venue, city,
+    id, organizer_id, title, slug, description, venue_name, city,
     start_date, end_date, start_time, end_time, cover_image_url,
     status, sales_start_date, sales_end_date, created_at, updated_at
 FROM events
@@ -78,7 +76,7 @@ SET
     title = COALESCE(sqlc.narg(title), title),
     slug = COALESCE(sqlc.narg(slug), slug),
     description = COALESCE(sqlc.narg(description), description),
-    venue = COALESCE(sqlc.narg(venue), venue),
+    venue_name = COALESCE(sqlc.narg(venue_name), venue_name),
     city = COALESCE(sqlc.narg(city), city),
     start_date = COALESCE(sqlc.narg(start_date), start_date),
     end_date = COALESCE(sqlc.narg(end_date), end_date),

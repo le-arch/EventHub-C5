@@ -12,7 +12,7 @@ RETURNING *;
 -- name: GetOrderByID :one
 SELECT * FROM orders WHERE id = $1;
 
--- name: UpdateOrderPayment :exec
+-- name: UpdateOrderPayment :one
 UPDATE orders
 SET
     payment_status = $2,
@@ -29,8 +29,8 @@ SET quantity_available = quantity_available - $2,
 WHERE id = $1 AND quantity_available >= $2;
 
 -- name: InsertWebhookLog :one
-INSERT INTO webhook_logs (
-    gateway, payload, headers, signature_valid, processed,error_message, received_at
+INSERT INTO payment_webhook_logs (
+    provider, payload, headers, signature_valid, processed, error_message, received_at
 ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
 RETURNING *;
 
@@ -56,4 +56,3 @@ WHERE id = $1;
 -- name: GetOrderByQRHash :one
 SELECT * FROM orders
 WHERE qr_code_hash = $1;
-
