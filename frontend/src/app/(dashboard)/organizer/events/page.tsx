@@ -364,6 +364,12 @@ export default function EventsDashboardPage() {
                     <MapPin className="h-3.5 w-3.5 text-purple-400" />
                     <span className="line-clamp-1">{event.venueName}, {event.city}</span>
                   </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <Users className="h-3.5 w-3.5 text-purple-400" />
+                    <span>
+                      Capacity: {event.capacityRange ? `${event.capacityRange.lower} – ${event.capacityRange.upper}` : 'Unlimited'}
+                    </span>
+                  </div>
 
                   {/* Operational Performance Visual Badging Metrics */}
                   <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100">

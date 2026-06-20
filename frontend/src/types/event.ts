@@ -9,6 +9,11 @@
 // Event Status Enum
 export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed'
 
+export interface CapacityRange {
+  lower: nummber;
+  upper: number;
+}
+
 // Core Event Interface
 export interface Event {
   id: string
@@ -31,6 +36,7 @@ export interface Event {
   ticketStats: TicketStats
   createdAt: string
   updatedAt: string
+  capacityRange?: CapacityRange | null;
 }
 
 // Ticket Statistics
@@ -70,6 +76,7 @@ export interface CreateEventData {
   endTime?: string
   coverImage?: File
   ticketTypes: Omit<TicketType, 'id' | 'quantitySold' | 'createdAt' | 'updatedAt'>[]
+  capacityRange?: CapacityRange
 }
 
 // Update Event Data

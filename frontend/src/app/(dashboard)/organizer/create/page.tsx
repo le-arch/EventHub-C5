@@ -62,6 +62,8 @@ const basicInfoSchema = z.object({
   startDate: z.string().min(1, 'Start date is required'),
   startTime: z.string().min(1, 'Start time is required'),
   coverImageUrl: z.string().nullable().optional(), // Preserved state tracking for cover image link
+  capacityMin: z.number().min(0).optional(),
+  capacityMax: z.number().min(0).optional(),
 })
 
 // Validation schema for ticket type
@@ -93,6 +95,8 @@ export default function CreateEventPage() {
       startDate: '',
       startTime: '',
       coverImageUrl: null,
+      capacityMin: undefined,
+      capacityMax: undefined,
     },
   })
 
@@ -140,6 +144,14 @@ export default function CreateEventPage() {
     try {
       const slug = slugify(basicInfo.title)
       const venueCombined = basicInfo.venueName + (basicInfo.venueAddress ? `, ${basicInfo.venueAddress}` : '')
+       // Build capacityRange only if both values are provided
+      let capacityRange = undefined
+      if (basicInfo.capacityMin !== undefined && basicInfo.capacityMax !== undefined) {
+        capacityRange = {
+          lower: basicInfo.capacityMin,
+          upper: basicInfo.capacityMax,
+        }
+      }
 
       const eventData = {
         // backend expects `venue` and `slug`
@@ -152,6 +164,7 @@ export default function CreateEventPage() {
         cover_image_url: basicInfo.coverImageUrl,
         slug,
         ticketTypes: data.ticketTypes,
+        capacity_range: capacityRange,
       }
 
       const response = await api.post('/events', eventData)
@@ -379,6 +392,28 @@ export default function CreateEventPage() {
                     )}
                   </div>
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="capacityMin" className="text-gray-700 font-medium">Minimum Capacity</Label>
+                  <Input
+                    id="capacityMin"
+                    type="number"
+                    placeholder="e.g., 10"
+                    {...basicForm.register('capacityMin', { valueAsNumber: true })}
+                    className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="capacityMax" className="text-gray-700 font-medium">Maximum Capacity</Label>
+                  <Input
+                    id="capacityMax"
+                    type="number"
+                    placeholder="e.g., 100"
+                    {...basicForm.register('capacityMax', { valueAsNumber: true })}
+                    className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                  />
+                </div>
+              </div>
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button
