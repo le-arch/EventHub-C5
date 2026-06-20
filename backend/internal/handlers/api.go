@@ -21,11 +21,11 @@ type EventHubHandler struct {
 	gmailPassword   string
 	MinioClient     *storage.MinioClient
 	payment         *payment.WebhookHandler
-	momoClient      *payment.Client
+	campayClient    *payment.CamPayClient
 	qrSecret        string
 }
 
-func NewEventHubHandler(querier repo.Querier, otpHandler *auth.OTPHandler, revocationStore *auth.RevocationStore, jwtSecret, frontendOrigin, gmailUser, gmailPassword, qrSecret string, payment *payment.WebhookHandler, minioClient *storage.MinioClient, momoClient *payment.Client) *EventHubHandler {
+func NewEventHubHandler(querier repo.Querier, otpHandler *auth.OTPHandler, revocationStore *auth.RevocationStore, jwtSecret, frontendOrigin, gmailUser, gmailPassword, qrSecret string, payment *payment.WebhookHandler, minioClient *storage.MinioClient, campayClient *payment.CamPayClient) *EventHubHandler {
 	return &EventHubHandler{
 		querier:         querier,
 		otpHandler:      otpHandler,
@@ -37,17 +37,14 @@ func NewEventHubHandler(querier repo.Querier, otpHandler *auth.OTPHandler, revoc
 		qrSecret:        qrSecret,
 		MinioClient:     minioClient,
 		payment:         payment,
-		momoClient:      momoClient,
+		campayClient:    campayClient,
 	}
 }
 
 func (h *EventHubHandler) WireHttpHandler() http.Handler {
-
 	r := gin.Default()
 
-	// Apply CORS middleware to allow requests from the frontend origin
 	r.Use(middleware.CorsMiddleware(h.frontendOrigin))
-
 	r.Use(middleware.RecoveryMiddleware())
 
 	r.POST("/api/v1/auth/register", h.handleRegister)
@@ -57,13 +54,19 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	r.POST("/api/v1/auth/logout", h.handleLogout)
 	r.POST("/api/v1/auth/forgot-password", h.handleForgotPassword)
 	r.POST("/api/v1/auth/verify-reset-otp", h.handleVerifyResetOTP)
-	r.POST("/api/v1/auth/reset-password", h.handlePasswrordReset)
+	r.POST("/api/v1/auth/reset-password", h.handlePasswordReset) 
 	r.POST("/api/v1/auth/resend-otp", h.handleResendOTP)
+	
+	// Core Checkout Order Processing Entrypoint
 	r.POST("/api/v1/orders", h.handleCreateOrder)
-	// CamPay webhook endpoint (primary payment provider)
+	
+	// CamPay Server-to-Server Callback Processing Node
 	r.POST("/api/v1/webhooks/campay", h.payment.HandleCamPayWebhook)
 
 	r.GET("/api/v1/events/public/:id", h.handleGetPublicEvent)
+
+	// Public Health Check Endpoint
+	r.GET("/health", h.handleHealthCheck)
 
 	Protection := r.Group("/api/v1")
 	Protection.Use(auth.AuthMiddleware(h.jwtSecret))
@@ -71,12 +74,12 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 		Protection.GET("/auth/me", h.handleGetCurrentUser)
 
 		Protection.POST("/events", h.handleCreateEvent)
-
 		Protection.POST("/events/upload-image", h.handleUploadImage)
 
 		Protection.PATCH("/events/:id", h.handleUpdateEvent)
 		Protection.PATCH("/events/:id/status", h.handleOrganizerUpdateEventStatus)
 		Protection.PATCH("/admin/events/:id/status", h.handleAdminUpdateEventStatus)
+		Protection.PATCH("/admin/events/:id/suspend", h.handleAdminSuspendEvent)
 		Protection.PATCH("/admin/events/:id/restore", h.handleAdminRestoreEvent)
 
 		Protection.GET("/Organization/events", h.handleGetOrganisationEvents)
@@ -91,8 +94,19 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 
 		Protection.DELETE("/events/:id", h.handleDeleteEvent)
 		Protection.DELETE("/ticket-type/:id", h.handleDeleteTicketType)
-
 	}
 
 	return r
+}
+
+func (h *EventHubHandler) handleViewAllTransactions(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"status": "unimplemented"})
+}
+
+func (h *EventHubHandler) handleVerifyOrganizer(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"status": "unimplemented"})
+}
+
+func (h *EventHubHandler) handleDeleteTicketType(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"status": "unimplemented"})
 }

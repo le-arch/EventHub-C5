@@ -348,7 +348,7 @@ func (h *EventHubHandler) handleVerifyResetOTP(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "OTP verified"})
 }
 
-func (h *EventHubHandler) handlePasswrordReset(c *gin.Context) {
+func (h *EventHubHandler) handlePasswordReset(c *gin.Context) {
 	var req models.ResetPasswordRequest
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {

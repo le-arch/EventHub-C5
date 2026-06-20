@@ -199,7 +199,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* ==================== NAVIGATION ==================== */}
+      {/*  NAVIGATION  */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-purple-100/30 shadow-sm">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           {/* Logo */}
@@ -305,7 +305,7 @@ export default function HomePage() {
         )}
       </nav>
 
-      {/* ==================== HERO SECTION ==================== */}
+      {/* HERO SECTION  */}
       <section className="bg-gradient-to-br from-purple-50 via-white to-blue-50/30 py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row items-center gap-12">
@@ -366,7 +366,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ==================== STATS SECTION ==================== */}
+      {/*  STATS SECTION  */}
       <section className="py-16 bg-gradient-to-r from-purple-50/50 via-white to-blue-50/30">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
@@ -386,7 +386,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ==================== FEATURES SECTION ==================== */}
+      {/* FEATURES SECTION */}
       <section id="features" className="container mx-auto px-4 py-16 md:py-24">
         <div className="text-center mb-12">
           <div className="inline-block bg-purple-100 text-purple-700 px-4 py-1 rounded-full text-sm font-medium mb-3">
@@ -415,7 +415,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ==================== HOW IT WORKS SECTION ==================== */}
+      {/* HOW IT WORKS SECTION */}
       <section id="how-it-works" className="bg-gradient-to-b from-purple-50/50 to-blue-50/30 py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -482,7 +482,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ==================== PRICING SECTION ==================== */}
+      {/* PRICING SECTION */}
       <section id="pricing" className="container mx-auto px-4 py-16 md:py-24">
         <div className="text-center mb-12">
           <div className="inline-block bg-emerald-100 text-emerald-700 px-4 py-1 rounded-full text-sm font-medium mb-3">
@@ -605,7 +605,7 @@ export default function HomePage() {
         </p>
       </section>
 
-      {/* ==================== CTA SECTION ==================== */}
+      {/* CTA SECTION */}
       <section className="bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 py-16 md:py-20">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
@@ -632,7 +632,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ==================== FOOTER ==================== */}
+      {/* FOOTER */}
       <footer className="bg-gray-800 text-gray-400 py-12">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8">

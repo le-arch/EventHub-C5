@@ -201,9 +201,9 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      {/* ============================================================
+      {/* 
           NAVIGATION TABS – FULL WIDTH (Separate Component)
-          ============================================================ */}
+           */}
       <div className="w-full bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
         <div className="flex w-full overflow-x-auto">
           {tabs.map((tab) => {
@@ -228,9 +228,7 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      {/* ============================================================
-          CONTENT PANELS – FULL WIDTH (Separate Component)
-          ============================================================ */}
+      {/* CONTENT PANELS – FULL WIDTH (Separate Component) */}
       <div className="w-full">
         {/* General Panel */}
         {activeTab === 'general' && (
@@ -303,7 +301,7 @@ export default function AdminSettingsPage() {
                     <SelectTrigger className="border-purple-200 focus:ring-purple-500">
                       <SelectValue placeholder="Select timezone" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="Africa/Douala">Africa/Douala (UTC+1)</SelectItem>
                       <SelectItem value="Africa/Lagos">Africa/Lagos (UTC+1)</SelectItem>
                       <SelectItem value="UTC">UTC</SelectItem>
@@ -319,7 +317,7 @@ export default function AdminSettingsPage() {
                     <SelectTrigger className="border-purple-200 focus:ring-purple-500">
                       <SelectValue placeholder="Select format" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
                       <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
                       <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
@@ -335,7 +333,7 @@ export default function AdminSettingsPage() {
                     <SelectTrigger className="border-purple-200 focus:ring-purple-500">
                       <SelectValue placeholder="Select currency" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="XAF">XAF - Central African CFA</SelectItem>
                       <SelectItem value="USD">USD - US Dollar</SelectItem>
                       <SelectItem value="EUR">EUR - Euro</SelectItem>

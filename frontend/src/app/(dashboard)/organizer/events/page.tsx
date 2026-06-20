@@ -93,7 +93,7 @@ export default function EventsDashboardPage() {
   }, [page, pageSize, deferredSearchTerm, fetchEvents])
 
   // Derive layout requirements dynamically
-  const totalCount = events.length // Adjust if your backend provides a paginated meta-wrapper globally
+  const totalCount = events?.length || 0 // Adjust if your backend provides a paginated meta-wrapper globally
   const totalPages = Math.ceil(totalCount / pageSize) || 1
 
   const handleDeleteEvent = async () => {
@@ -166,14 +166,13 @@ export default function EventsDashboardPage() {
   }
 
   // Filtered visibility matrix matching search criteria locally or dynamically
-  const filteredEvents = events.filter(event => 
-    event.title.toLowerCase().includes(deferredSearchTerm.toLowerCase()) ||
-    event.city.toLowerCase().includes(deferredSearchTerm.toLowerCase()) ||
-    event.venueName.toLowerCase().includes(deferredSearchTerm.toLowerCase())
-  )
+  const filteredEvents = (Array.isArray(events) ? events : []).filter(event => 
+  event.title?.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+  event.category?.toLowerCase().includes(deferredSearch.toLowerCase())
+)
 
   // Loading skeleton view
-  if (isLoading && events.length === 0) {
+  if (isLoading && events?.length === 0) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-6 w-64" />

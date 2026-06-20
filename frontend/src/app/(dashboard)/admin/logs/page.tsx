@@ -240,7 +240,7 @@ export default function AdminLogsPage() {
             className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:text-white backdrop-blur-sm"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh 🔄
+            Refresh 
           </Button>
           <Button 
             variant="outline" 

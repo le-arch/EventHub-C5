@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
 	"github.com/le-arch/EventHub-C5/internal/models"
-	"github.com/le-arch/EventHub-C5/internal/payment" // Importing your exact payment package
+	"github.com/le-arch/EventHub-C5/internal/payment"
 	"github.com/le-arch/EventHub-C5/internal/qrcode"
 	"github.com/le-arch/EventHub-C5/internal/utils"
 )
@@ -97,19 +97,20 @@ func (h *EventHubHandler) handleCreateOrder(c *gin.Context) {
 		return
 	}
 
-	// Initiate external billing process using your provided CamPay Client definitions
+	// Initiate external billing process using your provided Payment Client definitions from cammpay.go
 	campayReq := payment.PaymentRequest{
 		Amount:      float64(total),
 		Currency:    "XAF",
 		PhoneNumber: req.AttendeePhone,
-		FirstName:   req.AttendeeName, // Mapping name fields safely
+		FirstName:   req.AttendeeName,
 		Email:       req.AttendeeEmail,
 		ExternalID:  order.ID.String(),
 		Description: "Event Registration Ticket checkout sequence processing fee",
 	}
 
-	// Execute external API processing pipeline call using your specific client struct instance
-	campayResp, err := h.CampayClient.RequestPayment(campayReq)
+	// Initialize the custom CamPay client explicitly to execute outgoing payments
+	client := payment.NewCamPayClient()
+	campayResp, err := client.RequestPayment(campayReq)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "campay channel payment trigger error execution: " + err.Error()})
 		return
