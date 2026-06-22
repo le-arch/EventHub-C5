@@ -26,6 +26,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Loader2, Smartphone, CreditCard, Shield } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
+import api from '@/lib/api'
 
 interface PaymentModalProps {
   open: boolean
@@ -89,23 +90,26 @@ export function PaymentModal({
     setIsProcessing(true)
 
     try {
-      // Simulate API call - replace with actual API integration
-      // const response = await api.post('/orders', {
-      //   event_id: eventId,
-      //   ticket_type_id: ticketType.id,
-      //   attendee_name: attendeeName,
-      //   attendee_phone: cleanPhone,
-      //   quantity: quantity,
-      //   payment_method: paymentMethod === 'mtn' ? 'mtn_momo' : 'orange_money',
-      // })
-      
-      // Simulate delay for payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Mock success
-      onSuccess('mock-order-id')
+      // Create order and initiate payment on the backend
+      const payload = {
+        event_id: eventId,
+        ticket_type_id: ticketType.id,
+        attendee_name: attendeeName,
+        attendee_phone: cleanPhone,
+        quantity: quantity,
+      }
+
+      const response = await api.post('/orders', payload)
+
+      const orderId = response.data?.id || response.data?.ID || response.data?.order?.id
+      if (!orderId) {
+        throw new Error('Invalid order response')
+      }
+
+      // Notify caller with the created order ID
+      onSuccess(orderId)
     } catch (error: any) {
-      onError?.(error.response?.data?.error || 'Payment failed. Please try again.')
+      onError?.(error.response?.data?.error || error.message || 'Payment failed. Please try again.')
       setStep('form')
     } finally {
       setIsProcessing(false)

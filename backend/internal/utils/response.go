@@ -29,7 +29,7 @@ type CreateEventResponse struct {
 	Title          string           `json:"title"`
 	Slug           string           `json:"slug"`
 	Description    string           `json:"description"`
-	Venue          string           `json:"venue"`
+	Venue          string           `json:"venue_name"`
 	City           string           `json:"city"`
 	StartDate      string           `json:"start_date"`       
 	EndDate        string           `json:"end_date"`         
@@ -54,7 +54,7 @@ type EventResponse struct{
 	Title          string           `json:"title"`
 	Slug           string           `json:"slug"`
 	Description    string           `json:"description"`
-	Venue          string           `json:"venue"`
+	Venue          string           `json:"venue_name"`
 	City           string           `json:"city"`
 	StartDate      string           `json:"start_date"`       
 	EndDate        string           `json:"end_date"`         

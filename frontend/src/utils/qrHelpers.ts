@@ -5,6 +5,7 @@
  * 
  * @module QRHelpers
  */
+import { getApiUrl } from '@/lib/config'
 
 /**
  * Generate a QR code payload for ticket validation
@@ -107,7 +108,10 @@ export const generateTicketFilename = (eventTitle: string, attendeeName: string)
  * @returns QR code data URL
  */
 export const getQRCodeDataUrl = (orderId: string): string => {
-  return `${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}/qr-code`
+  // Backend exposes order status which contains `qr_code_image_url`.
+  // Consumers should fetch this endpoint and read `qr_code_image_url` from the response.
+  // Use centralized API URL helper for consistency.
+  return getApiUrl(`/orders/${orderId}/status`)
 }
 
 /**

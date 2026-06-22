@@ -1,2 +1,2 @@
-// QR code validation logic for ensuring the integrity of scanned QR codes
+//qr code playload structures and related types for QR code generation and validation
 package qrcode

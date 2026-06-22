@@ -10,7 +10,7 @@ import (
 	"net/netip"
 	"time"
 
-	uuid "github.com/google/uuid"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -151,7 +151,7 @@ type AdminLog struct {
 	AdminID    uuid.UUID        `json:"admin_id"`
 	Action     *string          `json:"action"`
 	TargetType *string          `json:"target_type"`
-	TargetID   *uuid.UUID       `json:"target_id"`
+	TargetID   uuid.UUID        `json:"target_id"`
 	OldValues  []byte           `json:"old_values"`
 	NewValues  []byte           `json:"new_values"`
 	Details    []byte           `json:"details"`
@@ -159,25 +159,37 @@ type AdminLog struct {
 	CreatedAt  pgtype.Timestamp `json:"created_at"`
 }
 
+type CheckInLog struct {
+	ID           uuid.UUID        `json:"id"`
+	OrderID      uuid.UUID        `json:"order_id"`
+	AttendeeName string           `json:"attendee_name"`
+	EventID      uuid.UUID        `json:"event_id"`
+	ScannedBy    uuid.UUID        `json:"scanned_by"`
+	ScannedAt    pgtype.Timestamp `json:"scanned_at"`
+	IpAddress    *netip.Addr      `json:"ip_address"`
+	UserAgent    string           `json:"user_agent"`
+}
+
 type Event struct {
-	ID             uuid.UUID                  `json:"id"`
-	OrganizerID    uuid.UUID                  `json:"organizer_id"`
-	Title          string                     `json:"title"`
-	Slug           string                     `json:"slug"`
-	Description    string                     `json:"description"`
-	Venue          string                     `json:"venue"`
-	City           string                     `json:"city"`
-	StartDate      time.Time                  `json:"start_date"`
-	EndDate        *time.Time                 `json:"end_date"`
-	StartTime      *string                    `json:"start_time"`
-	EndTime        *string                    `json:"end_time"`
-	CoverImageUrl  string                     `json:"cover_image_url"`
-	Status         EventStatus                `json:"status"`
-	SalesStartDate *time.Time                 `json:"sales_start_date"`
-	SalesEndDate   *time.Time                 `json:"sales_end_date"`
-	CapacityRange  *pgtype.Range[pgtype.Int4] `json:"capacity_range"`
-	CreatedAt      pgtype.Timestamp           `json:"created_at"`
-	UpdatedAt      pgtype.Timestamp           `json:"updated_at"`
+	ID             uuid.UUID                 `json:"id"`
+	OrganizerID    uuid.UUID                 `json:"organizer_id"`
+	Title          string                    `json:"title"`
+	Slug           string                    `json:"slug"`
+	Description    string                    `json:"description"`
+	VenueName      string                    `json:"venue_name"`
+	VenueAddress   string                    `json:"venue_address"`
+	City           string                    `json:"city"`
+	StartDate      pgtype.Date               `json:"start_date"`
+	EndDate        time.Time                 `json:"end_date"`
+	StartTime      pgtype.Time               `json:"start_time"`
+	EndTime        pgtype.Time               `json:"end_time"`
+	CoverImageUrl  string                    `json:"cover_image_url"`
+	Status         EventStatus               `json:"status"`
+	SalesStartDate time.Time                 `json:"sales_start_date"`
+	SalesEndDate   time.Time                 `json:"sales_end_date"`
+	CapacityRange  pgtype.Range[pgtype.Int4] `json:"capacity_range"`
+	CreatedAt      pgtype.Timestamp          `json:"created_at"`
+	UpdatedAt      pgtype.Timestamp          `json:"updated_at"`
 }
 
 type Order struct {
@@ -190,7 +202,7 @@ type Order struct {
 	Quantity               int32            `json:"quantity"`
 	UnitPrice              int32            `json:"unit_price"`
 	TotalAmount            int32            `json:"total_amount"`
-	PaymentStatus          PaymentStatus    `json:"payment_status"`
+	PaymentStatus          *string          `json:"payment_status"`
 	PaymentMethod          *string          `json:"payment_method"`
 	TransactionID          *string          `json:"transaction_id"`
 	PaymentReceivedAt      pgtype.Timestamp `json:"payment_received_at"`
@@ -200,11 +212,26 @@ type Order struct {
 	QrCodePlaintext        string           `json:"qr_code_plaintext"`
 	IsUsed                 *bool            `json:"is_used"`
 	UsedAt                 pgtype.Timestamp `json:"used_at"`
-	CheckedInBy            *uuid.UUID       `json:"checked_in_by"`
+	CheckedInBy            uuid.UUID        `json:"checked_in_by"`
 	PlatformFee            int32            `json:"platform_fee"`
 	DeviceInfo             string           `json:"device_info"`
 	IpAddress              *netip.Addr      `json:"ip_address"`
 	CreatedAt              pgtype.Timestamp `json:"created_at"`
+	UpdatedAt              pgtype.Timestamp `json:"updated_at"`
+}
+
+type PaymentWebhookLog struct {
+	ID             uuid.UUID        `json:"id"`
+	TransactionID  *string          `json:"transaction_id"`
+	OrderID        uuid.UUID        `json:"order_id"`
+	Provider       *string          `json:"provider"`
+	Payload        []byte           `json:"payload"`
+	Headers        []byte           `json:"headers"`
+	SignatureValid *bool            `json:"signature_valid"`
+	Processed      *bool            `json:"processed"`
+	ProcessedAt    pgtype.Timestamp `json:"processed_at"`
+	ErrorMessage   string           `json:"error_message"`
+	ReceivedAt     pgtype.Timestamp `json:"received_at"`
 }
 
 type SystemConfig struct {
@@ -221,32 +248,22 @@ type TicketType struct {
 	Description       string           `json:"description"`
 	Price             int32            `json:"price"`
 	QuantityAvailable int32            `json:"quantity_available"`
-	QuantitySold      int32            `json:"quantity_sold"`
+	QuantitySold      *int32           `json:"quantity_sold"`
 	IsActive          *bool            `json:"is_active"`
 	CreatedAt         pgtype.Timestamp `json:"created_at"`
 	UpdatedAt         pgtype.Timestamp `json:"updated_at"`
 }
 
 type User struct {
-	ID              uuid.UUID        `json:"id"`
-	Email           string           `json:"email"`
-	Phone           string           `json:"phone"`
-	PasswordHash    string           `json:"password_hash"`
-	FullName        string           `json:"full_name"`
-	Role            UserRole         `json:"role"`
-	IsEmailVerified *bool            `json:"is_email_verified"`
-	CreatedAt       pgtype.Timestamp `json:"created_at"`
-	UpdatedAt       pgtype.Timestamp `json:"updated_at"`
-}
-
-type WebhookLog struct {
-	ID             uuid.UUID        `json:"id"`
-	Gateway        string           `json:"gateway"`
-	Payload        []byte           `json:"payload"`
-	Headers        []byte           `json:"headers"`
-	SignatureValid *bool            `json:"signature_valid"`
-	Processed      *bool            `json:"processed"`
-	ProcessedAt    pgtype.Timestamp `json:"processed_at"`
-	ErrorMessage   string           `json:"error_message"`
-	ReceivedAt     pgtype.Timestamp `json:"received_at"`
+	ID                uuid.UUID        `json:"id"`
+	Email             string           `json:"email"`
+	Phone             string           `json:"phone"`
+	PasswordHash      string           `json:"password_hash"`
+	FullName          string           `json:"full_name"`
+	Role              UserRole         `json:"role"`
+	IsEmailVerified   *bool            `json:"is_email_verified"`
+	EmailOtp          *string          `json:"email_otp"`
+	EmailOtpExpiresAt pgtype.Timestamp `json:"email_otp_expires_at"`
+	CreatedAt         pgtype.Timestamp `json:"created_at"`
+	UpdatedAt         pgtype.Timestamp `json:"updated_at"`
 }

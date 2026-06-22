@@ -100,11 +100,10 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
 
     setIsLoading(true)
     try {
-      const response = await api.post('/auth/verify-reset-otp', {
+      await api.post('/auth/verify-reset-otp', {
         email,
         otp: otpString,
       })
-      setResetToken(response.data.reset_token)
       setStep('reset')
       toast.success('Code verified. Please enter your new password.')
     } catch (error: any) {
@@ -122,8 +121,9 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
     setIsLoading(true)
     try {
       await api.post('/auth/reset-password', {
-        token: resetToken,
-        new_password: data.password,
+        email,
+        otp: otp.join(''),
+        password_hash: data.password,
       })
       toast.success('Password reset successfully! Please log in.')
       onSuccess?.()

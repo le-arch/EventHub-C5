@@ -59,8 +59,46 @@ export default function TicketPage() {
 
   const fetchOrderDetails = async () => {
     try {
-      const response = await api.get(`/orders/${orderId}/ticket`)
-      setOrder(response.data)
+      // Prefer the status endpoint which returns order metadata
+      const response = await api.get(`/orders/${orderId}/status`)
+      const o = response.data
+
+      // Fetch public event details for richer display
+      let eventTitle = ''
+      let eventDate = ''
+      let eventTime = ''
+      let eventVenue = ''
+      let eventCity = ''
+
+      try {
+        const ev = await api.get(`/events/public/${o.eventId}`)
+        eventTitle = ev.data.title || ''
+        eventDate = ev.data.startDate || ''
+        eventTime = ev.data.startTime || ''
+        eventVenue = ev.data.venueName || ev.data.venue || ''
+        eventCity = ev.data.city || ''
+      } catch (e) {
+        // ignore: show limited info if public event fetch fails
+      }
+
+      const details: OrderDetails = {
+        id: o.id,
+        attendeeName: o.attendeeName || o.attendee_name || '',
+        attendeePhone: o.attendeePhone || o.attendee_phone || '',
+        ticketType: o.ticketTypeId ? String(o.ticketTypeId) : 'Ticket',
+        quantity: o.quantity || 1,
+        unitPrice: o.unitPrice || 0,
+        totalAmount: o.totalAmount || 0,
+        eventTitle,
+        eventDate,
+        eventTime,
+        eventVenue,
+        eventCity,
+        qrCodeData: o.qrCodeImageUrl || o.qr_code_image_url || o.qrCodeHash || o.qr_code_hash || String(o.id),
+        createdAt: o.createdAt || o.created_at || ''
+      }
+
+      setOrder(details)
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Ticket not found'
       toast.error(errorMessage)
@@ -70,20 +108,49 @@ export default function TicketPage() {
     }
   }
 
-  const downloadQRCode = () => {
-    const canvas = document.getElementById('qr-code-canvas') as HTMLCanvasElement
-    if (canvas) {
-      const pngUrl = canvas.toDataURL('image/png')
-      const downloadLink = document.createElement('a')
-      const filename = `ticket_${order?.eventTitle?.replace(/\s/g, '_')}_${order?.attendeeName?.replace(/\s/g, '_')}.png`
-      downloadLink.href = pngUrl
-      downloadLink.download = filename
-      document.body.appendChild(downloadLink)
-      downloadLink.click()
-      document.body.removeChild(downloadLink)
-      
+    const downloadQRCode = async () => {
+    const el = document.getElementById('qr-code-canvas')
+    if (!el) {
+      toast.error('QR code not found')
+      return
+    }
+
+    try {
+      if (el instanceof HTMLImageElement) {
+        // Download image by fetching blob
+        const resp = await fetch(el.src)
+        const blob = await resp.blob()
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        const filename = `ticket_${order?.eventTitle?.replace(/\s/g, '_')}_${order?.attendeeName?.replace(/\s/g, '_')}.png`
+        link.href = url
+        link.download = filename
+        document.body.appendChild(link)
+        link.click()
+        setTimeout(() => {
+          link.remove()
+          URL.revokeObjectURL(url)
+        }, 100)
+      } else if (el instanceof HTMLCanvasElement) {
+        const pngUrl = el.toDataURL('image/png')
+        const downloadLink = document.createElement('a')
+        const filename = `ticket_${order?.eventTitle?.replace(/\s/g, '_')}_${order?.attendeeName?.replace(/\s/g, '_')}.png`
+        downloadLink.href = pngUrl
+        downloadLink.download = filename
+        document.body.appendChild(downloadLink)
+        downloadLink.click()
+        setTimeout(() => {
+          if (downloadLink.parentNode) {
+            downloadLink.parentNode.removeChild(downloadLink)
+          }
+        }, 100)
+      }
+
       setDownloadCount(prev => prev + 1)
       toast.success('✅ QR code downloaded successfully!')
+    } catch (error) {
+      console.error('Download failed:', error)
+      toast.error('❌ Failed to download QR code')
     }
   }
 
@@ -91,22 +158,41 @@ export default function TicketPage() {
     if (!order) return
     
     try {
-      const canvas = document.getElementById('qr-code-canvas') as HTMLCanvasElement
-      if (canvas && typeof navigator.share === 'function') {
-        const blob = await new Promise<Blob>((resolve) => {
-          canvas.toBlob((blob) => resolve(blob!), 'image/png')
-        })
-        const file = new File([blob], 'ticket.png', { type: 'image/png' })
-        
-        await navigator.share({
-          title: `Ticket for ${order.eventTitle}`,
-          text: `Here's my ticket for ${order.eventTitle}!`,
-          files: [file],
-        })
-        toast.success('📤 Ticket shared successfully!')
-      } else {
-        downloadQRCode()
+      const el = document.getElementById('qr-code-canvas')
+      if (el && typeof navigator.share === 'function') {
+        try {
+          if (el instanceof HTMLCanvasElement) {
+            const blob = await new Promise<Blob>((resolve) => {
+              el.toBlob((b) => resolve(b!), 'image/png')
+            })
+            const file = new File([blob], 'ticket.png', { type: 'image/png' })
+            await navigator.share({
+              title: `Ticket for ${order.eventTitle}`,
+              text: `Here's my ticket for ${order.eventTitle}!`,
+              files: [file],
+            })
+            toast.success('📤 Ticket shared successfully!')
+            return
+          }
+
+          if (el instanceof HTMLImageElement) {
+            const resp = await fetch(el.src)
+            const blob = await resp.blob()
+            const file = new File([blob], 'ticket.png', { type: blob.type || 'image/png' })
+            await navigator.share({
+              title: `Ticket for ${order.eventTitle}`,
+              text: `Here's my ticket for ${order.eventTitle}!`,
+              files: [file],
+            })
+            toast.success('📤 Ticket shared successfully!')
+            return
+          }
+        } catch (e) {
+          console.error('Share failed (fallback to download):', e)
+        }
       }
+
+      downloadQRCode()
     } catch (error) {
       console.error('Share failed:', error)
     }
@@ -153,15 +239,24 @@ export default function TicketPage() {
           <CardContent className="pt-6 text-center">
             <div className="bg-white p-4 rounded-lg inline-block mx-auto border-2 border-dashed border-gray-200">
               <div ref={qrRef}>
-                <QRCodeCanvas
-                  id="qr-code-canvas"
-                  value={order.qrCodeData}
-                  size={200}
-                  level="H"
-                  includeMargin={true}
-                  bgColor="#FFFFFF"
-                  fgColor="#000000"
-                />
+                {order.qrCodeData?.startsWith?.('http') ? (
+                  <img
+                    id="qr-code-canvas"
+                    src={order.qrCodeData}
+                    alt="QR code"
+                    className="mx-auto w-48 h-48 object-contain"
+                  />
+                ) : (
+                  <QRCodeCanvas
+                    id="qr-code-canvas"
+                    value={order.qrCodeData}
+                    size={200}
+                    level="H"
+                    includeMargin={true}
+                    bgColor="#FFFFFF"
+                    fgColor="#000000"
+                  />
+                )}
               </div>
             </div>
             <p className="text-xs text-gray-400 mt-3">

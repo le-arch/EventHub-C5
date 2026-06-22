@@ -1,8 +1,8 @@
 /**
  * Breadcrumb Component
  * 
- * Displays a navigation breadcrumb trail showing the user's current location
- * within the application hierarchy. Supports dynamic paths and clickable links.
+ * Displays a navigation breadcrumb trail showing the user's current location.
+ * Fixed: uses unique keys even when href values are duplicated.
  * 
  * @module Breadcrumb
  */
@@ -93,25 +93,29 @@ export function Breadcrumb({
           </li>
         )}
         
-        {items.map((item, index) => (
-          <li key={item.href} className="flex items-center">
-            {item.isActive ? (
-              <span className="text-gray-900 font-medium" aria-current="page">
-                {item.label}
-              </span>
-            ) : (
-              <Link
-                href={item.href}
-                className="text-gray-500 hover:text-primary transition-colors"
-              >
-                {item.label}
-              </Link>
-            )}
-            {index < items.length - 1 && (
-              <span className="mx-1 text-gray-400">{separator}</span>
-            )}
-          </li>
-        ))}
+                {items.map((item, index) => {
+          // Unique key: href + label (both unique even when hrefs are duplicated)
+          const uniqueKey = `${item.href}-${item.label}`
+          return (
+            <li key={uniqueKey} className="flex items-center">
+              {item.isActive ? (
+                <span className="text-gray-900 font-medium" aria-current="page">
+                  {item.label}
+                </span>
+              ) : (
+                <Link
+                  href={item.href}
+                  className="text-gray-500 hover:text-primary transition-colors"
+                >
+                  {item.label}
+                </Link>
+              )}
+              {index < items.length - 1 && (
+                <span className="mx-1 text-gray-400">{separator}</span>
+              )}
+            </li>
+          )
+        })}
       </ol>
     </nav>
   )

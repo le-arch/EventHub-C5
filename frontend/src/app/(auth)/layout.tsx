@@ -31,11 +31,11 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
             href="/" 
             className="text-2xl font-bold text-primary inline-block hover:opacity-80 transition-opacity"
           >
-            EventHub
-          </Link>
+          
           <p className="text-sm text-gray-500 mt-1">
             Event Management Platform
           </p>
+          </Link>
         </div>
         
         {/* Children content - the actual form (login, register, etc.) */}

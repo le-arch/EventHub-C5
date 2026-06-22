@@ -14,21 +14,35 @@ export function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
-export function formatDate(date: string | Date): string {
+/**
+ * Format a date string to a readable date.
+ * Returns "Invalid date" if the input is not a valid date.
+ */
+export function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return '—' // or 'Invalid date'
+  const d = new Date(date)
+  if (isNaN(d.getTime())) return '—' // Invalid date
   return new Intl.DateTimeFormat('en-CM', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  }).format(new Date(date))
+  }).format(d)
 }
 
-export function formatTime(time: string): string {
-  // body...
+/**
+ * Format a time string (HH:mm:ss) to a readable time (e.g., "6:00 PM").
+ * Returns "—" if the time is invalid.
+ */
+export function formatTime(time: string | null | undefined): string {
+  if (!time) return '—'
+  // Try to construct a date with a dummy date
+  const d = new Date(`2000-01-01T${time}`)
+  if (isNaN(d.getTime())) return '—'
   return new Intl.DateTimeFormat('en-CM', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: true,
-  }).format(new Date(`2026-01-01T${time}`))
+  }).format(d)
 }
 
 export function generateUUID(): string {
@@ -37,5 +51,5 @@ export function generateUUID(): string {
 
 export function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text
-    return text.slice(0, maxLength) + '...'
+  return text.slice(0, maxLength) + '...'
 }

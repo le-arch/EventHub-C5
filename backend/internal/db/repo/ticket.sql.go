@@ -8,7 +8,7 @@ package repo
 import (
 	"context"
 
-	uuid "github.com/google/uuid"
+	"github.com/google/uuid"
 )
 
 const createTicketType = `-- name: CreateTicketType :one
