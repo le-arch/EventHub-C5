@@ -46,7 +46,7 @@ interface Event {
   id: string
   title: string
   startDate: string
-  venueName: string
+  venue: string
   city: string
   status: string
   ticketStats: {
@@ -199,7 +199,7 @@ export default function AttendeesOverviewPage() {
           className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:text-white backdrop-blur-sm"
         >
           <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh 🔄
+          Refresh 
         </Button>
       </div>
 
@@ -231,7 +231,7 @@ export default function AttendeesOverviewPage() {
                 {getStatusBadge(event.status)}
               </div>
               <CardDescription>
-                📅 {formatDate(event.startDate)} • 📍 {event.venueName}, {event.city}
+                📅 {formatDate(event.startDate)} • 📍 {event.venue}, {event.city}
               </CardDescription>
             </CardHeader>
             <CardContent>

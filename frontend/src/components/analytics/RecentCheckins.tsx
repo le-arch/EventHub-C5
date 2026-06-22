@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Clock, CheckCircle2, Users, ArrowUpRight } from 'lucide-react'
-import { formatTime } from '@/lib/utils'
+import { formatTime, cn } from '@/lib/utils'
 
 interface CheckinRecord {
   id: string

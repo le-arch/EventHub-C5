@@ -73,7 +73,7 @@ const CAMEROON_CITIES = [
 const eventSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters').max(100),
   description: z.string().max(5000).optional(),
-  venueName: z.string().min(3, 'Venue name is required'),
+  venue: z.string().min(3, 'Venue name and address is required'),
   city: z.string().min(2, 'City is required'),
   startDate: z.string().min(1, 'Start date is required'),
   startTime: z.string().min(1, 'Start time is required'),
@@ -96,7 +96,7 @@ interface Event {
   id: string
   title: string
   description: string
-  venueName: string
+  venue: string
   city: string
   startDate: string
   startTime: string
@@ -131,7 +131,7 @@ export default function EditEventPage() {
     defaultValues: {
       title: '',
       description: '',
-      venueName: '',
+      venue: '',
       city: '',
       startDate: '',
       startTime: '',
@@ -170,7 +170,7 @@ export default function EditEventPage() {
       form.reset({
         title: eventData.title,
         description: eventData.description || '',
-        venueName: eventData.venueName,
+        venue: eventData.venue,
         city: eventData.city,
         startDate: formattedDate,
         startTime: eventData.startTime,
@@ -322,7 +322,7 @@ export default function EditEventPage() {
         eventId={event.id}
         eventTitle={event.title}
         eventDate={event.startDate}
-        venueName={event.venueName}
+        venue={event.venue}
         variant="outline"
         className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:text-white backdrop-blur-sm"
       />
@@ -372,7 +372,7 @@ export default function EditEventPage() {
                 <MapPin className="h-5 w-5 text-blue-700" />
               </div>
               <div>
-                <p className="font-semibold text-blue-800">{event.venueName}</p>
+                <p className="font-semibold text-blue-800">{event.venue}</p>
                 <p className="text-xs text-blue-600">{event.city}</p>
               </div>
             </div>
@@ -464,16 +464,16 @@ export default function EditEventPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="venueName" className="text-gray-700 font-medium">Venue Name *</Label>
+                    <Label htmlFor="venue" className="text-gray-700 font-medium">Venue Name and Address *</Label>
                     <Input
-                      id="venueName"
+                      id="venue"
                       placeholder="e.g., Palais des Congrès"
-                      {...form.register('venueName')}
+                      {...form.register('venue')}
                       className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                     />
-                    {form.formState.errors.venueName && (
+                    {form.formState.errors.venue && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" /> {form.formState.errors.venueName.message}
+                        <AlertCircle className="h-3 w-3" /> {form.formState.errors.venue.message}
                       </p>
                     )}
                   </div>

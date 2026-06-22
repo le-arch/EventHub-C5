@@ -25,7 +25,7 @@ interface ShareEventButtonProps {
   eventId: string
   eventTitle: string
   eventDate: string
-  venueName: string
+  venue: string
   className?: string
   variant?: 'default' | 'outline' | 'ghost'
 }
@@ -34,7 +34,7 @@ export function ShareEventButton({
   eventId,
   eventTitle,
   eventDate,
-  venueName,
+  venue,
   className,
   variant = 'default',
 }: ShareEventButtonProps) {
@@ -45,7 +45,7 @@ export function ShareEventButton({
   const whatsappMessage = encodeURIComponent(
     `🎟️ Join me at ${eventTitle}!\n\n` +
     `📅 Date: ${formatDate(eventDate)}\n` +
-    `📍 Venue: ${venueName}\n\n` +
+    `📍 Venue: ${venue}\n\n` +
     `Click here to get your ticket:\n${eventUrl}`
   )
 
@@ -67,7 +67,7 @@ export function ShareEventButton({
       try {
         await navigator.share({
           title: eventTitle,
-          text: `Join me at ${eventTitle} on ${formatDate(eventDate)} at ${venueName}`,
+          text: `Join me at ${eventTitle} on ${formatDate(eventDate)} at ${venue}`,
           url: eventUrl,
         })
       } catch (error) {

@@ -22,8 +22,7 @@ export interface Event {
   title: string
   slug: string
   description: string | null
-  venueName: string
-  venueAddress: string | null
+  venue: string
   city: string
   startDate: string
   endDate: string | null
@@ -67,8 +66,7 @@ export interface TicketType {
 export interface CreateEventData {
   title: string
   description?: string
-  venueName: string
-  venueAddress?: string
+  venue?: string
   city: string
   startDate: string
   startTime: string

@@ -167,8 +167,8 @@ export default function EventsDashboardPage() {
 
   // Filtered visibility matrix matching search criteria locally or dynamically
   const filteredEvents = (Array.isArray(events) ? events : []).filter(event => 
-  event.title?.toLowerCase().includes(deferredSearch.toLowerCase()) ||
-  event.category?.toLowerCase().includes(deferredSearch.toLowerCase())
+  event.title?.toLowerCase().includes(deferredSearchTerm.toLowerCase()) 
+  //event.category?.toLowerCase().includes(deferredSearchTerm.toLowerCase())
 )
 
   // Loading skeleton view
@@ -362,7 +362,7 @@ export default function EventsDashboardPage() {
                   </div>
                   <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
                     <MapPin className="h-3.5 w-3.5 text-purple-400" />
-                    <span className="line-clamp-1">{event.venueName}, {event.city}</span>
+                    <span className="line-clamp-1">{event.venue}, {event.city}</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-gray-500">
                     <Users className="h-3.5 w-3.5 text-purple-400" />

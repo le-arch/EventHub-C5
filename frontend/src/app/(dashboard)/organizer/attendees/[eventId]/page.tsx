@@ -77,7 +77,7 @@ interface Event {
   title: string
   startDate: string
   startTime: string
-  venueName: string
+  venue: string
   city: string
 }
 
@@ -177,7 +177,7 @@ export default function AttendeeListPage() {
       }
       setSummary(summaryData)
 
-      const types = [...new Set(attendeesList.map((a: Attendee) => a.ticketType))]
+      const types = [...new Set(attendeesList.map((a: Attendee) => a.ticketType))] as string[]
       setTicketTypes(types)
     } catch (error) {
       toast.error('❌ Failed to load attendees')
@@ -359,7 +359,7 @@ export default function AttendeeListPage() {
               {formatDate(event.startDate)} at {formatTime(event.startTime)}
               <span className="mx-1">•</span>
               <MapPin className="h-3 w-3" />
-              {event.venueName}, {event.city}
+              {event.venue}, {event.city}
             </p>
           </div>
         </div>

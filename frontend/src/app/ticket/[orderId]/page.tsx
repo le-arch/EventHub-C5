@@ -108,7 +108,7 @@ export default function TicketPage() {
     }
   }
 
-    const downloadQRCode = () => {
+    const downloadQRCode = async () => {
     const el = document.getElementById('qr-code-canvas')
     if (!el) {
       toast.error('QR code not found')

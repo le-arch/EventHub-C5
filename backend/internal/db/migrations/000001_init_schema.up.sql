@@ -14,8 +14,6 @@ CREATE TABLE users (
     full_name VARCHAR(255) NOT NULL,
     role user_role NOT NULL DEFAULT 'organizer',
     is_email_verified BOOLEAN DEFAULT FALSE,
-    email_otp VARCHAR(6),
-    email_otp_expires_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT now() ,
     updated_at TIMESTAMP DEFAULT now() 
     

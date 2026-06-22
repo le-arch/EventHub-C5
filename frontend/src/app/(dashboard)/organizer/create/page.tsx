@@ -42,7 +42,7 @@ import { Breadcrumb } from '@/components/common/Breadcrumb'
 import { EventCoverUpload } from '@/components/events/EventCoverUpload' // Adjusted path to match custom components location
 
 // Utilities
-import api from '@/lib/api'
+import api, { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
 import { slugify } from '@/utils/stringHelpers'
 
@@ -57,7 +57,7 @@ const CAMEROON_CITIES = [
 const basicInfoSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters').max(100),
   description: z.string().max(5000).optional(),
-  venueName: z.string().min(3, 'Venue name is required'),
+  venue: z.string().min(3, 'Venue name and address is required'),
   city: z.string().min(2, 'City is required'),
   startDate: z.string().min(1, 'Start date is required'),
   startTime: z.string().min(1, 'Start time is required'),
@@ -90,7 +90,7 @@ export default function CreateEventPage() {
     defaultValues: {
       title: '',
       description: '',
-      venueName: '',
+      venue: '',
       city: '',
       startDate: '',
       startTime: '',
@@ -118,7 +118,7 @@ export default function CreateEventPage() {
    */
   const handleCoverUploadAction = async (file: File): Promise<string> => {
     try {
-      const response = await api.upload<{ url: string }>('/api/v1/upload', file)
+      const response = await apiClient.upload<{ url: string }>('/api/v1/upload', file)
       return response.data.url
     } catch (error) {
       toast.error('Failed to upload image asset')
@@ -143,7 +143,7 @@ export default function CreateEventPage() {
     setIsSubmitting(true)
     try {
       const slug = slugify(basicInfo.title)
-      const venueCombined = basicInfo.venueName + (basicInfo.venueAddress ? `, ${basicInfo.venueAddress}` : '')
+      //const venueCombined = basicInfo.venue + (basicInfo.venue ? `, ${basicInfo.venue}` : '')
        // Build capacityRange only if both values are provided
       let capacityRange = undefined
       if (basicInfo.capacityMin !== undefined && basicInfo.capacityMax !== undefined) {
@@ -157,7 +157,7 @@ export default function CreateEventPage() {
         // backend expects `venue` and `slug`
         title: basicInfo.title,
         description: basicInfo.description,
-        venue: venueCombined,
+        venue: basicInfo.venue,
         city: basicInfo.city,
         start_date: basicInfo.startDate,
         start_time: basicInfo.startTime,
@@ -176,7 +176,7 @@ export default function CreateEventPage() {
           data.ticketTypes.map((t) =>
             api.post(`/events/${eventId}/ticket-types`, {
               name: t.name,
-              description: t.description || '',
+             // description: t.description || '',
               price: Math.round(t.price),
               quantityAvailable: Math.round(t.quantityAvailable),
             })
@@ -321,16 +321,16 @@ export default function CreateEventPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Venue Name */}
                   <div>
-                    <Label htmlFor="venueName" className="text-gray-700 font-medium">Venue Name *</Label>
+                    <Label htmlFor="venue" className="text-gray-700 font-medium">Venue Name and Address *</Label>
                     <Input
-                      id="venueName"
+                      id="venue"
                       placeholder="e.g., Palais des Congrès"
-                      {...basicForm.register('venueName')}
+                      {...basicForm.register('venue')}
                       className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                     />
-                    {basicForm.formState.errors.venueName && (
+                    {basicForm.formState.errors.venue && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <span>⚠️</span> {basicForm.formState.errors.venueName.message}
+                        <span>⚠️</span> {basicForm.formState.errors.venue.message}
                       </p>
                     )}
                   </div>

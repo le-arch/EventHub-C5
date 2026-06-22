@@ -20,8 +20,7 @@ interface Event {
   id: string
   title: string
   description: string | null
-  venueName: string
-  venueAddress: string | null
+  venue: string | null
   city: string
   startDate: string
   endDate: string | null
@@ -49,8 +48,7 @@ interface TicketType {
 interface CreateEventData {
   title: string
   description?: string
-  venueName: string
-  venueAddress?: string
+  venue?: string
   city: string
   startDate: string
   startTime: string
@@ -136,8 +134,7 @@ export function useEvents({ autoFetch = true, pageSize = 10 }: UseEventsOptions 
       // Append event data (use snake_case keys)
       formData.append(toSnakeKey('title'), data.title)
       if (data.description) formData.append(toSnakeKey('description'), data.description)
-      formData.append(toSnakeKey('venueName'), data.venueName)
-      if (data.venueAddress) formData.append(toSnakeKey('venueAddress'), data.venueAddress)
+      formData.append(toSnakeKey('venue'), data.venue)
       formData.append(toSnakeKey('city'), data.city)
       formData.append(toSnakeKey('startDate'), data.startDate)
       formData.append(toSnakeKey('startTime'), data.startTime)
