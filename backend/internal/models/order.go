@@ -29,15 +29,15 @@ type MomoWebhookPayload struct {
 }
 
 type PaymentRequest struct {
-	Amount       float64 `json:"amount"`
+	Amount       string `json:"amount"`
 	Currency     string  `json:"currency"`
 	ExternalID   string  `json:"externalId"`
-	Payer        string  `json:"payer"`
+	Payer        Party  `json:"payer"`
 	PayerMessage string  `json:"payerMessage"`
 	PayeeNote    string  `json:"payeeNote"`
 }
 
-type Payer struct {
+type Party struct {
 	PartyIDType string `json:"partyIdType"`
 	PartyID     string `json:"partyId"`
 }

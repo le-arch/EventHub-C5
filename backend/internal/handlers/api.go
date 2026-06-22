@@ -63,6 +63,9 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	// CamPay Server-to-Server Callback Processing Node
 	r.POST("/api/v1/webhooks/campay", h.payment.HandleCamPayWebhook)
 
+	// Public routes (no auth required, but optional JWT parsing)
+	r.GET("/api/v1/orders/:id/status", auth.OptionalAuthMiddleware(h.jwtSecret), h.handleGetOrderStatus)
+	
 	r.GET("/api/v1/events/public/:id", h.handleGetPublicEvent)
 
 	// Public Health Check Endpoint
@@ -76,11 +79,28 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 		Protection.POST("/events", h.handleCreateEvent)
 		Protection.POST("/events/upload-image", h.handleUploadImage)
 
+<<<<<<< HEAD
+	Protection.GET("/Organization/events", h.handleGetOrganisationEvents)
+	Protection.GET("/Organization/:id", h.handleGetOrganisationEvent)
+	Protection.GET("/events/:id/share-link", h.handleShareLink)
+	// Protection.GET("/orders/:id/status", h.handleCheckPayementStatus)
+	// Protection.GET("/orders/:id/ticket", h.handleDownloadQRCode)
+	// Protection.GET("/events/:id/attendees", h.handleGetAttendeeList)
+	// Protection.GET("/events/:id/analytics", h.handleGetEventAnalytics)
+	Protection.GET("/admin/events", h.handleGetEvents)
+	// Protection.GET("/events/:id", h.handleEventDetails)
+	// Protection.GET("/checkin/event/:eventId/history", h.handleGetCheckinHistory)
+	Protection.GET("/events/:id/ticket-types", h.handleListTicketTypes)
+	Protection.GET("/admin/users", h.handleListAllUsers)
+	// Protection.GET("/admin/transactions", h.handleViewAllTransactions)
+	// Protection.GET("/admin/events", h.handleViewAllEvents)
+=======
 		Protection.PATCH("/events/:id", h.handleUpdateEvent)
 		Protection.PATCH("/events/:id/status", h.handleOrganizerUpdateEventStatus)
 		Protection.PATCH("/admin/events/:id/status", h.handleAdminUpdateEventStatus)
 		Protection.PATCH("/admin/events/:id/suspend", h.handleAdminSuspendEvent)
 		Protection.PATCH("/admin/events/:id/restore", h.handleAdminRestoreEvent)
+>>>>>>> main
 
 		Protection.GET("/Organization/events", h.handleGetOrganisationEvents)
 		Protection.GET("/Organization/:id", h.handleGetOrganisationEvent)

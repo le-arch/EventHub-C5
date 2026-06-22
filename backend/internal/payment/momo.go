@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"time"
 
@@ -83,45 +84,68 @@ func (c *Client) getAccessToken(ctx context.Context) (string, error) {
 
 // RequestPayment initiates a payment request via MTN Momo.
 func (c *Client) RequestPayment(ctx context.Context, req models.PaymentRequest) (*utils.PaymentResponse, error) {
-	// Get access token
-	token, err := c.getAccessToken(ctx)
-	if err != nil {
-		return nil, err
-	}
+    token, err := c.getAccessToken(ctx)
+    if err != nil {
+        return nil, err
+    }
 
-	url := c.cfg.APIURL + "/collection/v1_0/requesttopay"
-	bodyBytes, _ := json.Marshal(req)
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(bodyBytes))
-	if err != nil {
-		return nil, err
-	}
+    url := c.cfg.APIURL + "/collection/v1_0/requesttopay"
+    bodyBytes, err := json.Marshal(req)
+    if err != nil {
+        return nil, err
+    }
 
-	httpReq.Header.Set("Authorization", "Bearer "+token)
-	httpReq.Header.Set("X-Reference-Id", c.cfg.APIUser) // often the same as APIUser
-	httpReq.Header.Set("X-Target-Environment", c.cfg.TargetEnvironment)
-	httpReq.Header.Set("Ocp-Apim-Subscription-Key", c.cfg.SubscriptionKey)
-	httpReq.Header.Set("Content-Type", "application/json")
+    httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(bodyBytes))
+    if err != nil {
+        return nil, err
+    }
 
-	resp, err := c.httpClient.Do(httpReq)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
+    httpReq.Header.Set("Authorization", "Bearer "+token)
+    httpReq.Header.Set("X-Reference-Id", req.ExternalID)
+    httpReq.Header.Set("X-Target-Environment", c.cfg.TargetEnvironment)
+    httpReq.Header.Set("Ocp-Apim-Subscription-Key", c.cfg.SubscriptionKey)
+    httpReq.Header.Set("Content-Type", "application/json")
 
-	if resp.StatusCode != http.StatusAccepted && resp.StatusCode != http.StatusCreated {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("payment request failed: %s", string(body))
-	}
+    // Log the request (optional, for debugging)
+    log.Printf("Request to MTN: %s", url)
+    log.Printf("Headers: %+v", httpReq.Header)
 
-	// Transaction ID is in the X-Reference-Id header (or in Location)
-	txID := resp.Header.Get("X-Reference-Id")
-	if txID == "" {
-		// fallback: extract from Location header if needed
-		return nil, fmt.Errorf("missing transaction reference")
-	}
+    resp, err := c.httpClient.Do(httpReq)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
 
-	return &utils.PaymentResponse{
-		TransactionID: txID,
-		Status:        "PENDING",
-	}, nil
+    // Read the response body for all statuses
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return nil, err
+    }
+
+    // Log the response (important!)
+    log.Printf("MTN response status: %d, body: %s", resp.StatusCode, string(body))
+
+    if resp.StatusCode != http.StatusAccepted && resp.StatusCode != http.StatusCreated {
+        return nil, fmt.Errorf("payment request failed (status %d): %s", resp.StatusCode, string(body))
+    }
+
+    // The transaction ID is in the X-Reference-Id header (or maybe in the body)
+    txID := req.ExternalID
+    if txID == "" {
+        // Fallback: try to parse from body if needed
+        var result map[string]interface{}
+        if err := json.Unmarshal(body, &result); err == nil {
+            if ref, ok := result["referenceId"].(string); ok {
+                txID = ref
+            }
+        }
+        if txID == "" {
+            return nil, fmt.Errorf("missing transaction reference")
+        }
+    }
+
+    return &utils.PaymentResponse{
+        TransactionID: txID,
+        Status:        "PENDING",
+    }, nil
 }

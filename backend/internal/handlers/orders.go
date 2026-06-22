@@ -2,6 +2,8 @@
 package handlers
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"net/netip"
 
@@ -97,6 +99,19 @@ func (h *EventHubHandler) handleCreateOrder(c *gin.Context) {
 		return
 	}
 
+<<<<<<< HEAD
+	// Initiate Momo payment
+	momoReq := models.PaymentRequest{
+		Amount:       fmt.Sprintf("%d", total),
+		Currency:     "EUR",
+		ExternalID:   order.ID.String(),
+		Payer:      models.Party{
+			PartyIDType: "MSISDN",
+		 	PartyID: req.AttendeePhone,
+		 } ,
+		PayerMessage: "Ticket payment",
+		PayeeNote:    "Order " + order.ID.String(),
+=======
 	// Initiate external billing process using your provided Payment Client definitions from cammpay.go
 	campayReq := payment.PaymentRequest{
 		Amount:      float64(total),
@@ -106,6 +121,7 @@ func (h *EventHubHandler) handleCreateOrder(c *gin.Context) {
 		Email:       req.AttendeeEmail,
 		ExternalID:  order.ID.String(),
 		Description: "Event Registration Ticket checkout sequence processing fee",
+>>>>>>> main
 	}
 
 	// Initialize the custom CamPay client explicitly to execute outgoing payments
@@ -127,6 +143,18 @@ func (h *EventHubHandler) handleCreateOrder(c *gin.Context) {
 	// Async/Sync QR component build trigger mapping sequence
 	qrImageURL, _ := qrcode.GenerateAndUpload(c.Request.Context(),
 		order.ID.String(), req.AttendeeName, qrHash, h.MinioClient)
+<<<<<<< HEAD
+	if qrImageURL != "" {
+    err := h.querier.UpdateOrderQRImage(c, repo.UpdateOrderQRImageParams{
+        ID:             order.ID,
+        QrCodeImageUrl: qrImageURL,
+    })
+    if err != nil {
+        log.Printf("Failed to update QR image URL for order %s: %v", order.ID, err)
+    }
+}
+=======
+>>>>>>> main
 
 	response := utils.OrderResponse{
 		ID:             order.ID,
@@ -150,6 +178,76 @@ func (h *EventHubHandler) handleCreateOrder(c *gin.Context) {
 }
 
 func (h *EventHubHandler) handleGetOrderStatus(c *gin.Context) {
+<<<<<<< HEAD
+    // 1. Parse order ID
+    orderIDStr := c.Param("id")
+    orderID, err := uuid.Parse(orderIDStr)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid order id"})
+        return
+    }
+
+    // 2. Fetch order
+    order, err := h.querier.GetOrderByID(c, orderID)
+    if err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "order not found"})
+        return
+    }
+
+    // 3. Check if authenticated 
+    userID, authErr := utils.ExtractOrganizerID(c) // returns error if not authenticated
+    var isOrganizer bool
+    var isAdmin bool
+
+    if authErr == nil {
+        // User is authenticated – check admin role
+        role, roleErr := utils.GetUserRole(c)
+        if roleErr == nil && role == "admin" {
+            isAdmin = true
+        }
+        if !isAdmin {
+            // Check if user is the event organizer
+            event, err := h.querier.GetEventByID(c, order.EventID)
+            if err == nil && event.OrganizerID == userID {
+                isOrganizer = true
+            }
+        }
+    }
+
+    // 4. Build base response (public)
+    baseResponse := gin.H{
+        "id":                order.ID,
+        "event_id":          order.EventID,
+        "attendee_name":     order.AttendeeName,
+        "attendee_phone":    order.AttendeePhone,
+        "attendee_email":    order.AttendeeEmail,
+        "quantity":          order.Quantity,
+        "total_amount":      order.TotalAmount,
+        "payment_status":    order.PaymentStatus,
+        "qr_code_image_url": order.QrCodeImageUrl,
+        "is_used":           order.IsUsed,
+        "created_at":        utils.FormatDateTime(order.CreatedAt),
+    }
+
+    // 5. If authenticated as organizer or admin, add financial details
+    if isAdmin || isOrganizer {
+        platformFee := order.PlatformFee 
+        netAmount := order.TotalAmount - platformFee
+
+        fullResponse := baseResponse
+        fullResponse["unit_price"] = order.UnitPrice
+        fullResponse["platform_fee"] = platformFee
+        fullResponse["net_amount"] = netAmount
+        fullResponse["transaction_id"] = order.TransactionID
+        fullResponse["payment_method"] = order.PaymentMethod
+        fullResponse["payment_webhook_received"] = order.PaymentWebhookReceived
+        c.JSON(http.StatusOK, fullResponse)
+        return
+    }
+
+    // 6. Otherwise, return only public fields
+    c.JSON(http.StatusOK, baseResponse)
+=======
 	userID, err := utils.ExtractOrganizerID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
@@ -209,4 +307,5 @@ func (h *EventHubHandler) handleGetOrderStatus(c *gin.Context) {
 		"is_used":           order.IsUsed,
 		"created_at":        utils.FormatDateTime(order.CreatedAt),
 	})
+>>>>>>> main
 }

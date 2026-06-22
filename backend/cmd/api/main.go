@@ -62,6 +62,23 @@ type Config struct {
 	CamPay         CamPayConfig
 }
 
+<<<<<<< HEAD
+type PaymentConfig struct {
+	momoSecret  string `conf:"env:MTN_MOMO_WEBHOOK_SECRET,required"`
+}
+
+type MomoConfig struct {
+	APIURL     string `conf:"env:MTN_MOMO_API_URL"`
+	SubscriptionKey string `conf:"env:MTN_MOMO_SUBSCRIPTION_KEY"`
+	APIUser		string `conf:"env:MTN_MOMO_API_USER"`
+	APIKey string `conf:"env:MTN_MOMO_API_KEY"`
+	TargetEnvironment      string `conf:"env:MTN_MOMO_TARGET_ENVIRONMENT"`
+    CallbackURL  string `conf:"env:MTN_MOMO_CALLBACK_URL"`
+}
+
+
+=======
+>>>>>>> main
 func main() {
 	// We call run() here because main cannot return an error. If run() returns an error we print the error and exit.
 	// This is a common pattern in Go applications to handle errors gracefully.
