@@ -331,7 +331,24 @@ func (h *EventHubHandler) handleForgotPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Password reset otp sent successfully"})
 }
 
-func (h *EventHubHandler) handlePasswrordReset(c *gin.Context) {
+// VerifyResetOTP verifies a reset OTP and returns success if valid
+func (h *EventHubHandler) handleVerifyResetOTP(c *gin.Context) {
+	var req models.VerifyEmailRequest
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ok, err := h.otpHandler.VerifyResetOTP(req.Email, req.Otp)
+	if err != nil || !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid or expired OTP"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "OTP verified"})
+}
+
+func (h *EventHubHandler) handlePasswordReset(c *gin.Context) {
 	var req models.ResetPasswordRequest
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {

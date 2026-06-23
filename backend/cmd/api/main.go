@@ -32,29 +32,37 @@ type DBConfig struct {
 	TLSDisabled bool   `conf:"env:DB_TLS_DISABLED"`
 }
 
-type MinioConfig struct{
-	Endpoint string `conf:"env:MINIO_ENDPOINT,required"`
+type MinioConfig struct {
+	Endpoint  string `conf:"env:MINIO_ENDPOINT,required"`
 	AccessKey string `conf:"env:MINIO_ACCESS_KEY,required"`
 	SecretKey string `conf:"env:MINIO_SECRET_KEY,required"`
-	Bucket string `conf:"env:MINIO_BUCKET,required"`
-	UseSSL bool `conf:"env:MINIO_USE_SSL,required"`
+	Bucket    string `conf:"env:MINIO_BUCKET,required"`
+	UseSSL    bool   `conf:"env:MINIO_USE_SSL,required"`
+}
+
+// CamPayConfig holds CamPay payment gateway configuration
+type CamPayConfig struct {
+	APIUrl        string `conf:"env:CAMPAY_API_URL,required"`
+	APIKey        string `conf:"env:CAMPAY_API_KEY,required,mask"`
+	WebhookSecret string `conf:"env:CAMPAY_WEBHOOK_SECRET,required,mask"`
+	Enabled       bool   `conf:"env:CAMPAY_ENABLED"`
 }
 
 // Config holds the application configuration. This struct is populated from the .env in the current directory.
 type Config struct {
 	ListenPort     uint16 `conf:"env:LISTEN_PORT,required"`
 	MigrationsPath string `conf:"env:MIGRATIONS_PATH,required"`
-	JWTSecret		string `conf:"env:JWT_SECRET,required"`
+	JWTSecret      string `conf:"env:JWT_SECRET,required"`
 	FrontendOrigin string `conf:"env:FRONTEND_ORIGIN,required"`
 	GmailUser      string `conf:"env:GMAIL_USER,required"`
-    GmailPassword  string `conf:"env:GMAIL_PASSWORD,required"`
-	qrSecret		string `conf:"env:QR_HMAC_SECRET"`
+	GmailPassword  string `conf:"env:GMAIL_PASSWORD,required"`
+	QRSecret       string `conf:"env:QR_HMAC_SECRET"`
 	DB             DBConfig
 	Minio          MinioConfig
-	Payment        PaymentConfig
-	Momo           MomoConfig
+	CamPay         CamPayConfig
 }
 
+<<<<<<< HEAD
 type PaymentConfig struct {
 	momoSecret  string `conf:"env:MTN_MOMO_WEBHOOK_SECRET,required"`
 }
@@ -69,8 +77,9 @@ type MomoConfig struct {
 }
 
 
+=======
+>>>>>>> main
 func main() {
-
 	// We call run() here because main cannot return an error. If run() returns an error we print the error and exit.
 	// This is a common pattern in Go applications to handle errors gracefully.
 	err := run()
@@ -118,22 +127,15 @@ func run() error {
 	otpHandler.StartCleanupRoutine(10 * time.Minute)
 
 	// We create a new http handler using the database querier.
-	minioClient, err := storage.NewMinioClient(config.Minio.Endpoint, config.Minio.AccessKey, config.Minio.SecretKey,config.Minio.Bucket, config.Minio.UseSSL)
+	minioClient, err := storage.NewMinioClient(config.Minio.Endpoint, config.Minio.AccessKey, config.Minio.SecretKey, config.Minio.Bucket, config.Minio.UseSSL)
 	if err != nil {
 		log.Fatal("Failed to create MinIO client:", err)
 	}
 
-	paymentClient := payment.NewWebhookHandler(querier, config.Payment.momoSecret)
-	momoCfg := payment.Config{
-		APIURL: config.Momo.APIURL,
-		SubscriptionKey: config.Momo.SubscriptionKey,APIUser: config.Momo.APIUser,
-		APIKey: config.Momo.APIKey,
-		TargetEnvironment: config.Momo.TargetEnvironment,
-		CallbackURL: config.Momo.CallbackURL,
-	}
-	momoClient := payment.NewClient(momoCfg)
+	// Initialize CamPay webhook handler for payment processing
+	campayHandler := payment.NewWebhookHandler(querier, config.CamPay.WebhookSecret)
 
-	handler := handlers.NewEventHubHandler(querier, otpHandler, revocationStore, config.JWTSecret, config.FrontendOrigin, config.GmailUser, config.GmailPassword,config.qrSecret, paymentClient, minioClient, momoClient).WireHttpHandler()
+	handler := handlers.NewEventHubHandler(querier, otpHandler, revocationStore, config.JWTSecret, config.FrontendOrigin, config.GmailUser, config.GmailPassword, config.QRSecret, campayHandler, minioClient, nil).WireHttpHandler()
 
 	
 	// And finally we start the HTTP server on the configured port.

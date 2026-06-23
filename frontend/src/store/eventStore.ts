@@ -26,14 +26,14 @@ export interface Event {
   id: string
   title: string
   description: string | null
-  venueName: string
-  venueAddress: string | null
+  venue: string | null
   city: string
   startDate: string
   endDate: string | null
   startTime: string
   endTime: string | null
   coverImageUrl: string | null
+  capacityRange?: CapacityRange | null
   status: 'draft' | 'published' | 'cancelled' | 'completed'
   ticketStats: {
     totalSold: number
@@ -44,11 +44,15 @@ export interface Event {
   updatedAt: string
 }
 
+export interface CapacityRange {
+  lower: number;
+  upper: number;
+}
+
 export interface CreateEventData {
   title: string
   description?: string
-  venueName: string
-  venueAddress?: string
+  venue?: string
   city: string
   startDate: string
   startTime: string
@@ -56,6 +60,7 @@ export interface CreateEventData {
   endTime?: string
   coverImage?: File
   ticketTypes: Omit<TicketType, 'id' | 'quantitySold'>[]
+  capacityRange?: CapacityRange
 }
 
 interface EventState {
@@ -181,17 +186,21 @@ export const useEventStore = create<EventState>()(
         
         try {
           const formData = new FormData()
-          formData.append('title', data.title)
-          if (data.description) formData.append('description', data.description)
-          formData.append('venueName', data.venueName)
-          if (data.venueAddress) formData.append('venueAddress', data.venueAddress)
-          formData.append('city', data.city)
-          formData.append('startDate', data.startDate)
-          formData.append('startTime', data.startTime)
-          if (data.endDate) formData.append('endDate', data.endDate)
-          if (data.endTime) formData.append('endTime', data.endTime)
-          if (data.coverImage) formData.append('coverImage', data.coverImage)
-          formData.append('ticketTypes', JSON.stringify(data.ticketTypes))
+          const toSnakeKey = (k: string) => k.replace(/([A-Z])/g, '_$1').toLowerCase()
+
+          formData.append(toSnakeKey('title'), data.title)
+          if (data.description) formData.append(toSnakeKey('description'), data.description)
+          if (data.venue) formData.append(toSnakeKey('venue'), data.venue)
+          formData.append(toSnakeKey('city'), data.city)
+          formData.append(toSnakeKey('startDate'), data.startDate)
+          formData.append(toSnakeKey('startTime'), data.startTime)
+          if (data.endDate) formData.append(toSnakeKey('endDate'), data.endDate)
+          if (data.endTime) formData.append(toSnakeKey('endTime'), data.endTime)
+          if (data.coverImage) formData.append(toSnakeKey('coverImage'), data.coverImage)
+          formData.append(toSnakeKey('ticketTypes'), JSON.stringify(data.ticketTypes))
+         if (data.capacityRange) {
+           formData.append(toSnakeKey('capacityRange'), JSON.stringify(data.capacityRange))
+    }
           
           const response = await api.post('/events', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
@@ -214,14 +223,20 @@ export const useEventStore = create<EventState>()(
         try {
           const formData = new FormData()
           
-          Object.entries(data).forEach(([key, value]) => {
+          const toSnakeKey = (k: string) => k.replace(/([A-Z])/g, '_$1').toLowerCase()
+
+              Object.entries(data).forEach(([key, value]) => {
             if (value !== undefined) {
+              const snake = toSnakeKey(key)
               if (key === 'ticketTypes') {
-                formData.append(key, JSON.stringify(value))
+                formData.append(snake, JSON.stringify(value))
               } else if (key === 'coverImage' && value instanceof File) {
-                formData.append(key, value)
+                formData.append(snake, value)
+              } else if (key === 'capacityRange') {
+                // capacityRange is an object → JSON string
+                formData.append(snake, JSON.stringify(value))
               } else if (typeof value === 'string') {
-                formData.append(key, value)
+                formData.append(snake, value)
               }
             }
           })

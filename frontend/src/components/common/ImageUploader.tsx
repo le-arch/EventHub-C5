@@ -1,18 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * ImageUploader Component
- * 
- * Drag-and-drop image uploader with preview, cropping, and validation.
+ * * Drag-and-drop image uploader with preview, cropping, and validation.
  * Supports multiple formats and size limits.
- * 
- * @module ImageUploader
+ * * @module ImageUploader
  */
 
 'use client'
 
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react'
+import { Upload, X, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -119,14 +117,22 @@ export function ImageUploader({
 
       {preview ? (
         // Preview mode
-        <div className={cn("relative group rounded-lg overflow-hidden border", aspectRatioClass[aspectRatio])}>
+        <div 
+          className={cn(
+            "relative group rounded-lg overflow-hidden border bg-gray-50 flex items-center justify-center", 
+            aspectRatio === 'free' ? "w-full h-auto max-h-[500px]" : aspectRatioClass[aspectRatio]
+          )}
+        >
           <img
             src={preview}
             alt="Preview"
-            className="w-full h-full object-cover"
+            className={cn(
+              "w-full h-full",
+              aspectRatio === 'free' ? "object-contain max-h-[500px]" : "object-cover"
+            )}
           />
           {!disabled && (
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <Button
                 type="button"
                 variant="destructive"

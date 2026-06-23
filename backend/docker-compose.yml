@@ -75,6 +75,8 @@ services:
     container_name: ngrok
     restart: unless-stopped
     command: http api:8085
+    env_file:
+      - .env
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
     ports:

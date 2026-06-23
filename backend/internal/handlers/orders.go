@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
 	"github.com/le-arch/EventHub-C5/internal/models"
+	"github.com/le-arch/EventHub-C5/internal/payment"
 	"github.com/le-arch/EventHub-C5/internal/qrcode"
 	"github.com/le-arch/EventHub-C5/internal/utils"
 )
@@ -21,6 +22,7 @@ func (h *EventHubHandler) handleCreateOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
 	clientIP := c.ClientIP()
 	var ipPtr *netip.Addr
 	if clientIP != "" {
@@ -29,13 +31,9 @@ func (h *EventHubHandler) handleCreateOrder(c *gin.Context) {
 		}
 	}
 
-deviceInfo := c.GetHeader("User-Agent")
-var devicePtr string
-if deviceInfo != "" {
-    devicePtr = deviceInfo
-}
+	deviceInfo := c.GetHeader("User-Agent")
 
-	// Validate ticket
+	// Validate ticket type existence
 	ticket, err := h.querier.GetTicketTypeByID(c, req.TicketTypeID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "ticket type not found"})
@@ -46,61 +44,62 @@ if deviceInfo != "" {
 		return
 	}
 	if ticket.IsActive == nil || !*ticket.IsActive {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ticket type is inactive"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ticket type is currently inactive"})
 		return
 	}
 	if ticket.QuantityAvailable < int32(req.Quantity) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "not enough tickets available"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "not enough tickets available in inventory pool"})
 		return
 	}
 
-	//  Compute total
-	total := ticket.Price * int32(req.Quantity)
-
-	// attendie can only order for one ticket. it now depend on the ticket type how many people are accepted for that ticket
+	// Dynamic validation constraint rules checkout block
 	if req.Quantity != 1 {
-    c.JSON(http.StatusBadRequest, gin.H{"error": "only one ticket per order is allowed"})
-    return
+		c.JSON(http.StatusBadRequest, gin.H{"error": "only single item unit volume count checkouts allowed per request processing lifecycle"})
+		return
 	}
 
-	// Generate QR hash (HMAC)
+	// Compute cost balances
+	total := ticket.Price * int32(req.Quantity)
+	const platformFeePercent = 5
+	platformFee := (total * platformFeePercent) / 100
+
+	// Generate verifiable cryptographic security patterns
 	salt := uuid.New().String()
 	qrHash := qrcode.GenerateQRHash(req.AttendeeName+salt, h.qrSecret)
-
 	qrPlaintext := qrHash
 
-	// Create order (pending)
 	var emailPtr *string
 	if req.AttendeeEmail != "" {
 		emailPtr = &req.AttendeeEmail
 	}
 
-	const platformFeePercent = 5
-	platformFee := (total * platformFeePercent) / 100
+	pendingStatus := "PENDING"
 
+	// Persist foundational structural record block natively inside repository pipeline
 	order, err := h.querier.CreateOrder(c, repo.CreateOrderParams{
-		EventID:       req.EventID,
-		TicketTypeID:  req.TicketTypeID,
-		AttendeeName:  req.AttendeeName,
-		AttendeePhone: req.AttendeePhone,
-		AttendeeEmail: emailPtr,
-		Quantity:      int32(req.Quantity),
-		UnitPrice:     ticket.Price,
-		TotalAmount:   total,
-		PaymentStatus: repo.PaymentStatusPending,
-		TransactionID: nil,
-		QrCodeHash:    qrHash,
+		EventID:         req.EventID,
+		TicketTypeID:    req.TicketTypeID,
+		AttendeeName:    req.AttendeeName,
+		AttendeePhone:   req.AttendeePhone,
+		AttendeeEmail:   emailPtr,
+		Quantity:        int32(req.Quantity),
+		UnitPrice:       ticket.Price,
+		TotalAmount:     total,
+		PaymentStatus:   &pendingStatus,
+		TransactionID:   nil, // Set tracking identification string empty during initial capture phase
+		QrCodeHash:      qrHash,
 		QrCodePlaintext: qrPlaintext,
-		QrCodeImageUrl:  "", 
-		DeviceInfo: devicePtr,     
-    	IpAddress:  ipPtr, 
-    	PlatformFee:   platformFee,
+		QrCodeImageUrl:  "",
+		DeviceInfo:      deviceInfo,
+		IpAddress:       ipPtr,
+		PlatformFee:     platformFee,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create order: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to seed transaction layer values: " + err.Error()})
 		return
 	}
 
+<<<<<<< HEAD
 	// Initiate Momo payment
 	momoReq := models.PaymentRequest{
 		Amount:       fmt.Sprintf("%d", total),
@@ -112,24 +111,39 @@ if deviceInfo != "" {
 		 } ,
 		PayerMessage: "Ticket payment",
 		PayeeNote:    "Order " + order.ID.String(),
+=======
+	// Initiate external billing process using your provided Payment Client definitions from cammpay.go
+	campayReq := payment.PaymentRequest{
+		Amount:      float64(total),
+		Currency:    "XAF",
+		PhoneNumber: req.AttendeePhone,
+		FirstName:   req.AttendeeName,
+		Email:       req.AttendeeEmail,
+		ExternalID:  order.ID.String(),
+		Description: "Event Registration Ticket checkout sequence processing fee",
+>>>>>>> main
 	}
-	momoResp, err := h.momoClient.RequestPayment(c.Request.Context(), momoReq)
+
+	// Initialize the custom CamPay client explicitly to execute outgoing payments
+	client := payment.NewCamPayClient()
+	campayResp, err := client.RequestPayment(campayReq)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "payment initiation failed: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "campay channel payment trigger error execution: " + err.Error()})
 		return
 	}
 
-	// Update order with transaction ID
-	txID := momoResp.TransactionID
-	_ = h.querier.UpdateOrderPayment(c, repo.UpdateOrderPaymentParams{
+	// Update tracking reference identifiers directly using your exact structural TransactionID output
+	txID := campayResp.TransactionID
+	_, _ = h.querier.UpdateOrderPayment(c, repo.UpdateOrderPaymentParams{
 		ID:            order.ID,
-		PaymentStatus: repo.PaymentStatusPending,
+		PaymentStatus: &pendingStatus,
 		TransactionID: &txID,
 	})
 
-	// Generate QR image (sync – can be async)
+	// Async/Sync QR component build trigger mapping sequence
 	qrImageURL, _ := qrcode.GenerateAndUpload(c.Request.Context(),
 		order.ID.String(), req.AttendeeName, qrHash, h.MinioClient)
+<<<<<<< HEAD
 	if qrImageURL != "" {
     err := h.querier.UpdateOrderQRImage(c, repo.UpdateOrderQRImageParams{
         ID:             order.ID,
@@ -139,6 +153,8 @@ if deviceInfo != "" {
         log.Printf("Failed to update QR image URL for order %s: %v", order.ID, err)
     }
 }
+=======
+>>>>>>> main
 
 	response := utils.OrderResponse{
 		ID:             order.ID,
@@ -150,17 +166,19 @@ if deviceInfo != "" {
 		Quantity:       order.Quantity,
 		UnitPrice:      order.UnitPrice,
 		TotalAmount:    order.TotalAmount,
-		PaymentStatus:  string(order.PaymentStatus),
+		PaymentStatus:  pendingStatus,
 		TransactionID:  &txID,
 		QRCodeHash:     order.QrCodeHash,
 		QRCodeImageURL: qrImageURL,
 		IsUsed:         order.IsUsed,
 		CreatedAt:      utils.FormatDateTime(order.CreatedAt),
 	}
+
 	c.JSON(http.StatusCreated, response)
 }
 
 func (h *EventHubHandler) handleGetOrderStatus(c *gin.Context) {
+<<<<<<< HEAD
     // 1. Parse order ID
     orderIDStr := c.Param("id")
     orderID, err := uuid.Parse(orderIDStr)
@@ -229,4 +247,65 @@ func (h *EventHubHandler) handleGetOrderStatus(c *gin.Context) {
 
     // 6. Otherwise, return only public fields
     c.JSON(http.StatusOK, baseResponse)
+=======
+	userID, err := utils.ExtractOrganizerID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	orderID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid order identification structure"})
+		return
+	}
+
+	order, err := h.querier.GetOrderByID(c, orderID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "order record lookup matching identity parameters failed"})
+		return
+	}
+
+	event, err := h.querier.GetEventByID(c, order.EventID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "contextual entity event map parameters missing"})
+		return
+	}
+
+	// Verify administrative and ownership context matching authorizations
+	if event.OrganizerID != userID {
+		role, _ := utils.GetUserRole(c)
+		if role != "admin" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "unauthorized permission access violation block execution"})
+			return
+		}
+	}
+
+	// Dynamically update and verify missing operational graphic generation blocks on paid entities
+	if order.PaymentStatus != nil && *order.PaymentStatus == "SUCCESSFUL" && order.QrCodeImageUrl == "" {
+		qrURL, _ := qrcode.GenerateAndUpload(c.Request.Context(),
+			order.ID.String(), order.AttendeeName, order.QrCodeHash, h.MinioClient)
+		if qrURL != "" {
+			_ = h.querier.UpdateOrderQRImage(c, repo.UpdateOrderQRImageParams{
+				ID:             order.ID,
+				QrCodeImageUrl: qrURL,
+			})
+			order.QrCodeImageUrl = qrURL
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"id":                order.ID,
+		"event_id":          order.EventID,
+		"attendee_name":     order.AttendeeName,
+		"attendee_phone":    order.AttendeePhone,
+		"quantity":          order.Quantity,
+		"total_amount":      order.TotalAmount,
+		"payment_status":    order.PaymentStatus,
+		"transaction_id":    order.TransactionID,
+		"qr_code_image_url": order.QrCodeImageUrl,
+		"is_used":           order.IsUsed,
+		"created_at":        utils.FormatDateTime(order.CreatedAt),
+	})
+>>>>>>> main
 }
