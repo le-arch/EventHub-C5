@@ -52,6 +52,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	
 	r.Use(middleware.RecoveryMiddleware())
 
+	r.GET("/health", HealthCheck)
 	r.POST("/api/v1/auth/register", h.handleRegister)
 	r.POST("/api/v1/auth/verify-otp", h.handleVerifyEmail)
 	r.POST("/api/v1/auth/login", h.handleLogin)

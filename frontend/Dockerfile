@@ -1,34 +1,31 @@
-# Stage 1: Build Stage
+# --- Stage 1: Build Stage ---
+FROM node:22-alpine AS builder
 
-FROM node:20-alpine AS builder
-
-# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Install dependencies using cache mount for speed
+# The --mount=type=cache stores npm files on your host so they aren't re-downloaded
 COPY package*.json ./
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --legacy-peer-deps
+
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 
 
-# Install dependencies
-RUN npm ci --legacy-peer-deps
-
-# Copy source code
+# Copy the rest of the source code
 COPY . .
 
-# Generate Prisma client (if using Prisma)
-# RUN npx prisma generate
-
-# Build the Next.js application
+# Build the application
 RUN npm run build
 
-
-# Stage 2: Production Stage
+# --- Stage 2: Production Stage ---
 FROM node:20-alpine AS runner
 
-# Set working directory
 WORKDIR /app
 
-# Set NODE_ENV to production
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
@@ -36,26 +33,24 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN apk add --no-cache curl
 
 # Create non-root user for security
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
 
-# Copy necessary files from builder stage
-# COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+# Copy the standalone build from the builder stage
+# This replaces the need to copy the entire node_modules folder
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
-COPY --from=builder --chown=nextjs:nodejs /app/package-lock.json ./package-lock.json
 
-# Expose port
+# Expose the application port
 EXPOSE 3000
 
-# Switch to non-root user
+# Switch to the non-root user
 USER nextjs
 
-# Health check
+# Health check using curl
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+  CMD curl -f http://localhost:3000/ || exit 1
 
-# Start the application
-CMD ["npm", "start"]
+# Start the application using the standalone server
+CMD ["node", "server.js"]
