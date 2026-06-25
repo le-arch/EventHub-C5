@@ -30,7 +30,7 @@ interface EventCardProps {
     title: string
     coverImageUrl: string | null
     startDate: string
-    venueName: string
+    venue: string
     city: string
     status: 'draft' | 'published' | 'cancelled' | 'completed'
     ticketStats: {
@@ -124,7 +124,7 @@ export function EventCard({ event, onEdit, onDelete, onDuplicate, onViewAttendee
         
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
           <MapPin className="h-3 w-3" />
-          <span className="line-clamp-1">{event.venueName}, {event.city}</span>
+          <span className="line-clamp-1">{event.venue}, {event.city}</span>
         </div>
 
         {/* Ticket Stats */}

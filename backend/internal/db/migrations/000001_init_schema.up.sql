@@ -138,19 +138,19 @@ CREATE INDEX idx_orders_is_used ON orders(is_used);
 
 
 
---tickets schema migration
+-- tickets schema migration
 
 
 -- orders schema migration
 
 
---checkin logschema migration
+-- checkin logschema migration
 
 
---webhook log schema migration
+-- webhook log schema migration
 
 
---admin log schema migration
+-- admin log schema migration
 
 
---create system log schema migration
+-- create system log schema migration

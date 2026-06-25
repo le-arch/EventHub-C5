@@ -1,18 +1,16 @@
 /**
  * Ticket Download Page
- * 
- * Displays the QR code ticket after successful payment.
+ * * Displays the QR code ticket after successful payment.
  * Allows attendee to download the QR code as PNG image.
- * 
- * @module TicketPage
+ * * @module TicketPage
  */
 
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import {QRCodeCanvas} from 'qrcode.react'
-import { Download, CheckCircle, Home, Ticket, Calendar, MapPin, Clock, Share2 } from 'lucide-react'
+import { QRCodeCanvas } from 'qrcode.react'
+import { Download, CheckCircle, Home, Calendar, MapPin, Share2, User, Ticket, Layers, CreditCard, ShieldCheck } from 'lucide-react'
 
 // Components
 import { Button } from '@/components/ui/button'
@@ -66,11 +64,11 @@ export default function TicketPage() {
       toast.error(errorMessage)
       router.push('/')
     } finally {
-      setLoading(false)
+      loading && setLoading(false)
     }
   }
 
-  const downloadQRCode = () => {
+  const downloadQRCode = async () => {
     const canvas = document.getElementById('qr-code-canvas') as HTMLCanvasElement
     if (canvas) {
       const pngUrl = canvas.toDataURL('image/png')
@@ -83,7 +81,7 @@ export default function TicketPage() {
       document.body.removeChild(downloadLink)
       
       setDownloadCount(prev => prev + 1)
-      toast.success('✅ QR code downloaded successfully!')
+      toast.success('QR code downloaded successfully')
     }
   }
 
@@ -103,7 +101,7 @@ export default function TicketPage() {
           text: `Here's my ticket for ${order.eventTitle}!`,
           files: [file],
         })
-        toast.success('📤 Ticket shared successfully!')
+        toast.success('Ticket shared successfully')
       } else {
         downloadQRCode()
       }
@@ -114,11 +112,11 @@ export default function TicketPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-6">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-slate-200/80 shadow-sm rounded-2xl">
+          <CardContent className="p-6">
             <Skeleton className="h-8 w-3/4 mx-auto mb-4" />
-            <Skeleton className="h-40 w-40 mx-auto mb-6 rounded" />
+            <Skeleton className="h-40 w-40 mx-auto mb-6 rounded-xl" />
             <Skeleton className="h-10 w-full mb-3" />
             <Skeleton className="h-10 w-full" />
           </CardContent>
@@ -130,127 +128,169 @@ export default function TicketPage() {
   if (!order) return null
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-md mx-auto">
+    <div className="min-h-screen bg-slate-50 text-slate-800 antialiased py-12 px-4 relative overflow-hidden">
+      
+      {/* Decorative background gradients */}
+      <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-indigo-200/10 rounded-full blur-[100px] pointer-events-none z-0" />
+      
+      <div className="max-w-md mx-auto relative z-10 space-y-6">
+        
         {/* Success Header */}
-        <div className="text-center mb-6 animate-fade-in">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-            <CheckCircle className="h-8 w-8 text-green-600" />
+        <div className="text-center space-y-2 animate-fade-in">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-emerald-50 border border-emerald-200 rounded-2xl mb-2 text-emerald-600 shadow-sm">
+            <CheckCircle className="h-5 w-5" />
           </div>
-          <h1 className="text-2xl font-bold mb-1">Payment Successful! 🎉</h1>
-          <p className="text-gray-500">Thank you, {order.attendeeName}!</p>
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Payment Successful</h1>
+          <p className="text-sm font-medium text-slate-500">Thank you for your purchase, {order.attendeeName}</p>
         </div>
 
-        {/* Ticket Card */}
-        <Card className="mb-6 overflow-hidden shadow-lg animate-slide-up">
-          {/* Ticket Header */}
-          <div className="bg-primary p-4 text-white text-center">
-            <h2 className="font-bold text-lg">{order.eventTitle}</h2>
-            <p className="text-primary-foreground/80 text-sm">Event Ticket 🎟️</p>
+        {/* Ticket Card Cardboard-Style Layout */}
+        <Card className="bg-white border-slate-200/80 shadow-md shadow-slate-100 rounded-2xl overflow-hidden animate-slide-up">
+          
+          {/* Ticket Header Banner */}
+          <div className="bg-slate-900 p-5 text-white text-center space-y-1">
+            <Badge className="bg-white/10 hover:bg-white/10 text-white border-none text-[10px] uppercase font-bold tracking-wider rounded px-2 py-0.5">
+              Verified Event Access
+            </Badge>
+            <h2 className="font-bold text-base tracking-tight leading-tight pt-1">{order.eventTitle}</h2>
           </div>
 
-          {/* QR Code */}
-          <CardContent className="pt-6 text-center">
-            <div className="bg-white p-4 rounded-lg inline-block mx-auto border-2 border-dashed border-gray-200">
-              <div ref={qrRef}>
+          {/* QR Code Presentation Matrix */}
+          <CardContent className="pt-8 pb-6 text-center bg-slate-50/50">
+            <div className="bg-white p-4 rounded-2xl inline-block mx-auto border border-slate-200/60 shadow-sm">
+              <div ref={qrRef} className="rounded-lg overflow-hidden">
                 <QRCodeCanvas
                   id="qr-code-canvas"
                   value={order.qrCodeData}
-                  size={200}
+                  size={190}
                   level="H"
                   includeMargin={true}
                   bgColor="#FFFFFF"
-                  fgColor="#000000"
+                  fgColor="#0f172a"
                 />
               </div>
             </div>
-            <p className="text-xs text-gray-400 mt-3">
-              📱 Scan this QR code at the event entrance
+            <p className="text-xs font-semibold text-slate-400 mt-4 max-w-[240px] mx-auto leading-normal">
+              Present this cryptographically signed verification asset during venue entry gate processing.
             </p>
           </CardContent>
 
-          <Separator />
+          {/* Dotted Intersecting Separator Component */}
+          <div className="relative flex items-center justify-between px-0 bg-slate-50/50">
+            <div className="w-3 h-6 bg-slate-50 rounded-r-full border-r border-t border-b border-slate-200/80 -ml-[1px]" />
+            <Separator className="border-dashed border-slate-200 bg-transparent flex-1 mx-2" />
+            <div className="w-3 h-6 bg-slate-50 rounded-l-full border-l border-t border-b border-slate-200/80 -mr-[1px]" />
+          </div>
 
-          {/* Event Details */}
-          <CardContent className="pt-4 space-y-3">
-            <div className="flex items-center gap-3 text-sm">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <div>
-                <p className="font-medium">{formatDate(order.eventDate)}</p>
-                <p className="text-xs text-gray-500">{formatTime(order.eventTime)}</p>
+          {/* Scheduled Logistics Grid */}
+          <CardContent className="py-5 px-6 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-start gap-2.5 text-sm">
+                <Calendar className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Date</span>
+                  <p className="font-semibold text-slate-800">{formatDate(order.eventDate)}</p>
+                  <p className="text-xs text-slate-500 font-medium">{formatTime(order.eventTime)}</p>
+                </div>
               </div>
-            </div>
-            
-            <div className="flex items-center gap-3 text-sm">
-              <MapPin className="h-4 w-4 text-gray-400" />
-              <div>
-                <p className="font-medium">{order.eventVenue}</p>
-                <p className="text-xs text-gray-500">{order.eventCity}</p>
+              
+              <div className="flex items-start gap-2.5 text-sm">
+                <MapPin className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Venue</span>
+                  <p className="font-semibold text-slate-800 line-clamp-1">{order.eventVenue}</p>
+                  <p className="text-xs text-slate-500 font-medium">{order.eventCity}</p>
+                </div>
               </div>
             </div>
           </CardContent>
 
-          <Separator />
+          <Separator className="bg-slate-100" />
 
-          {/* Ticket Details */}
-          <CardContent className="pt-4 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">👤 Attendee:</span>
-              <span className="font-medium">{order.attendeeName}</span>
+          {/* Pass Attendee Ledger Metadata */}
+          <CardContent className="py-5 px-6 space-y-3 bg-slate-50/20 text-sm font-medium text-slate-600">
+            <div className="flex justify-between items-center">
+              <span className="flex items-center gap-2 text-slate-400"><User className="h-3.5 w-3.5" /> Attendee</span>
+              <span className="font-bold text-slate-800">{order.attendeeName}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">🎟️ Ticket Type:</span>
-              <span className="font-medium">{order.ticketType}</span>
+            <div className="flex justify-between items-center">
+              <span className="flex items-center gap-2 text-slate-400"><Ticket className="h-3.5 w-3.5" /> Access Tier</span>
+              <span className="font-bold text-slate-800">{order.ticketType}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">🔢 Quantity:</span>
-              <span className="font-medium">{order.quantity}</span>
+            <div className="flex justify-between items-center">
+              <span className="flex items-center gap-2 text-slate-400"><Layers className="h-3.5 w-3.5" /> Volume Allocated</span>
+              <span className="font-bold text-slate-800">{order.quantity}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">💰 Total Paid:</span>
-              <span className="font-bold text-primary">{formatCurrency(order.totalAmount)}</span>
+            <div className="flex justify-between items-center pt-2 border-t border-slate-100 mt-2">
+              <span className="flex items-center gap-2 text-slate-500 font-semibold"><CreditCard className="h-3.5 w-3.5" /> Final Clearing</span>
+              <span className="font-extrabold text-slate-900 text-base">{formatCurrency(order.totalAmount)}</span>
             </div>
           </CardContent>
 
-          <Separator />
+          <Separator className="bg-slate-100" />
 
-          {/* Footer */}
-          <CardContent className="pt-4 pb-6 text-center">
-            <Badge variant="outline" className="text-xs">
-              🆔 Order ID: {order.id.slice(0, 8)}...
+          {/* Unique Identifier Core Info */}
+          <CardContent className="py-4 text-center bg-slate-50/50 space-y-1">
+            <Badge variant="outline" className="text-[10px] bg-white text-slate-500 border-slate-200 font-mono tracking-tight px-2.5">
+              ID: {order.id.slice(0, 8).toUpperCase()}...
             </Badge>
-            <p className="text-xs text-gray-400 mt-2">
-              📅 Purchased on {formatDate(order.createdAt)}
+            <p className="text-[11px] text-slate-400 font-medium">
+              Settlement committed on {formatDate(order.createdAt)}
             </p>
           </CardContent>
         </Card>
 
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          <Button onClick={downloadQRCode} className="w-full btn-press">
-            <Download className="h-4 w-4 mr-2" />
-            Download QR Code (PNG) 📥
+        {/* Tactical Interaction Operations Buttons */}
+        <div className="space-y-2.5 pt-2">
+          <Button 
+            onClick={downloadQRCode} 
+            className="w-full bg-slate-900 text-white hover:bg-slate-800 h-11 rounded-xl font-semibold shadow-sm transition-all flex items-center justify-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Download Signature Asset (PNG)
           </Button>
           
+          <Button 
+            variant="outline" 
+            onClick={shareTicket} 
+            className="w-full bg-white text-slate-700 hover:bg-slate-50 border-slate-200 h-11 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+          >
+            <Share2 className="h-4 w-4" />
+            Share Validation Link
+          </Button>
           
-            <Button variant="outline" onClick={shareTicket} className="w-full">
-              <Share2 className="h-4 w-4 mr-2" />
-              Share Ticket 📤
-            </Button>
-          
-          
-          <Button variant="ghost" onClick={() => router.push('/')} className="w-full">
-            <Home className="h-4 w-4 mr-2" />
-            Back to Home 🏠
+          <Button 
+            variant="ghost" 
+            onClick={() => router.push('/')} 
+            className="w-full text-slate-400 hover:text-slate-600 hover:bg-slate-100/50 h-10 rounded-xl font-medium transition-all flex items-center justify-center gap-2"
+          >
+            <Home className="h-4 w-4" />
+            Back to Dashboard
           </Button>
         </div>
 
-        {/* Instructions */}
-        <div className="mt-6 text-center text-xs text-gray-400 space-y-1">
-          <p>💾 Save this QR code to your phone gallery</p>
-          <p>📱 Present this QR code at the event entrance</p>
-          <p>⚠️ One-time use only - QR code expires after scanning</p>
+        {/* Technical Gate Access Instructions */}
+        <div className="pt-4 border-t border-slate-200/60 grid grid-cols-3 gap-3 text-center">
+          <div className="space-y-1.5 p-2 rounded-xl bg-slate-100/40 border border-slate-200/30">
+            <div className="w-6 h-6 rounded-lg bg-slate-900/5 flex items-center justify-center text-slate-600 mx-auto">
+              <Download className="h-3 w-3" />
+            </div>
+            <p className="text-[10px] text-slate-500 font-bold leading-tight">Commit to Storage</p>
+          </div>
+          <div className="space-y-1.5 p-2 rounded-xl bg-slate-100/40 border border-slate-200/30">
+            <div className="w-6 h-6 rounded-lg bg-slate-900/5 flex items-center justify-center text-slate-600 mx-auto">
+              <Layers className="h-3 w-3" />
+            </div>
+            <p className="text-[10px] text-slate-500 font-bold leading-tight">Present QR Token</p>
+          </div>
+          <div className="space-y-1.5 p-2 rounded-xl bg-slate-100/40 border border-slate-200/30">
+            <div className="w-6 h-6 rounded-lg bg-slate-900/5 flex items-center justify-center text-slate-600 mx-auto">
+              <ShieldCheck className="h-3 w-3" />
+            </div>
+            <p className="text-[10px] text-slate-500 font-bold leading-tight">Single Clearance</p>
+          </div>
         </div>
+        
       </div>
     </div>
   )

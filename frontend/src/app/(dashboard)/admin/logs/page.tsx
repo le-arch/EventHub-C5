@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Admin System Logs Page
- * 
- * Allows admin to view system activity logs.
+ * * Allows admin to view system activity logs.
  * Features include:
  * - View all admin actions
  * - Search by user or action
@@ -11,13 +10,12 @@
  * - Pagination for large log lists
  * - Breadcrumb navigation
  * - Export logs (coming soon)
- * 
- * @module AdminLogsPage
+ * * @module AdminLogsPage
  */
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useDeferredValue } from 'react'
 import {
   Search,
   Filter,
@@ -82,38 +80,39 @@ interface LogEntry {
   createdAt: string
 }
 
-// Action type badges with emojis
+// Action type badges with optimized light-mode readability metrics
 const getActionBadge = (action: string) => {
-  if (action.includes('verify')) 
-    return <Badge className="bg-green-100 text-green-800 flex items-center gap-1">✅ Verify</Badge>
-  if (action.includes('suspend')) 
-    return <Badge variant="destructive" className="flex items-center gap-1">⛔ Suspend</Badge>
-  if (action.includes('delete')) 
-    return <Badge variant="destructive" className="flex items-center gap-1">🗑️ Delete</Badge>
-  if (action.includes('refund')) 
-    return <Badge className="bg-amber-100 text-amber-800 flex items-center gap-1">🔄 Refund</Badge>
-  if (action.includes('cancel')) 
-    return <Badge className="bg-orange-100 text-orange-800 flex items-center gap-1">❌ Cancel</Badge>
-  if (action.includes('publish')) 
-    return <Badge className="bg-blue-100 text-blue-800 flex items-center gap-1">📢 Publish</Badge>
-  if (action.includes('login')) 
-    return <Badge variant="outline" className="flex items-center gap-1">🔑 Login</Badge>
-  if (action.includes('logout')) 
-    return <Badge variant="outline" className="flex items-center gap-1">🚪 Logout</Badge>
-  return <Badge variant="outline" className="flex items-center gap-1">📝 {action}</Badge>
+  const normalized = action.toLowerCase()
+  if (normalized.includes('verify')) 
+    return <Badge className="bg-emerald-100 text-emerald-950 font-bold border border-emerald-300 shadow-sm">✅ Verify</Badge>
+  if (normalized.includes('suspend')) 
+    return <Badge variant="destructive" className="bg-red-100 text-red-950 font-bold border border-red-300 shadow-sm hover:bg-red-100">⛔ Suspend</Badge>
+  if (normalized.includes('delete')) 
+    return <Badge variant="destructive" className="bg-rose-100 text-rose-950 font-bold border border-rose-300 shadow-sm hover:bg-rose-100">🗑️ Delete</Badge>
+  if (normalized.includes('refund')) 
+    return <Badge className="bg-amber-100 text-amber-950 font-bold border border-amber-300 shadow-sm">🔄 Refund</Badge>
+  if (normalized.includes('cancel')) 
+    return <Badge className="bg-orange-100 text-orange-950 font-bold border border-orange-300 shadow-sm">❌ Cancel</Badge>
+  if (normalized.includes('publish')) 
+    return <Badge className="bg-blue-100 text-blue-950 font-bold border border-blue-300 shadow-sm">📢 Publish</Badge>
+  if (normalized.includes('login')) 
+    return <Badge variant="outline" className="bg-slate-100 text-slate-900 font-bold border border-slate-300 shadow-sm">🔑 Login</Badge>
+  if (normalized.includes('logout')) 
+    return <Badge variant="outline" className="bg-zinc-100 text-zinc-900 font-bold border border-zinc-300 shadow-sm">🚪 Logout</Badge>
+  return <Badge variant="outline" className="bg-purple-100 text-purple-950 font-bold border border-purple-300 shadow-sm">📝 {action}</Badge>
 }
 
-// Target type badges with emojis
+// Target type badges with high contrast foreground shades
 const getTargetBadge = (targetType: string) => {
   switch (targetType) {
     case 'user':
-      return <Badge variant="outline" className="bg-blue-50 flex items-center gap-1">👤 User</Badge>
+      return <Badge variant="outline" className="bg-blue-100 text-blue-950 font-bold border border-blue-300 shadow-sm">👤 User</Badge>
     case 'event':
-      return <Badge variant="outline" className="bg-purple-50 flex items-center gap-1">📅 Event</Badge>
+      return <Badge variant="outline" className="bg-purple-100 text-purple-950 font-bold border border-purple-300 shadow-sm">📅 Event</Badge>
     case 'order':
-      return <Badge variant="outline" className="bg-cyan-50 flex items-center gap-1">🎟️ Order</Badge>
+      return <Badge variant="outline" className="bg-cyan-100 text-cyan-950 font-bold border border-cyan-300 shadow-sm">🎟️ Order</Badge>
     default:
-      return <Badge variant="outline" className="flex items-center gap-1">⚙️ System</Badge>
+      return <Badge variant="outline" className="bg-slate-100 text-slate-900 font-bold border border-slate-300 shadow-sm">⚙️ System</Badge>
   }
 }
 
@@ -130,13 +129,16 @@ export default function AdminLogsPage() {
   const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
 
-  // Fetch logs on component mount or when page/pageSize changes
+  // Use deferred value for API filtering search optimization
+  const deferredSearchTerm = useDeferredValue(searchTerm)
+
+  // Sync server side requests when UI state variables scale or shift parameters
   useEffect(() => {
     fetchLogs()
-  }, [page, pageSize])
+  }, [page, pageSize, deferredSearchTerm, actionFilter, targetFilter])
 
   /**
-   * Fetch system logs from API with pagination
+   * Fetch system logs from API with server side filters applied
    */
   const fetchLogs = async () => {
     setLoading(true)
@@ -145,39 +147,23 @@ export default function AdminLogsPage() {
         params: {
           page,
           limit: pageSize,
-          search: searchTerm || undefined,
+          search: deferredSearchTerm || undefined,
           action: actionFilter !== 'all' ? actionFilter : undefined,
           targetType: targetFilter !== 'all' ? targetFilter : undefined,
         },
       })
-      setLogs(response.data.logs)
-      setTotalCount(response.data.total)
-      setTotalPages(response.data.totalPages || Math.ceil(response.data.total / pageSize))
+      setLogs(response.data.logs || [])
+      setTotalCount(response.data.total || 0)
+      setTotalPages(response.data.totalPages || Math.ceil((response.data.total || 0) / pageSize) || 1)
     } catch (error) {
-      toast.error('❌ Failed to load logs')
+      toast.error('❌ Failed to load infrastructure logs pipeline')
     } finally {
       setLoading(false)
     }
   }
 
   /**
-   * Filter logs based on search term and filters
-   */
-  const filteredLogs = logs.filter((log) => {
-    const matchesSearch =
-      searchTerm === '' ||
-      log.adminName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.targetName.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    const matchesAction = actionFilter === 'all' || log.action.includes(actionFilter)
-    const matchesTarget = targetFilter === 'all' || log.targetType === targetFilter
-    
-    return matchesSearch && matchesAction && matchesTarget
-  })
-
-  /**
-   * Reset search and filters
+   * Reset search and filter configurations back to factory parameters
    */
   const handleResetFilters = () => {
     setSearchTerm('')
@@ -186,35 +172,35 @@ export default function AdminLogsPage() {
     setPage(1)
   }
 
-  // Loading skeleton
-  if (loading) {
+  // Loading skeleton configuration
+  if (loading && logs.length === 0) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-6 w-64" />
+      <div className="space-y-6 max-w-7xl mx-auto p-4 bg-[#fcfaff] min-h-screen">
+        <Skeleton className="h-6 w-64 bg-purple-200/50" />
         <div className="flex justify-between items-center">
           <div>
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-4 w-64" />
+            <Skeleton className="h-8 w-48 mb-2 bg-purple-200/50" />
+            <Skeleton className="h-4 w-64 bg-purple-200/50" />
           </div>
           <div className="flex gap-2">
-            <Skeleton className="h-10 w-24" />
-            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-24 bg-purple-200/50" />
+            <Skeleton className="h-10 w-32 bg-purple-200/50" />
           </div>
         </div>
-        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full bg-purple-200/50" />
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-16 w-full" />
+            <Skeleton key={i} className="h-16 w-full bg-purple-200/50" />
           ))}
         </div>
-        <Skeleton className="h-12 w-full max-w-md mx-auto" />
+        <Skeleton className="h-12 w-full max-w-md mx-auto bg-purple-200/50" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* BreadCrumb */}
+    <div className="space-y-6 max-w-7xl mx-auto p-4 bg-[#fcfaff] min-h-screen text-gray-900">
+      {/* BreadCrumb Shell */}
       <Breadcrumb 
         items={[
           { label: 'Admin', href: '/admin/users' },
@@ -223,173 +209,203 @@ export default function AdminLogsPage() {
         showHome
       />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <FileText className="h-6 w-6 text-primary" />
+      {/* Hero Header Control Layout */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-gradient-to-r from-slate-800 via-indigo-950 to-purple-900 p-6 rounded-2xl shadow-md text-white border border-slate-950">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-white/10 rounded-xl border border-white/20 shadow-inner backdrop-blur-md">
+            <FileText className="h-7 w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">System Activity Logs 📋</h1>
-            <p className="text-gray-500 mt-1">
-              Track all admin actions and system events
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight">System Activity Logs <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" > 📋</span> </h1>
+            <p className="text-purple-200/90 text-sm font-medium mt-0.5">
+              Comprehensive trace logs detailing cryptographic actions, account adjustments, and system mutations.
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchLogs}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh 🔄
+        <div className="flex sm:items-center gap-3 w-full lg:w-auto shrink-0">
+          <Button 
+            variant="outline" 
+            onClick={fetchLogs}
+            className="bg-white/10 text-white border border-white/20 hover:bg-white/20 hover:text-white font-bold py-5 px-4 rounded-xl shadow-sm backdrop-blur-sm flex-1 sm:flex-initial"
+          >
+            <RefreshCw className="h-4 w-4 mr-2 text-slate-700" />
+            Refresh Log 
           </Button>
-          <Button variant="outline" disabled>
-            <Download className="h-4 w-4 mr-2" />
-            Export 📥 (Soon)
+          <Button 
+            variant="outline" 
+            disabled 
+            className="bg-slate-800/40 text-gray-400 border border-slate-800 font-bold py-5 px-4 rounded-xl flex-1 sm:flex-initial"
+          >
+            <Download className="h-4 w-4 mr-2 text-brown-700" />
+            Export CSV 
           </Button>
         </div>
       </div>
 
-      {/* Search and Filter */}
-      <Card>
+      {/* Search and Filters Architecture Block */}
+      <Card className="border-2 border-purple-100 bg-white shadow-sm">
         <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col xl:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-purple-600 z-10" />
               <Input
-                placeholder="🔍 Search by admin, action, or target..."
+                placeholder="🔍 Search entries by administrator signature, action code, or target details..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value)
                   setPage(1)
                 }}
-                className="pl-10"
+                className="pl-11 pr-4 py-6 text-gray-900 placeholder:text-gray-500 font-medium border-2 border-purple-100 focus-visible:border-purple-500 focus-visible:ring-purple-500 rounded-xl shadow-sm bg-white"
               />
             </div>
-            <Select value={actionFilter} onValueChange={(value) => {
-              setActionFilter(value)
-              setPage(1)
-            }}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Action Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Actions</SelectItem>
-                <SelectItem value="verify">✅ Verify</SelectItem>
-                <SelectItem value="suspend">⛔ Suspend</SelectItem>
-                <SelectItem value="delete">🗑️ Delete</SelectItem>
-                <SelectItem value="refund">🔄 Refund</SelectItem>
-                <SelectItem value="cancel">❌ Cancel</SelectItem>
-                <SelectItem value="publish">📢 Publish</SelectItem>
-                <SelectItem value="login">🔑 Login</SelectItem>
-                <SelectItem value="logout">🚪 Logout</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={targetFilter} onValueChange={(value) => {
-              setTargetFilter(value)
-              setPage(1)
-            }}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Target Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Targets</SelectItem>
-                <SelectItem value="user">👤 Users</SelectItem>
-                <SelectItem value="event">📅 Events</SelectItem>
-                <SelectItem value="order">🎟️ Orders</SelectItem>
-              </SelectContent>
-            </Select>
-            {(searchTerm || actionFilter !== 'all' || targetFilter !== 'all') && (
-              <Button variant="ghost" onClick={handleResetFilters} className="sm:w-auto">
-                Reset Filters ✕
-              </Button>
-            )}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Select value={actionFilter} onValueChange={(value) => {
+                setActionFilter(value)
+                setPage(1)
+              }}>
+                <SelectTrigger className="w-full py-6 border-2 border-purple-100 text-gray-900 font-bold focus:border-purple-500 focus:ring-purple-500 bg-white rounded-xl shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-purple-600" />
+                    <SelectValue placeholder="Action Type" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="border-2 border-purple-100 bg-white font-semibold">
+                  <SelectItem value="all" className="text-gray-900">All Operations</SelectItem>
+                  <SelectItem value="verify" className="text-emerald-950"> Verify actions</SelectItem>
+                  <SelectItem value="suspend" className="text-red-950"> Suspend actions</SelectItem>
+                  <SelectItem value="delete" className="text-rose-950"> Delete actions</SelectItem>
+                  <SelectItem value="refund" className="text-amber-950"> Refund actions</SelectItem>
+                  <SelectItem value="cancel" className="text-orange-950"> Cancel actions</SelectItem>
+                  <SelectItem value="publish" className="text-blue-950"> Publish actions</SelectItem>
+                  <SelectItem value="login" className="text-slate-900"> Logins</SelectItem>
+                  <SelectItem value="logout" className="text-zinc-900"> Logouts</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={targetFilter} onValueChange={(value) => {
+                setTargetFilter(value)
+                setPage(1)
+              }}>
+                <SelectTrigger className="w-full py-6 border-2 border-purple-100 text-gray-900 font-bold focus:border-purple-500 focus:ring-purple-500 bg-white rounded-xl shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-purple-600" />
+                    <SelectValue placeholder="Target Type" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="border-2 border-purple-100 bg-white font-semibold">
+                  <SelectItem value="all" className="text-gray-900">All Data Classes</SelectItem>
+                  <SelectItem value="user" className="text-blue-950"> User Targets</SelectItem>
+                  <SelectItem value="event" className="text-purple-950"> Event Targets</SelectItem>
+                  <SelectItem value="order" className="text-cyan-950"> Order Targets</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {(searchTerm || actionFilter !== 'all' || targetFilter !== 'all') && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleResetFilters} 
+                  className="border-2 border-red-200 text-red-700 font-bold hover:bg-red-50 hover:text-red-800 py-6 px-4 rounded-xl shadow-sm"
+                >
+                  Clear Filters ✕
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Results Count */}
-      <div className="text-sm text-gray-500 flex items-center gap-2">
-        <Activity className="h-4 w-4" />
-        Showing {filteredLogs.length} of {totalCount} log entr{totalCount !== 1 ? 'ies' : 'y'}
+      {/* Tracker Status Metatag */}
+      <div className="text-sm text-gray-700 flex items-center gap-2 px-1 font-semibold">
+        <Activity className="h-4 w-4 text-purple-600 animate-pulse" />
+        Rendered payload stream maps <span className="text-purple-700 font-black">{logs.length}</span> nodes out of <span className="text-gray-900 font-black">{totalCount}</span> total pipeline index entries
       </div>
 
-      {/* Logs Table */}
-      <Card>
+      {/* Infrastructure Core Logs Grid Spread Table */}
+      <Card className="border-l-4 border-purple-100 bg-white shadow-md rounded-2xl overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-purple-100/60 border-b border-purple-200">
                 <TableRow>
-                  <TableHead>⏰ Timestamp</TableHead>
-                  <TableHead>👤 Admin</TableHead>
-                  <TableHead>📋 Action</TableHead>
-                  <TableHead>🎯 Target</TableHead>
-                  <TableHead>📄 Details</TableHead>
-                  <TableHead>🌐 IP Address</TableHead>
+                  <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >⏰</span> Production Timestamp</TableHead>
+                  <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >👤</span> Signed Admin Agent</TableHead>
+                  <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >📋</span> Mutator Action</TableHead>
+                  <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >🎯</span> Target Reference</TableHead>
+                  <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >📄</span> Metadata JSON</TableHead>
+                  <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >🌐</span> Handshake IP</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLogs.length === 0 ? (
+                {logs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12">
-                      <div className="flex flex-col items-center gap-2">
-                        <AlertCircle className="h-8 w-8 text-gray-400" />
-                        <p className="text-gray-500">No logs found 📭</p>
+                    <TableCell colSpan={6} className="text-center py-16 bg-white">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center border-2 border-purple-100">
+                          <AlertCircle className="h-8 w-8 text-purple-600" />
+                        </div>
+                        <p className="text-gray-900 font-black text-lg">No audit entries match parameters 📭</p>
+                        <p className="text-sm text-gray-600 font-medium max-w-sm leading-relaxed">
+                          Your filtration parameters returned zero transaction hashes. Clear query fields to monitor active clusters.
+                        </p>
                         {(searchTerm || actionFilter !== 'all' || targetFilter !== 'all') && (
                           <Button
                             variant="link"
                             onClick={handleResetFilters}
+                            className="text-purple-700 font-bold underline decoration-2 hover:text-purple-900 mt-1"
                           >
-                            Clear filters
+                            Reset filters pipeline 
                           </Button>
                         )}
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredLogs.map((log) => (
-                    <TableRow key={log.id}>
-                      <TableCell className="whitespace-nowrap">
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3 text-gray-400" />
-                          <span className="text-sm">{formatDate(log.createdAt)}</span>
-                          <span className="text-xs text-gray-400 ml-1">
+                  logs.map((log) => (
+                    <TableRow key={log.id} className="hover:bg-purple-50/50 border-b border-purple-100/60 transition-colors">
+                      <TableCell className="whitespace-nowrap py-4">
+                        <div className="flex items-center gap-1.5 font-bold text-gray-800 text-sm">
+                          <Clock className="h-4 w-4 text-purple-600" />
+                          <span>{formatDate(log.createdAt)}</span>
+                          <span className="text-xs font-semibold text-purple-900/60 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100">
                             {formatTime(log.createdAt)}
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                            <User className="h-4 w-4 text-primary" />
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 bg-purple-100 border border-purple-200 rounded-full flex items-center justify-center shrink-0">
+                            <User className="h-4 w-4 text-purple-700" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium">{log.adminName}</p>
-                            <p className="text-xs text-gray-500">{log.adminEmail}</p>
+                            <p className="text-sm font-bold text-gray-900 leading-none">{log.adminName}</p>
+                            <p className="text-xs font-semibold text-gray-600 mt-1">{log.adminEmail}</p>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{getActionBadge(log.action)}</TableCell>
-                      <TableCell>
+                      <TableCell className="py-4">{getActionBadge(log.action)}</TableCell>
+                      <TableCell className="py-4">
                         <div className="space-y-1">
                           {getTargetBadge(log.targetType)}
-                          <p className="text-sm font-medium">{log.targetName}</p>
-                          <p className="text-xs text-gray-400 font-mono">ID: {log.targetId.slice(0, 8)}</p>
+                          <p className="text-sm font-bold text-gray-800 leading-tight">{log.targetName}</p>
+                          <code className="block text-xs text-purple-700 font-mono font-bold bg-purple-50/50 border border-purple-100/60 rounded px-1 w-max">
+                            ID: {log.targetId ? log.targetId.slice(0, 8) : 'N/A'}
+                          </code>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <details className="text-xs">
-                          <summary className="cursor-pointer text-primary hover:text-primary/80 flex items-center gap-1">
-                            <Server className="h-3 w-3" />
-                            View details
+                      <TableCell className="py-4">
+                        <details className="text-xs group">
+                          <summary className="cursor-pointer text-purple-700 hover:text-purple-900 font-bold flex items-center gap-1 list-none bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2 py-1 rounded-lg w-max transition-all shadow-sm">
+                            <Server className="h-3.5 w-3.5" />
+                            <span>Inspect Payload</span>
                           </summary>
-                          <pre className="mt-2 p-2 bg-gray-50 rounded text-xs overflow-x-auto max-w-xs">
-                            {JSON.stringify(log.details, null, 2)}
+                          <pre className="mt-2 p-3 bg-slate-900 text-emerald-400 font-mono text-xs rounded-xl overflow-x-auto max-w-xs md:max-w-md border border-slate-950 shadow-inner">
+                            {JSON.stringify(log.details || {}, null, 2)}
                           </pre>
                         </details>
                       </TableCell>
-                      <TableCell>
-                        <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">
-                          {log.ipAddress}
+                      <TableCell className="py-4">
+                        <code className="text-xs bg-gray-100 text-gray-900 border border-gray-300 font-black px-2.5 py-1 rounded-lg font-mono shadow-inner shadow-gray-200/50">
+                          {log.ipAddress || '127.0.0.1'}
                         </code>
                       </TableCell>
                     </TableRow>
@@ -401,69 +417,71 @@ export default function AdminLogsPage() {
         </CardContent>
       </Card>
 
-      {/* Pagination */}
+      {/* Pagination Module Row */}
       {totalPages > 1 && (
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
-          pageSizeOptions={[10, 20, 50, 100]}
-          totalItems={totalCount}
-          showFirstLast
-        />
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-purple-100">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[10, 20, 50, 100]}
+            totalItems={totalCount}
+            showFirstLast
+          />
+        </div>
       )}
 
-      {/* Stats Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
+      {/* Aggregate Stats Analytics Blocks Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-2 border-purple-200 bg-white shadow-sm rounded-xl">
+          <CardContent className="pt-5 pb-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold">{logs.length.toLocaleString()}</p>
-                <p className="text-sm text-gray-500">Total Log Entries 📊</p>
+                <p className="text-3xl font-black text-gray-900 tracking-tight">{totalCount.toLocaleString()}</p>
+                <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Total Entries </p>
               </div>
-              <Activity className="h-8 w-8 text-primary/60" />
+              <Activity className="h-8 w-8 text-purple-700 shrink-0" />
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="border-2 border-indigo-200 bg-white shadow-sm rounded-xl">
+          <CardContent className="pt-5 pb-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold">
+                <p className="text-3xl font-black text-indigo-9ived tracking-tight">
                   {new Set(logs.map(l => l.adminEmail)).size}
                 </p>
-                <p className="text-sm text-gray-500">Active Admins 👥</p>
+                <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Active Clusters </p>
               </div>
-              <Shield className="h-8 w-8 text-primary/60" />
+              <Shield className="h-8 w-8 text-indigo-700 shrink-0" />
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="border-2 border-emerald-300 bg-white shadow-sm rounded-xl">
+          <CardContent className="pt-5 pb-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold">
-                  {logs.filter(l => l.action.includes('verify')).length}
+                <p className="text-3xl font-black text-emerald-800 tracking-tight">
+                  {logs.filter(l => l.action.toLowerCase().includes('verify')).length}
                 </p>
-                <p className="text-sm text-gray-500">Verifications ✅</p>
+                <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Verifications </p>
               </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
+              <CheckCircle className="h-8 w-8 text-emerald-600 shrink-0" />
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="border-2 border-amber-200 bg-white shadow-sm rounded-xl">
+          <CardContent className="pt-5 pb-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold">
+                <p className="text-3xl font-black text-amber-900 tracking-tight">
                   {logs.filter(l => l.createdAt > new Date(Date.now() - 7 * 86400000).toISOString()).length}
                 </p>
-                <p className="text-sm text-gray-500">Last 7 Days 📅</p>
+                <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Rolling 7-Day Cycle </p>
               </div>
-              <Calendar className="h-8 w-8 text-primary/60" />
+              <Calendar className="h-8 w-8 text-amber-700 shrink-0" />
             </div>
           </CardContent>
         </Card>

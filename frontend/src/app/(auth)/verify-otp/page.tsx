@@ -61,7 +61,7 @@ export default function VerifyOTPPage() {
    */
   const handleVerify = async () => {
     const otpString = otp.join('')
-    if (otpString.length !== 6) {
+    if (otpString.length !== 7) {
       toast.error('❌ Please enter the complete 6-digit code')
       return
     }

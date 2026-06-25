@@ -19,6 +19,18 @@ const badgeVariants = cva(
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
+        // --- NEW COLORFUL VARIANTS ---
+        purple:
+          "bg-purple-100 text-purple-800 border-purple-300 [a]:hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700",
+        blue: "bg-blue-100 text-blue-800 border-blue-300 [a]:hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700",
+        "purple-outline":
+          "border-purple-500 text-purple-700 bg-transparent hover:bg-purple-50 dark:border-purple-400 dark:text-purple-400 dark:hover:bg-purple-950/30",
+        "blue-outline":
+          "border-blue-500 text-blue-700 bg-transparent hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-950/30",
+        gradient:
+          "bg-gradient-to-r from-purple-600 to-blue-500 text-white border-none shadow-md [a]:hover:shadow-lg [a]:hover:scale-105 transition-all",
+        success:
+          "bg-green-100 text-green-800 border-green-300 [a]:hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700",
       },
     },
     defaultVariants: {

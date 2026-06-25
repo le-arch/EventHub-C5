@@ -20,7 +20,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   return (
     // Main container with gradient background
     // Uses Tailwind classes for responsive full-height layout
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-indigo-200 flex items-center justify-center p-4">
       
       {/* Content wrapper - limits maximum width for better readability */}
       <div className="w-full max-w-md">
@@ -29,7 +29,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         <div className="text-center mb-8">
           <Link 
             href="/" 
-            className="text-2xl font-bold text-primary inline-block hover:opacity-80 transition-opacity"
+            className="text-2xl font-bold text-purple-500 inline-block hover:opacity-80 transition-opacity"
           >
             EventHub
           </Link>

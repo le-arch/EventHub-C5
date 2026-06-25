@@ -99,7 +99,7 @@ interface Event {
   title: string
   startDate: string
   startTime: string
-  venueName: string
+  venue: string
   city: string
   status: string
 }
@@ -200,13 +200,13 @@ export default function AnalyticsPage() {
             <BarChart3 className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Analytics Dashboard 📊</h1>
+            <h1 className="text-2xl font-bold">Analytics Dashboard <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" > 📊</span></h1>
             <p className="text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
               <Calendar className="h-3 w-3" />
               {formatDate(event.startDate)} at {formatTime(event.startTime)}
               <span className="mx-1">•</span>
               <MapPin className="h-3 w-3" />
-              {event.venueName}, {event.city}
+              {event.venue}, {event.city}
             </p>
           </div>
         </div>
@@ -218,7 +218,7 @@ export default function AnalyticsPage() {
           <CardContent className="pt-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm text-gray-500">Total Tickets Sold 🎟️</p>
+                <p className="text-sm text-gray-500">Total Tickets Sold </p>
                 <p className="text-3xl font-bold text-blue-600">{analytics.totalTickets}</p>
               </div>
               <Ticket className="h-5 w-5 text-blue-400" />
@@ -230,7 +230,7 @@ export default function AnalyticsPage() {
           <CardContent className="pt-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm text-gray-500">Total Revenue 💰</p>
+                <p className="text-sm text-gray-500">Total Revenue </p>
                 <p className="text-3xl font-bold text-green-600">
                   {formatCurrency(analytics.totalRevenue)}
                 </p>
@@ -244,7 +244,7 @@ export default function AnalyticsPage() {
           <CardContent className="pt-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm text-gray-500">Checked In ✅</p>
+                <p className="text-sm text-gray-500">Checked In </p>
                 <p className="text-3xl font-bold text-purple-600">
                   {analytics.checkinCount} / {analytics.totalTickets}
                 </p>
@@ -259,7 +259,7 @@ export default function AnalyticsPage() {
             <div className="space-y-2">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm text-gray-500">Check-in Rate 📊</p>
+                  <p className="text-sm text-gray-500">Check-in Rate </p>
                   <p className="text-3xl font-bold text-amber-600">{analytics.checkinPercentage}%</p>
                 </div>
                 <TrendingUp className="h-5 w-5 text-amber-400" />
@@ -279,16 +279,16 @@ export default function AnalyticsPage() {
       <Tabs defaultValue="sales" className="space-y-6">
         <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="sales" className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Sales 📈
+            <TrendingUp className="h-4 w-4 text-blue-600" />
+            Sales 
           </TabsTrigger>
           <TabsTrigger value="tickets" className="flex items-center gap-2">
-            <PieChart className="h-4 w-4" />
-            Tickets 🎟️
+            <PieChart className="h-4 w-4 text-green-600" />
+            Tickets 
           </TabsTrigger>
           <TabsTrigger value="checkins" className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4" />
-            Check-ins ✅
+            <CheckCircle className="h-4 w-4 text-purple-400" />
+            Check-ins 
           </TabsTrigger>
         </TabsList>
 
@@ -301,7 +301,7 @@ export default function AnalyticsPage() {
                 Sales Over Time
               </CardTitle>
               <CardDescription>
-                Daily ticket sales and revenue trend 📅
+                Daily ticket sales and revenue trend 
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -309,7 +309,7 @@ export default function AnalyticsPage() {
                 <div className="h-80 flex items-center justify-center text-gray-500">
                   <div className="text-center">
                     <Ticket className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p>No sales data available yet 📭</p>
+                    <p>No sales data available yet </p>
                     <p className="text-sm mt-1">Sales will appear once tickets are purchased</p>
                   </div>
                 </div>
@@ -377,7 +377,7 @@ export default function AnalyticsPage() {
                   Ticket Distribution
                 </CardTitle>
                 <CardDescription>
-                  Percentage of tickets sold by type 🎟️
+                  Percentage of tickets sold by type 
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -421,7 +421,7 @@ export default function AnalyticsPage() {
                   Ticket Type Details
                 </CardTitle>
                 <CardDescription>
-                  Breakdown by ticket category 📋
+                  Breakdown by ticket category 
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -447,8 +447,8 @@ export default function AnalyticsPage() {
                           </Badge>
                         </div>
                         <div className="flex justify-between text-sm text-gray-500">
-                          <span>🎟️ {ticket.sold} sold</span>
-                          <span>💰 {formatCurrency(ticket.revenue)}</span>
+                          <span> {ticket.sold} sold</span>
+                          <span> {formatCurrency(ticket.revenue)}</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div
@@ -477,7 +477,7 @@ export default function AnalyticsPage() {
                 Recent Check-ins
               </CardTitle>
               <CardDescription>
-                Last 20 attendees checked in ✅
+                Last 20 attendees checked in 
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -492,9 +492,9 @@ export default function AnalyticsPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b bg-gray-50">
-                        <th className="text-left py-3 px-4 font-semibold text-sm">👤 Attendee Name</th>
-                        <th className="text-left py-3 px-4 font-semibold text-sm">🎟️ Ticket Type</th>
-                        <th className="text-left py-3 px-4 font-semibold text-sm">⏰ Check-in Time</th>
+                        <th className="text-left py-3 px-4 font-semibold text-sm"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >👤</span> Attendee Name</th>
+                        <th className="text-left py-3 px-4 font-semibold text-sm"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >🎟️</span> Ticket Type</th>
+                        <th className="text-left py-3 px-4 font-semibold text-sm"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >⏰</span> Check-in Time</th>
                       </tr>
                     </thead>
                     <tbody>

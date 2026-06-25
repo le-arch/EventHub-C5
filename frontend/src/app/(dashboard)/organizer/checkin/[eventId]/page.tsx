@@ -16,7 +16,7 @@
 
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { 
   CheckCircle, 
@@ -67,11 +67,12 @@ interface Event {
   title: string
   startDate: string
   startTime: string
-  venueName: string
+  venue: string
   city: string
 }
 
 interface CheckinResult {
+  id: string // Used to safely check frame contexts
   success: boolean
   attendeeName?: string
   ticketType?: string
@@ -88,6 +89,8 @@ interface RecentCheckin {
 export default function CheckinPage() {
   const params = useParams()
   const router = useRouter()
+  const eventId = params.eventId as string
+
   const [event, setEvent] = useState<Event | null>(null)
   const [loading, setLoading] = useState(true)
   const [lastResult, setLastResult] = useState<CheckinResult | null>(null)
@@ -96,6 +99,9 @@ export default function CheckinPage() {
   const [manualTicketId, setManualTicketId] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [stats, setStats] = useState({ checkedIn: 0, total: 0, percentage: 0 })
+
+  // Keep a ref of the current flash timeout ID to overwrite overlapping frames
+  const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // QR Scanner hook
   const {
@@ -111,45 +117,63 @@ export default function CheckinPage() {
       if (isProcessing) return
       
       setIsProcessing(true)
+      const executionId = crypto.randomUUID()
+
       try {
-        const response = await api.post('/checkin', { qr_hash: result })
-        
-        setLastResult({
+        const response = await api.post('/checkin', { qr_hash: result, event_id: eventId })
+        const payload = response.data
+
+        const nextResult: CheckinResult = {
+          id: executionId,
           success: true,
-          attendeeName: response.data.attendee_name,
-          ticketType: response.data.ticket_type,
-          checkedInAt: response.data.checked_in_at,
-        })
+          attendeeName: payload.attendee_name,
+          ticketType: payload.ticket_type,
+          checkedInAt: payload.checked_in_at,
+        }
+
+        setLastResult(nextResult)
         
-        // Add to recent checkins
         setRecentCheckins(prev => [
           {
-            attendeeName: response.data.attendee_name,
-            ticketType: response.data.ticket_type,
-            checkedInAt: response.data.checked_in_at,
+            attendeeName: payload.attendee_name,
+            ticketType: payload.ticket_type,
+            checkedInAt: payload.checked_in_at,
           },
           ...prev.slice(0, 9),
         ])
         
-        // Update stats
-        setStats(prev => ({
-          ...prev,
-          checkedIn: prev.checkedIn + 1,
-          percentage: Math.round(((prev.checkedIn + 1) / prev.total) * 100),
-        }))
+        setStats(prev => {
+          const nextChecked = prev.checkedIn + 1
+          return {
+            ...prev,
+            checkedIn: nextChecked,
+            percentage: prev.total > 0 ? Math.round((nextChecked / prev.total) * 100) : 0,
+          }
+        })
         
-        toast.success(`✅ ${response.data.attendee_name} checked in successfully!`)
+        toast.success(`✅ ${payload.attendee_name} checked in successfully!`)
         
-        // Clear result after 3 seconds
-        setTimeout(() => setLastResult(null), 3000)
+        if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current)
+        feedbackTimeoutRef.current = setTimeout(() => {
+          setLastResult(current => current?.id === executionId ? null : current)
+        }, 3000)
+
       } catch (error: any) {
         const errorMessage = error.response?.data?.error || '❌ Invalid or already used ticket'
-        setLastResult({
+        
+        const fallbackResult: CheckinResult = {
+          id: executionId,
           success: false,
           error: errorMessage,
-        })
+        }
+
+        setLastResult(fallbackResult)
         toast.error(errorMessage)
-        setTimeout(() => setLastResult(null), 3000)
+
+        if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current)
+        feedbackTimeoutRef.current = setTimeout(() => {
+          setLastResult(current => current?.id === executionId ? null : current)
+        }, 3000)
       } finally {
         setIsProcessing(false)
       }
@@ -161,15 +185,21 @@ export default function CheckinPage() {
     qrbox: 250,
   })
 
-  // Fetch event details and stats
+  // Fetch baseline parameters on load and synchronize polling intervals safely
   useEffect(() => {
     fetchEventAndStats()
-    // Refresh stats every 30 seconds
-    const interval = setInterval(fetchEventAndStats, 30000)
-    return () => clearInterval(interval)
-  }, [params.eventId])
+    
+    const interval = setInterval(() => {
+      fetchEventAndStats()
+    }, 30000)
 
-  // Start scanning when component mounts and camera is available
+    return () => {
+      clearInterval(interval)
+      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current)
+    }
+  }, [eventId])
+
+  // Mount/Unmount controller for underlying hardware webcam engine
   useEffect(() => {
     if (hasCamera && !isScanning) {
       startScanning()
@@ -181,45 +211,50 @@ export default function CheckinPage() {
 
   const fetchEventAndStats = async () => {
     try {
-      const [eventRes, statsRes] = await Promise.all([
-        api.get(`/events/${params.eventId}`),
-        api.get(`/events/${params.eventId}/analytics`),
+      const [eventRes, statsRes, historyRes] = await Promise.all([
+        api.get(`/events/${eventId}`),
+        api.get(`/events/${eventId}/analytics`),
+        api.get(`/checkin/event/${eventId}/history?limit=10`)
       ])
       
       setEvent(eventRes.data.event)
-      setStats({
-        checkedIn: statsRes.data.summary.checkedInCount,
-        total: statsRes.data.summary.totalAttendees,
-        percentage: statsRes.data.summary.checkInPercentage,
-      })
+      setRecentCheckins(historyRes.data.checkins || [])
       
-      // Fetch recent check-ins
-      const historyRes = await api.get(`/checkin/event/${params.eventId}/history?limit=10`)
-      setRecentCheckins(historyRes.data.checkins)
+      const summary = statsRes.data.summary
+      if (summary) {
+        setStats({
+          checkedIn: summary.checkedInCount,
+          total: summary.totalAttendees,
+          percentage: summary.checkInPercentage,
+        })
+      }
     } catch (error) {
-      toast.error('❌ Failed to load event data')
+      console.error('Failed to update tracking statistics parameters:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  /**
-   * Handle manual ticket ID entry
-   */
   const handleManualCheckin = async () => {
-    if (!manualTicketId) {
-      toast.error('❌ Please enter a ticket ID')
+    if (!manualTicketId.trim()) {
+      toast.error('❌ Please enter a valid ticket ID')
       return
     }
     
     setIsProcessing(true)
     try {
-      const response = await api.post('/checkin', { ticket_id: manualTicketId })
+      // Normalizing manual payload keys to ensure endpoint handling uniformity
+      const response = await api.post('/checkin', { 
+        ticket_id: manualTicketId.trim(), 
+        event_id: eventId 
+      })
       
       toast.success(`✅ ${response.data.attendee_name} checked in manually!`)
       setShowManualEntry(false)
       setManualTicketId('')
-      fetchEventAndStats()
+      
+      // Update UI records directly after validation
+      await fetchEventAndStats()
     } catch (error: any) {
       toast.error(`❌ ${error.response?.data?.error || 'Invalid ticket ID'}`)
     } finally {
@@ -263,11 +298,11 @@ export default function CheckinPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.push('/organizer/events')}
+            onClick={() => router.push(`/organizer/events/${eventId}`)}
             className="-ml-2"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Events
+            Back to Event
           </Button>
         </div>
         <div className="flex items-center gap-3">
@@ -281,7 +316,7 @@ export default function CheckinPage() {
               {formatDate(event.startDate)} at {formatTime(event.startTime)}
               <span className="mx-1">•</span>
               <MapPin className="h-3 w-3" />
-              {event.venueName}, {event.city}
+              {event.venue}, {event.city}
             </p>
           </div>
         </div>
@@ -293,14 +328,14 @@ export default function CheckinPage() {
           <CardContent className="pt-4 text-center">
             <CheckCircle className="h-6 w-6 text-green-600 mx-auto mb-2" />
             <p className="text-2xl font-bold text-green-600">{stats.checkedIn}</p>
-            <p className="text-xs text-gray-500">Checked In ✅</p>
+            <p className="text-xs text-gray-500">Checked In </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 text-center">
             <Users className="h-6 w-6 text-gray-400 mx-auto mb-2" />
             <p className="text-2xl font-bold">{stats.total}</p>
-            <p className="text-xs text-gray-500">Total Tickets 🎟️</p>
+            <p className="text-xs text-gray-500">Total Tickets </p>
           </CardContent>
         </Card>
         <Card>
@@ -310,7 +345,7 @@ export default function CheckinPage() {
                 <span className="text-primary font-bold">{stats.percentage}%</span>
               </div>
             </div>
-            <p className="text-xs text-gray-500">Check-in Rate 📊</p>
+            <p className="text-xs text-gray-500">Check-in Rate </p>
           </CardContent>
         </Card>
       </div>
@@ -331,7 +366,7 @@ export default function CheckinPage() {
 
       {/* Main Content Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* QR Scanner - Main Area */}
+        {/* QR Scanner Area */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
@@ -380,22 +415,20 @@ export default function CheckinPage() {
                   />
                   <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                     <div className="w-64 h-64 border-2 border-primary rounded-lg shadow-lg">
-                      {/* Corner brackets for scanning guide */}
                       <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-lg" />
                       <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-lg" />
                       <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-lg" />
                       <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-lg" />
                     </div>
                   </div>
-                  {/* Scanning line animation */}
                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 w-64 h-0.5 bg-primary animate-pulse" 
                        style={{ transform: 'translate(-50%, -50%)' }} />
                 </div>
               )}
 
-              {/* Scan Result Feedback */}
+              {/* Validation Flash Notification Frame */}
               {lastResult && (
-                <div className={`mt-4 p-4 rounded-lg animate-slide-up ${
+                <div className={`mt-4 p-4 rounded-lg transition-all ${
                   lastResult.success
                     ? 'bg-green-50 border border-green-200'
                     : 'bg-red-50 border border-red-200'
@@ -410,15 +443,15 @@ export default function CheckinPage() {
                       {lastResult.success ? (
                         <>
                           <p className="font-semibold text-green-800">
-                            ✅ {lastResult.attendeeName} checked in!
+                             {lastResult.attendeeName} checked in!
                           </p>
                           <p className="text-sm text-green-600">
-                            🎟️ {lastResult.ticketType} • {lastResult.checkedInAt && formatTime(lastResult.checkedInAt)}
+                             {lastResult.ticketType} • {lastResult.checkedInAt && formatTime(lastResult.checkedInAt)}
                           </p>
                         </>
                       ) : (
                         <p className="font-semibold text-red-800">
-                          ❌ {lastResult.error}
+                          {lastResult.error}
                         </p>
                       )}
                     </div>
@@ -432,15 +465,15 @@ export default function CheckinPage() {
                   onClick={() => setShowManualEntry(true)}
                   className="mt-2"
                 >
-                  <Smartphone className="h-4 w-4 mr-2" />
-                  Manual Ticket Entry 📝
+                  <Smartphone className="h-4 w-4 mr-2 text-slate-600" />
+                  Manual Ticket Entry 
                 </Button>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Recent Check-ins Sidebar */}
+        {/* Sidebar Frame history logs */}
         <div>
           <Card>
             <CardHeader>
@@ -456,7 +489,7 @@ export default function CheckinPage() {
               {recentCheckins.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <Users className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm">No check-ins yet 📭</p>
+                  <p className="text-sm">No check-ins yet </p>
                   <p className="text-xs text-gray-400 mt-1">
                     Scan QR codes to see them here
                   </p>
@@ -489,13 +522,13 @@ export default function CheckinPage() {
         </div>
       </div>
 
-      {/* Manual Entry Dialog */}
+      {/* Manual Entry Dialog Box */}
       <Dialog open={showManualEntry} onOpenChange={setShowManualEntry}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Smartphone className="h-5 w-5 text-primary" />
-              Manual Ticket Entry 📝
+              Manual Ticket Entry 
             </DialogTitle>
             <DialogDescription>
               Enter the ticket ID or QR code value manually

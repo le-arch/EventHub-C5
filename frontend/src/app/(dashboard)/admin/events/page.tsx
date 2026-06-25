@@ -1,7 +1,6 @@
 /**
  * Admin Events Management Page
- * 
- * Allows admin to view all events across all organizers.
+ * * Allows admin to view all events across all organizers.
  * Features include:
  * - Search by event title or organizer
  * - Filter by event status
@@ -11,13 +10,13 @@
  * - Pagination for large event lists
  * - Breadcrumb navigation
  * - Confirmation dialog for cancellations
- * 
- * @module AdminEventsPage
+ * - Uses global event store for state management
+ * * @module AdminEventsPage
  */
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useDeferredValue } from 'react'
 import Link from 'next/link'
 import {
   Search,
@@ -25,11 +24,10 @@ import {
   MoreVertical,
   Calendar,
   MapPin,
-  User,
+  Users,
   Eye,
   XCircle,
   AlertCircle,
-  TrendingUp,
   Ticket,
   CalendarDays,
   DollarSign,
@@ -73,85 +71,79 @@ import { Breadcrumb } from '@/components/common/Breadcrumb'
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog'
 import { Pagination } from '@/components/common/Pagination'
 
-// Utilities
+// Stores & Utilities
+import { useEventStore, type Event } from '@/store/eventStore'
+import { useAuthStore, type User } from '@/store/authStore'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 import { formatDate, formatCurrency } from '@/lib/utils'
 
-// Type definitions
-interface Event {
-  id: string
-  title: string
+// Extended Event type for admin view
+interface AdminEvent extends Event {
+  organizerId: string
   organizerName: string
   organizerEmail: string
-  venueName: string
-  city: string
-  startDate: string
-  status: 'draft' | 'published' | 'cancelled' | 'completed'
   ticketsSold: number
   totalRevenue: number
-  createdAt: string
 }
 
 export default function AdminEventsPage() {
-  const [events, setEvents] = useState<Event[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
+  // Store actions and state
+  const { 
+    events, 
+    isLoading, 
+    fetchEvents, 
+    totalCount,
+    page,
+    pageSize,
+    setPage,
+    setPageSize,
+    searchTerm,
+    statusFilter,
+    setSearchTerm,
+    setStatusFilter,
+  } = useEventStore()
+  
+  // Auth store for user info (admin)
+  const { user: adminUser } = useAuthStore()
+  
+  const [localEvents, setLocalEvents] = useState<AdminEvent[]>([])
   const [eventToCancel, setEventToCancel] = useState<Event | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
-  
-  // Pagination state
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
-  const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
+  
+  // Use deferred value for search optimization
+  const deferredSearchTerm = useDeferredValue(searchTerm)
 
-  // Fetch events on component mount or when page/pageSize changes
+  // Fetch events when page, pageSize, search, or status filter changes
   useEffect(() => {
     fetchEvents()
-  }, [page, pageSize])
+  }, [page, pageSize, deferredSearchTerm, statusFilter, fetchEvents])
+
+  // Calculate total pages when totalCount changes
+  useEffect(() => {
+    setTotalPages(Math.ceil(totalCount / pageSize) || 1)
+  }, [totalCount, pageSize])
+
+  // Map events to AdminEvent type with computed fields
+  useEffect(() => {
+    const mappedEvents: AdminEvent[] = events.map((event) => {
+      const organizerInfo = (event as any).organizer || {}
+      
+      return {
+        ...event,
+        organizerId: (event as any).organizerId || (event as any).organizer_id || '',
+        organizerName: organizerInfo.fullName || organizerInfo.full_name || 'Unknown Organizer',
+        organizerEmail: organizerInfo.email || 'No email provided',
+        ticketsSold: event.ticketStats?.totalSold || 0,
+        totalRevenue: event.ticketStats?.totalRevenue || 0,
+      }
+    })
+    setLocalEvents(mappedEvents)
+  }, [events])
 
   /**
-   * Fetch all events from API with pagination
-   */
-  const fetchEvents = async () => {
-    setLoading(true)
-    try {
-      const response = await api.get('/admin/events', {
-        params: {
-          page,
-          limit: pageSize,
-          search: searchTerm || undefined,
-          status: statusFilter !== 'all' ? statusFilter : undefined,
-        },
-      })
-      setEvents(response.data.events)
-      setTotalCount(response.data.total)
-      setTotalPages(response.data.totalPages || Math.ceil(response.data.total / pageSize))
-    } catch (error) {
-      toast.error('❌ Failed to load events')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  /**
-   * Filter events based on search term and status filter
-   */
-  const filteredEvents = events.filter((event) => {
-    const matchesSearch =
-      searchTerm === '' ||
-      event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.organizerName.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    const matchesStatus = statusFilter === 'all' || event.status === statusFilter
-    
-    return matchesSearch && matchesStatus
-  })
-
-  /**
-   * Cancel an event
+   * Cancel an event via admin API
    */
   const handleCancelEvent = async () => {
     if (!eventToCancel) return
@@ -160,7 +152,7 @@ export default function AdminEventsPage() {
     try {
       await api.put(`/admin/events/${eventToCancel.id}/cancel`)
       toast.success(`✅ "${eventToCancel.title}" cancelled successfully`)
-      fetchEvents()
+      await fetchEvents()
     } catch (error) {
       toast.error('❌ Failed to cancel event')
     } finally {
@@ -179,58 +171,87 @@ export default function AdminEventsPage() {
   }
 
   /**
-   * Get status badge for event with icon
+   * Get status badge for event with high-contrast font metrics
    */
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'published':
-        return <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
-          <CheckCircle className="h-3 w-3" />
-          Published ✅
-        </Badge>
+        return (
+          <Badge className="bg-emerald-100 text-emerald-900 font-bold flex items-center gap-1 border border-emerald-300 shadow-sm">
+            <CheckCircle className="h-3 w-3 text-emerald-700 fill-emerald-100" />
+            Published 
+          </Badge>
+        )
       case 'draft':
-        return <Badge variant="secondary" className="flex items-center gap-1">
-          <FileText className="h-3 w-3" />
-          Draft 📝
-        </Badge>
+        return (
+          <Badge variant="secondary" className="flex items-center gap-1 bg-amber-100 text-amber-950 font-bold border border-amber-300 shadow-sm">
+            <FileText className="h-3 w-3 text-amber-700 fill-amber-200" />
+            Draft 
+          </Badge>
+        )
       case 'cancelled':
-        return <Badge variant="destructive" className="flex items-center gap-1">
-          <XCircle className="h-3 w-3" />
-          Cancelled ❌
-        </Badge>
+        return (
+          <Badge variant="destructive" className="flex items-center gap-1 bg-red-100 text-red-950 font-bold border border-red-300 shadow-sm hover:bg-red-100">
+            <XCircle className="h-3 w-3 text-red-700" />
+            Cancelled
+          </Badge>
+        )
       case 'completed':
-        return <Badge className="bg-gray-100 text-gray-800 flex items-center gap-1">
-          <CheckCircle className="h-3 w-3" />
-          Completed 🏁
-        </Badge>
+        return (
+          <Badge className="bg-blue-100 text-blue-950 font-bold flex items-center gap-1 border border-blue-300 shadow-sm">
+            <CheckCircle className="h-3 w-3 text-blue-700" />
+            Completed
+          </Badge>
+        )
       default:
         return null
     }
   }
 
   // Loading skeleton
-  if (loading) {
+  if (isLoading && events.length === 0) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-6 w-64" />
+      <div className="space-y-6 max-w-7xl mx-auto p-4 bg-[#fcfaff] min-h-screen">
+        <Skeleton className="h-6 w-64 bg-purple-200/50" />
         <div>
-          <Skeleton className="h-8 w-48 mb-2" />
-          <Skeleton className="h-4 w-64" />
+          <Skeleton className="h-8 w-48 mb-2 bg-purple-200/50" />
+          <Skeleton className="h-4 w-64 bg-purple-200/50" />
         </div>
-        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full bg-purple-200/50" />
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-16 w-full" />
+            <Skeleton key={i} className="h-16 w-full bg-purple-200/50" />
           ))}
         </div>
-        <Skeleton className="h-12 w-full max-w-md mx-auto" />
+        <Skeleton className="h-12 w-full max-w-md mx-auto bg-purple-200/50" />
+      </div>
+    )
+  }
+
+  // Check if admin is authenticated
+  if (!adminUser || adminUser.role !== 'admin') {
+    return (
+      <div className="p-4 bg-[#fcfaff] min-h-screen flex items-center justify-center">
+        <Card className="text-center py-12 border-2 border-red-200 bg-white shadow-xl max-w-md w-full">
+          <CardContent>
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center border border-red-300">
+                <AlertCircle className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className="font-black text-xl text-gray-900 tracking-tight">Access Denied</h3>
+              <p className="text-gray-700 max-w-sm text-sm font-medium leading-relaxed">
+                You need administrative credentials and structural privileges to view this management platform module.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Breadcrumb */}
+    <div className="space-y-6 max-w-7xl mx-auto p-4 bg-[#fcfaff] min-h-screen text-gray-900">
+      {/* Breadcrumb Section */}
       <Breadcrumb 
         items={[
           { label: 'Admin', href: '/admin/users' },
@@ -239,161 +260,206 @@ export default function AdminEventsPage() {
         showHome
       />
 
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-primary/10 rounded-lg">
-          <CalendarDays className="h-6 w-6 text-primary" />
+      {/* Main Feature Dashboard Jumbotron Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600 p-6 rounded-2xl shadow-md text-white border border-purple-800">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-md border border-white/20 shadow-inner">
+            <CalendarDays className="h-8 w-8 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight">Event Management <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" > 📅</span> </h1>
+            <p className="text-purple-100 text-sm font-medium mt-0.5">
+              Supervise, review performance metrics, and moderate production events platform-wide.
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold">Event Management 📅</h1>
-          <p className="text-gray-500 mt-1">
-            View and manage all events across the platform
-          </p>
+        <div className="text-purple-950 text-sm font-bold bg-white px-4 py-2.5 rounded-xl shadow-md border border-purple-200">
+          Total Base: <span className="text-purple-700 font-extrabold text-base ml-1">{totalCount}</span> metrics accounts
         </div>
       </div>
 
-      {/* Search and Filter */}
-      <Card>
+      {/* Filter and Search Layout Grid */}
+      <Card className="border-2 border-purple-100 bg-white shadow-sm">
         <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-purple-600 z-10" />
               <Input
-                placeholder="🔍 Search by event title or organizer..."
+                placeholder="🔍 Search by event title or organizer details..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value)
                   setPage(1)
                 }}
-                className="pl-10"
+                className="pl-11 pr-4 py-6 text-gray-900 placeholder:text-gray-500 font-medium border-2 border-purple-100 focus-visible:border-purple-500 focus-visible:ring-purple-500 rounded-xl shadow-sm bg-white"
               />
             </div>
-            <Select value={statusFilter} onValueChange={(value) => {
-              setStatusFilter(value)
-              setPage(1)
-            }}>
-              <SelectTrigger className="w-full sm:w-48">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Events</SelectItem>
-                <SelectItem value="published">✅ Published</SelectItem>
-                <SelectItem value="draft">📝 Draft</SelectItem>
-                <SelectItem value="cancelled">❌ Cancelled</SelectItem>
-                <SelectItem value="completed">🏁 Completed</SelectItem>
-              </SelectContent>
-            </Select>
-            {(searchTerm || statusFilter !== 'all') && (
-              <Button variant="ghost" onClick={handleResetFilters} className="sm:w-auto">
-                Reset Filters ✕
-              </Button>
-            )}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Select value={statusFilter} onValueChange={(value) => {
+                setStatusFilter(value)
+                setPage(1)
+              }}>
+                <SelectTrigger className="w-full sm:w-52 py-6 border-2 border-purple-100 text-gray-900 font-bold focus:border-purple-500 focus:ring-purple-500 bg-white rounded-xl shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-purple-600" />
+                    <SelectValue placeholder="Filter by status" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="border-2 border-purple-100 bg-white font-semibold">
+                  <SelectItem value="all" className="text-gray-900">All Status Categories</SelectItem>
+                  <SelectItem value="published" className="text-emerald-950"> Published Events</SelectItem>
+                  <SelectItem value="draft" className="text-amber-950"> Draft Backlogs</SelectItem>
+                  <SelectItem value="cancelled" className="text-red-950"> Cancelled Buffers</SelectItem>
+                  <SelectItem value="completed" className="text-blue-950"> Completed Operations</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {(searchTerm || statusFilter !== 'all') && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleResetFilters} 
+                  className="border-2 border-red-200 text-red-700 font-bold hover:bg-red-50 hover:text-red-800 py-6 px-5 rounded-xl shadow-sm"
+                >
+                  Clear Filters ✕
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Result Count */}
-      <div className="text-sm text-gray-500 flex items-center gap-2">
-        <CalendarDays className="h-4 w-4" />
-        Showing {filteredEvents.length} of {totalCount} event{totalCount !== 1 ? 's' : ''}
+      {/* Dynamic Count Tracker Info Layer */}
+      <div className="text-sm text-gray-700 flex items-center gap-2 px-1 font-semibold">
+        <CalendarDays className="h-4 w-4 text-purple-600" />
+        Showing <span className="text-purple-700 font-black">{localEvents.length}</span> out of <span className="text-gray-900 font-black">{totalCount}</span> functional system queries
       </div>
 
-      {/* Events Table */}
-      <Card>
+      {/* Main Core Architecture Spreadsheet Table */}
+      <Card className="border border-purple-100 bg-white shadow-md rounded-2xl overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-purple-100/60 border-b border-purple-200">
                 <TableRow>
-                  <TableHead>📋 Event</TableHead>
-                  <TableHead>👤 Organizer</TableHead>
-                  <TableHead>📍 Venue</TableHead>
-                  <TableHead>📅 Date</TableHead>
-                  <TableHead>🎟️ Tickets</TableHead>
-                  <TableHead>💰 Revenue</TableHead>
-                  <TableHead>📊 Status</TableHead>
-                  <TableHead className="w-12"></TableHead>
+                  <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >📋 </span> Event Details</TableHead>
+                  <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >👤</span> Organizer Signature</TableHead>
+                  <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >📍</span> Venue / Hub</TableHead>
+                  <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >📅</span> Timestamp</TableHead>
+                  <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >🎟️</span> Tickets</TableHead>
+                  <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >💰</span> Gross Revenue</TableHead>
+                  <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >📊</span> Deployment</TableHead>
+                  <TableHead className="text-purple-950 font-black text-sm py-4 w-16 text-center"> <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >📌</span> Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredEvents.length === 0 ? (
+                {localEvents.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-12">
-                      <div className="flex flex-col items-center gap-2">
-                        <AlertCircle className="h-8 w-8 text-gray-400" />
-                        <p className="text-gray-500">No events found 📭</p>
+                    <TableCell colSpan={8} className="text-center py-16 bg-white">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center border-2 border-purple-100">
+                          <AlertCircle className="h-8 w-8 text-purple-600" />
+                        </div>
+                        <p className="text-gray-900 font-black text-lg">No matching records found <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" > 📭</span> </p>
+                        <p className="text-sm text-gray-600 font-medium max-w-sm leading-relaxed">
+                          {searchTerm || statusFilter !== 'all' 
+                            ? 'The filters applied yield zero query records. Adjust parameters to check alternate rows.' 
+                            : 'No events are registered on the host clusters yet.'}
+                        </p>
                         {(searchTerm || statusFilter !== 'all') && (
                           <Button
                             variant="link"
                             onClick={handleResetFilters}
+                            className="text-purple-700 font-bold underline decoration-2 hover:text-purple-900 mt-1"
                           >
-                            Clear filters
+                            Reset filters pipeline 
                           </Button>
                         )}
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredEvents.map((event) => (
-                    <TableRow key={event.id}>
-                      <TableCell>
+                  localEvents.map((event) => (
+                    <TableRow 
+                      key={event.id} 
+                      className="hover:bg-purple-50/50 border-b border-purple-100/60 transition-colors"
+                    >
+                      <TableCell className="py-4">
                         <div>
-                          <p className="font-medium">{event.title}</p>
-                          <p className="text-xs text-gray-500 font-mono">ID: {event.id.slice(0, 8)}</p>
+                          <p className="font-bold text-gray-900 text-base leading-snug">{event.title}</p>
+                          <p className="text-xs font-mono font-bold text-purple-700 mt-1">ID: {event.id.slice(0, 8)}</p>
+                          {event.capacityRange && (
+                            <div className="text-xs text-gray-700 font-semibold bg-gray-100 border border-gray-200 inline-block px-2 py-0.5 rounded-md mt-1.5">
+                              Capacity bounds: {event.capacityRange.lower} – {event.capacityRange.upper}
+                            </div>
+                          )}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-gray-400" />
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-2 bg-purple-100 border border-purple-200 rounded-xl shrink-0">
+                            <Users className="h-4 w-4 text-purple-700" />
+                          </div>
                           <div>
-                            <p className="text-sm">{event.organizerName}</p>
-                            <p className="text-xs text-gray-500">{event.organizerEmail}</p>
+                            <p className="text-sm font-bold text-gray-900">{event.organizerName}</p>
+                            <p className="text-xs font-semibold text-gray-600 mt-0.5">{event.organizerEmail}</p>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3 text-gray-400" />
-                          <span className="text-sm">{event.venueName}, {event.city}</span>
+                      <TableCell className="py-4">
+                        <div className="flex items-start gap-1.5 max-w-[180px]">
+                          <MapPin className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" />
+                          <span className="text-sm font-bold text-gray-800 leading-tight">
+                            {event.venue}, <span className="text-purple-950 font-black">{event.city}</span>
+                          </span>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3 text-gray-400" />
-                          <span className="text-sm">{formatDate(event.startDate)}</span>
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-4 w-4 text-purple-600 shrink-0" />
+                          <span className="text-sm font-bold text-gray-800">
+                            {formatDate(event.startDate)}
+                            <span className="block text-xs font-semibold text-gray-500 mt-0.5">
+                              {event.startTime}
+                            </span>
+                          </span>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <span className="font-medium">{event.ticketsSold.toLocaleString()}</span>
+                      <TableCell className="py-4">
+                        <span className="font-extrabold text-gray-900 bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-200 text-sm">
+                          {event.ticketsSold.toLocaleString()}
+                        </span>
                       </TableCell>
-                      <TableCell>
-                        <span className="font-medium text-green-600">
+                      <TableCell className="py-4">
+                        <span className="font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg text-sm">
                           {formatCurrency(event.totalRevenue)}
                         </span>
                       </TableCell>
-                      <TableCell>{getStatusBadge(event.status)}</TableCell>
-                      <TableCell>
+                      <TableCell className="py-4">{getStatusBadge(event.status)}</TableCell>
+                      <TableCell className="py-4 text-center">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              className="hover:bg-purple-100 text-gray-700 hover:text-purple-950 border border-transparent hover:border-purple-200 rounded-xl h-9 w-9"
+                            >
+                              <MoreVertical className="h-5 w-5" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" className="border-2 border-purple-100 bg-white p-1.5 rounded-xl shadow-lg min-w-[170px] font-bold">
                             <DropdownMenuItem asChild>
-                              <Link href={`/e/${event.id}`} target="_blank">
-                                <Eye className="h-4 w-4 mr-2" />
-                                👁️ View Event Page
+                              <Link href={`/e/${event.id}`} target="_blank" className="cursor-pointer flex items-center gap-2 p-2 rounded-lg text-gray-900 hover:bg-purple-50">
+                                <Eye className="h-4 w-4 text-purple-700" />
+                                 View Live Link
                               </Link>
                             </DropdownMenuItem>
                             {event.status !== 'cancelled' && event.status !== 'completed' && (
                               <DropdownMenuItem
                                 onClick={() => setEventToCancel(event)}
-                                className="text-red-600"
+                                className="text-red-700 cursor-pointer focus:bg-red-50 focus:text-red-800 flex items-center gap-2 p-2 rounded-lg mt-1"
                               >
-                                <XCircle className="h-4 w-4 mr-2" />
-                                ❌ Cancel Event
+                                <XCircle className="h-4 w-4 text-red-600" />
+                                 Cancel Event
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>
@@ -408,78 +474,91 @@ export default function AdminEventsPage() {
         </CardContent>
       </Card>
 
-      {/* Pagination */}
+      {/* Pagination Controller Container */}
       {totalPages > 1 && (
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
-          pageSizeOptions={[10, 25, 50, 100]}
-          totalItems={totalCount}
-          showFirstLast
-        />
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-purple-100">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[10, 25, 50, 100]}
+            totalItems={totalCount}
+            showFirstLast
+          />
+        </div>
       )}
 
-      {/* Stats Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
+      {/* High-Contrast Bottom Aggregated KPI Cards Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-2 border-purple-200 bg-white shadow-sm rounded-xl">
+          <CardContent className="pt-5 pb-5">
             <div className="text-center">
-              <CalendarDays className="h-6 w-6 text-primary mx-auto mb-2" />
-              <p className="text-2xl font-bold">{events.length}</p>
-              <p className="text-sm text-gray-500">Total Events 📋</p>
+              <CalendarDays className="h-7 w-7 text-purple-700 mx-auto mb-2" />
+              <p className="text-3xl font-black text-gray-900 tracking-tight">{localEvents.length}</p>
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Total Query Rows</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="border-2 border-emerald-300 bg-white shadow-sm rounded-xl">
+          <CardContent className="pt-5 pb-5">
             <div className="text-center">
-              <CheckCircle className="h-6 w-6 text-green-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-green-600">
-                {events.filter(e => e.status === 'published').length}
+              <CheckCircle className="h-7 w-7 text-emerald-700 mx-auto mb-2" />
+              <p className="text-3xl font-black text-emerald-700 tracking-tight">
+                {localEvents.filter(e => e.status === 'published').length}
               </p>
-              <p className="text-sm text-gray-500">Published ✅</p>
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Live Broadcasts </p>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="border-2 border-blue-300 bg-white shadow-sm rounded-xl">
+          <CardContent className="pt-5 pb-5">
             <div className="text-center">
-              <Ticket className="h-6 w-6 text-blue-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-blue-600">
-                {events.reduce((sum, e) => sum + e.ticketsSold, 0).toLocaleString()}
+              <Ticket className="h-7 w-7 text-blue-700 mx-auto mb-2" />
+              <p className="text-3xl font-black text-blue-900 tracking-tight">
+                {localEvents.reduce((sum, e) => sum + e.ticketsSold, 0).toLocaleString()}
               </p>
-              <p className="text-sm text-gray-500">Total Tickets Sold 🎟️</p>
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Receipt Indexes </p>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="border-2 border-amber-300 bg-white shadow-sm rounded-xl">
+          <CardContent className="pt-5 pb-5">
             <div className="text-center">
-              <DollarSign className="h-6 w-6 text-primary mx-auto mb-2" />
-              <p className="text-2xl font-bold text-primary">
-                {formatCurrency(events.reduce((sum, e) => sum + e.totalRevenue, 0))}
+              <DollarSign className="h-7 w-7 text-amber-700 mx-auto mb-2" />
+              <p className="text-3xl font-black text-amber-900 tracking-tight">
+                {formatCurrency(localEvents.reduce((sum, e) => sum + e.totalRevenue, 0))}
               </p>
-              <p className="text-sm text-gray-500">Total Revenue 💰</p>
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Combined Ledger </p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Cancel Events Dialog */}
+      {/* Structured Confirmation Dialog Box for Platform Moderation */}
       <ConfirmationDialog
         open={!!eventToCancel}
         onOpenChange={() => setEventToCancel(null)}
         onConfirm={handleCancelEvent}
-        title="❌ Cancel Event"
-        description={`Are you sure you want to cancel "${eventToCancel?.title}"? This action cannot be undone. Event will be marked as cancelled, no further ticket sales will be possible, ticket holders will be notified (if email notifications are enabled), and the event will be hidden from public listings.`}
-        confirmText="Yes, Cancel Event"
-        cancelText="Back"
+        title=" Cancel Platform Event Record"
+        description={`Are you absolutely sure you want to flag and cancel "${eventToCancel?.title}"? This process blocks future checkouts instantly and terminates tickets.`}
+        confirmText="Confirm Event Cancellation"
+        cancelText="Dismiss Action"
         variant="danger"
         isLoading={isProcessing}
-      />
+      >
+        <div className="mt-4 p-4 bg-gradient-to-br from-red-50 to-amber-50 rounded-xl border-2 border-red-200 shadow-sm">
+          <div className="flex items-center gap-2 text-red-900 mb-2">
+            <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-700" />
+            <span className="font-black text-sm">⚠️ High System Severity Notice</span>
+          </div>
+          <p className="text-xs text-red-950 font-bold leading-relaxed">
+            Cancelling this pipeline transaction halts payment gateways (MTN MoMo & Orange Money) directly. 
+            Archived logs will remain saved, but public entry gates will be hidden immediately.
+          </p>
+        </div>
+      </ConfirmationDialog>
     </div>
   )
 }

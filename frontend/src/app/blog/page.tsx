@@ -1,7 +1,7 @@
 /**
- * Blog Listing Page
+ * Blog Listing Page (Light Theme)
  * 
- * Displays 5 blog posts across 5 categories.
+ * Displays blog posts across structured categories following the premium landing page aesthetic.
  * 
  * @module BlogPage
  */
@@ -10,13 +10,13 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-// import Image from 'next/image'
-import { Calendar, User, Clock, Search } from 'lucide-react'
+import Image from 'next/image'
+import { Calendar, User, Clock, Search, ArrowRight, BookOpen, Layers } from 'lucide-react'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -34,9 +34,10 @@ interface BlogPost {
   publishedAt: string
   readTime: number
   category: string
+  gradient: string
 }
 
-// 5 Blog Posts - One per category
+// 5 Blog Posts - Updated with specific landing cover gradients
 const blogPosts: BlogPost[] = [
   {
     id: '1',
@@ -48,6 +49,7 @@ const blogPosts: BlogPost[] = [
     publishedAt: '2026-06-15T10:00:00Z',
     readTime: 5,
     category: 'Tutorial',
+    gradient: 'from-purple-500/10 to-indigo-500/5 border-purple-500/10',
   },
   {
     id: '2',
@@ -59,6 +61,7 @@ const blogPosts: BlogPost[] = [
     publishedAt: '2026-05-10T10:00:00Z',
     readTime: 4,
     category: 'Technology',
+    gradient: 'from-blue-500/10 to-indigo-500/5 border-blue-500/10',
   },
   {
     id: '3',
@@ -70,6 +73,7 @@ const blogPosts: BlogPost[] = [
     publishedAt: '2026-06-05T10:00:00Z',
     readTime: 6,
     category: 'Trends',
+    gradient: 'from-pink-500/10 to-purple-500/5 border-pink-500/10',
   },
   {
     id: '4',
@@ -81,6 +85,7 @@ const blogPosts: BlogPost[] = [
     publishedAt: '2026-06-01T10:00:00Z',
     readTime: 3,
     category: 'News',
+    gradient: 'from-emerald-500/10 to-teal-500/5 border-emerald-500/10',
   },
   {
     id: '5',
@@ -92,6 +97,7 @@ const blogPosts: BlogPost[] = [
     publishedAt: '2026-05-20T10:00:00Z',
     readTime: 8,
     category: 'Case Studies',
+    gradient: 'from-amber-500/10 to-orange-500/5 border-amber-500/10',
   },
 ]
 
@@ -107,7 +113,7 @@ export default function BlogPage() {
     const timer = setTimeout(() => {
       setPosts(blogPosts)
       setLoading(false)
-    }, 800)
+    }, 600)
     return () => clearTimeout(timer)
   }, [])
 
@@ -130,29 +136,18 @@ export default function BlogPage() {
     })
   }
 
-  const getCategoryEmoji = (category: string) => {
-    switch (category) {
-      case 'Tutorial': return '📚'
-      case 'Technology': return '💻'
-      case 'Trends': return '📈'
-      case 'News': return '📰'
-      case 'Case Studies': return '📊'
-      default: return '📝'
-    }
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <Skeleton className="h-8 w-48 mb-4" />
+      <div className="min-h-screen bg-slate-50">
+        <div className="container mx-auto px-4 py-16 max-w-5xl">
+          <Skeleton className="h-6 w-32 mb-8 mx-auto rounded-full" />
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5].map((i) => (
-              <Card key={i}>
-                <Skeleton className="h-48 w-full rounded-t-lg" />
-                <CardHeader>
-                  <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-full" />
+              <Card key={i} className="bg-white border-slate-200">
+                <Skeleton className="h-44 w-full rounded-t-2xl" />
+                <CardHeader className="space-y-2">
+                  <Skeleton className="h-5 w-1/4 rounded-full" />
+                  <Skeleton className="h-6 w-5/6" />
                 </CardHeader>
               </Card>
             ))}
@@ -163,67 +158,117 @@ export default function BlogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-primary/10 to-primary/5 py-16">
-        <div className="container mx-auto px-4">
-          <Breadcrumb 
-            items={[{ label: 'Blog', href: '#', isActive: true }]}
-            showHome
-          />
-          <div className="text-center mt-8">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">EventHub Blog 📝</h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Insights, tips, and news for event organizers in Cameroon
+    <div className="min-h-screen bg-slate-50 text-slate-800 antialiased selection:bg-purple-500/10 overflow-hidden relative">
+      
+      {/* Light Gradient Background Mesh Ambient Glows */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-purple-200/20 rounded-full blur-[130px] pointer-events-none z-0" />
+      <div className="absolute top-[300px] right-1/4 w-[700px] h-[700px] bg-blue-200/20 rounded-full blur-[150px] pointer-events-none z-0" />
+
+      {/* Hero Header Section */}
+      <div className="relative border-b border-slate-200/80 bg-gradient-to-b from-purple-50/60 via-indigo-50/40 to-transparent pt-12 pb-20 z-10">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="flex justify-center mb-8">
+            <Breadcrumb 
+              items={[{ label: 'Blog', href: '#', isActive: true }]}
+              showHome
+            />
+          </div>
+          
+          <div className="text-center space-y-6">
+            {/* Elegant Brand Logo Container */}
+            <div className="inline-flex relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-blue-400 rounded-3xl blur-md opacity-30 group-hover:opacity-60 transition-opacity duration-500" />
+              <div className="relative p-4 bg-white border border-slate-200 rounded-3xl shadow-xl shadow-slate-200/60">
+                <Image 
+                  src="/images/logo.svg" 
+                  alt="EventHub Brand Icon" 
+                  width={56} 
+                  height={56}
+                  className="w-14 h-14"
+                  priority
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <span className="text-xs font-bold uppercase tracking-widest bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Resources and Insights
+              </span>
+              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
+                The EventHub Blog
+              </h1>
+            </div>
+            
+            <p className="text-base sm:text-lg text-slate-600 max-w-xl mx-auto font-medium">
+              Expert guides, payment trends, and localized strategies built to support event growth inside Cameroon.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-12">
-        {/* Search and Filter */}
-        <div className="flex flex-col md:flex-row justify-between gap-4 mb-8">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="🔍 Search articles..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+      <div className="container mx-auto px-4 py-16 max-w-5xl relative z-10">
+        
+        {/* Search Input and Category Pills Navigation */}
+        <div className="space-y-6 mb-12">
+          <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+            
+            {/* Input Search Block */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="Search resources..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 h-11 bg-white border-slate-200 shadow-sm rounded-xl text-slate-800 placeholder:text-slate-400 focus-visible:ring-purple-500/20 focus-visible:border-purple-500"
+              />
+            </div>
+
+            {/* Total Count Flag */}
+            {filteredPosts.length > 0 && (
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-400 self-center px-1">
+                Showing {filteredPosts.length} post{filteredPosts.length !== 1 ? 's' : ''}
+              </div>
+            )}
           </div>
-          <div className="flex gap-2 flex-wrap">
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCategory(category)}
-                className="rounded-full"
-              >
-                {getCategoryEmoji(category)} {category}
-                {category !== 'All' && (
-                  <span className="ml-1 text-xs opacity-70">
-                    ({posts.filter(p => p.category === category).length})
+
+          {/* Dynamic Filtering Navigation Array */}
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none flex-wrap">
+            {categories.map((category) => {
+              const isActive = selectedCategory === category
+              const count = category === 'All' ? posts.length : posts.filter(p => p.category === category).length
+              
+              return (
+                <Button
+                  key={category}
+                  variant={isActive ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedCategory(category)}
+                  className={`rounded-full px-4 text-xs font-semibold h-8 transition-all ${
+                    isActive 
+                      ? 'bg-slate-900 text-white shadow-md' 
+                      : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-600'
+                  }`}
+                >
+                  <span>{category}</span>
+                  <span className={`ml-1.5 text-[10px] font-bold ${isActive ? 'text-purple-300' : 'text-slate-400'}`}>
+                    ({count})
                   </span>
-                )}
-              </Button>
-            ))}
+                </Button>
+              )
+            })}
           </div>
         </div>
 
-        {/* Results Count */}
-        {filteredPosts.length > 0 && (
-          <div className="text-sm text-gray-500 mb-4">
-            Found {filteredPosts.length} article{filteredPosts.length !== 1 ? 's' : ''}
-          </div>
-        )}
-
-        {/* Blog Grid */}
+        {/* Missing Query Empty Canvas Case */}
         {filteredPosts.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🔍</div>
-            <p className="text-gray-500">No posts found matching your criteria 📭</p>
+          <div className="text-center py-20 bg-white border border-slate-200 rounded-3xl shadow-xl shadow-slate-200/40 max-w-xl mx-auto space-y-4">
+            <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center mx-auto">
+              <Layers className="h-5 w-5 text-slate-400" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-bold text-slate-800 text-lg">No resources found</h3>
+              <p className="text-slate-500 text-sm max-w-xs mx-auto">We couldn&apos;t match any articles to your custom criteria parameters.</p>
+            </div>
             {(searchTerm || selectedCategory !== 'All') && (
               <Button
                 variant="link"
@@ -231,40 +276,49 @@ export default function BlogPage() {
                   setSearchTerm('')
                   setSelectedCategory('All')
                 }}
-                className="mt-2"
+                className="text-purple-600 font-semibold text-sm"
               >
-                Clear filters
+                Reset active search parameters
               </Button>
             )}
           </div>
         ) : (
+          
+          /* Core Grid Representation Matrix */
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPosts.map((post) => (
-              <Link href={`/blog/${post.slug}`} key={post.id}>
-                <Card className="h-full card-hover cursor-pointer">
-                  <div className="relative h-48 bg-gradient-to-br from-primary/20 to-primary/10 rounded-t-lg flex items-center justify-center">
-                    <span className="text-6xl">{getCategoryEmoji(post.category)}</span>
-                    <Badge className="absolute top-3 right-3 bg-white/90 text-gray-800">
-                      {getCategoryEmoji(post.category)} {post.category}
+              <Link href={`/blog/${post.slug}`} key={post.id} className="group">
+                <Card className="h-full bg-white border-slate-200/80 rounded-2xl overflow-hidden shadow-lg shadow-slate-200/40 transition-all duration-300 hover:-translate-y-1 hover:border-purple-500/30 flex flex-col">
+                  
+                  {/* Decorative Banner Top Placeholder */}
+                  <div className={`relative h-44 bg-gradient-to-br ${post.gradient} border-b flex items-center justify-center transition-all group-hover:opacity-90 overflow-hidden`}>
+                    <div className="absolute inset-0 bg-grid-slate-200 [mask-image:linear-gradient(0deg,white,transparent)]" />
+                    <BookOpen className="h-10 w-10 text-slate-400/100 fill-blue-500 absolute" />
+                    <Badge className="absolute top-4 left-4 bg-white/90 border border-slate-200/60 shadow-sm text-slate-700 font-bold hover:bg-white text-[10px] uppercase tracking-wider rounded-md">
+                      {post.category}
                     </Badge>
                   </div>
-                  <CardHeader>
-                    <CardTitle className="line-clamp-2">{post.title}</CardTitle>
-                    <div className="line-clamp-2 text-sm text-gray-600 mt-2">
+
+                  <CardHeader className="space-y-2 pt-6 flex-1">
+                    <CardTitle className="text-lg font-bold text-slate-900 tracking-tight leading-snug line-clamp-2 group-hover:text-purple-600 transition-colors">
+                      {post.title}
+                    </CardTitle>
+                    <CardDescription className="line-clamp-3 text-slate-600 text-xs md:text-sm leading-relaxed">
                       {post.excerpt}
-                    </div>
+                    </CardDescription>
                   </CardHeader>
-                  <CardFooter className="flex justify-between text-xs text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <User className="h-3 w-3" />
-                      <span>{post.author}</span>
+
+                  <CardFooter className="flex justify-between items-center text-[11px] font-semibold text-slate-400 border-t border-slate-100 pt-4 pb-5 px-6">
+                    <div className="flex items-center gap-1.5">
+                      <User className="h-3 w-3 text-slate-400" />
+                      <span className="text-slate-500">{post.author}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-3 w-3" />
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="h-3 w-3 text-slate-400" />
                       <span>{formatDate(post.publishedAt)}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-3 w-3" />
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="h-3 w-3 text-slate-400" />
                       <span>{post.readTime} min</span>
                     </div>
                   </CardFooter>

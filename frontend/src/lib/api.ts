@@ -52,6 +52,22 @@ api.interceptors.request.use(
   }
 )
 
+  const handleCoverUploadAction = async (file: File): Promise<string> => {
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+      
+      const response = await api.post<{ url: string }>('/api/v1/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      return response.data.url
+    } catch (error) {
+      toast.error('Failed to upload image asset')
+      throw error
+    }
+  }
+
+
 /**
  * Response Interceptor
  * Handles token refresh on 401 errors

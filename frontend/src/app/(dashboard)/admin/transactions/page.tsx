@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Admin Transactions Page
- * 
- * Allows admin to view all payment transactions across the platform.
+ * * Allows admin to view all payment transactions across the platform.
  * Features include:
  * - Search by transaction ID, attendee name, or email
  * - Filter by payment status and method
@@ -11,13 +11,12 @@
  * - Pagination for large transaction lists
  * - Breadcrumb navigation
  * - Confirmation dialog for refunds
- * 
- * @module AdminTransactionsPage
+ * * @module AdminTransactionsPage
  */
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useDeferredValue } from 'react'
 import {
   Search,
   Filter,
@@ -27,11 +26,11 @@ import {
   Clock,
   RefreshCw,
   AlertCircle,
-  Download,
   TrendingUp,
   Wallet,
   CreditCard,
   Smartphone,
+  ShieldAlert,
 } from 'lucide-react'
 
 // shadcn/ui components
@@ -106,13 +105,16 @@ export default function AdminTransactionsPage() {
   const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
 
-  // Fetch transactions on component mount or when page/pageSize changes
+  // Use deferred values to naturally debounce keystrokes on server round-trips
+  const deferredSearchTerm = useDeferredValue(searchTerm)
+
+  // Fetch from transaction pipeline whenever server criteria parameters shift
   useEffect(() => {
     fetchTransactions()
-  }, [page, pageSize])
+  }, [page, pageSize, deferredSearchTerm, statusFilter, methodFilter])
 
   /**
-   * Fetch all transactions from API with pagination
+   * Fetch all transactions from API with pagination and search context applied
    */
   const fetchTransactions = async () => {
     setLoading(true)
@@ -121,39 +123,23 @@ export default function AdminTransactionsPage() {
         params: {
           page,
           limit: pageSize,
-          search: searchTerm || undefined,
+          search: deferredSearchTerm || undefined,
           status: statusFilter !== 'all' ? statusFilter : undefined,
           method: methodFilter !== 'all' ? methodFilter : undefined,
         },
       })
-      setTransactions(response.data.transactions)
-      setTotalCount(response.data.total)
-      setTotalPages(response.data.totalPages || Math.ceil(response.data.total / pageSize))
+      setTransactions(response.data.transactions || [])
+      setTotalCount(response.data.total || 0)
+      setTotalPages(response.data.totalPages || Math.ceil((response.data.total || 0) / pageSize) || 1)
     } catch (error) {
-      toast.error('❌ Failed to load transactions')
+      toast.error('Failed to pull platform transactional history ledger')
     } finally {
       setLoading(false)
     }
   }
 
   /**
-   * Filter transactions based on search term and filters
-   */
-  const filteredTransactions = transactions.filter((transaction) => {
-    const matchesSearch =
-      searchTerm === '' ||
-      transaction.transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.attendeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.eventTitle.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    const matchesStatus = statusFilter === 'all' || transaction.status === statusFilter
-    const matchesMethod = methodFilter === 'all' || transaction.paymentMethod === methodFilter
-    
-    return matchesSearch && matchesStatus && matchesMethod
-  })
-
-  /**
-   * Refund a transaction
+   * Refund an audited payment lifecycle entry
    */
   const handleRefund = async () => {
     if (!transactionToRefund) return
@@ -161,10 +147,10 @@ export default function AdminTransactionsPage() {
     setIsProcessing(true)
     try {
       await api.post(`/admin/transactions/${transactionToRefund.transactionId}/refund`)
-      toast.success(`✅ Refund processed for ${transactionToRefund.attendeeName}`)
+      toast.success(`Refund processed for ${transactionToRefund.attendeeName}`)
       fetchTransactions()
     } catch (error) {
-      toast.error('❌ Failed to refund transaction')
+      toast.error('Failed to void or refund ledger transaction through vendor gateways')
     } finally {
       setIsProcessing(false)
       setTransactionToRefund(null)
@@ -172,7 +158,7 @@ export default function AdminTransactionsPage() {
   }
 
   /**
-   * Reset search and filters
+   * Reset filtering params back to zero parameters
    */
   const handleResetFilters = () => {
     setSearchTerm('')
@@ -182,77 +168,66 @@ export default function AdminTransactionsPage() {
   }
 
   /**
-   * Get status badge for transaction with icon
+   * Get status badge for transaction with distinct text colors matching light layouts
    */
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
-        return <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
-          <CheckCircle className="h-3 w-3" />
-          Paid ✅
-        </Badge>
+        return (
+          <Badge className="bg-emerald-50 text-emerald-900 border border-emerald-200/80 font-semibold shadow-none flex items-center gap-1 hover:bg-emerald-50">
+            <CheckCircle className="h-3 w-3 text-emerald-600" />
+            Paid
+          </Badge>
+        )
       case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800 flex items-center gap-1">
-          <Clock className="h-3 w-3" />
-          Pending ⏳
-        </Badge>
+        return (
+          <Badge className="bg-amber-50 text-amber-900 border border-amber-200/80 font-semibold shadow-none flex items-center gap-1 hover:bg-amber-50">
+            <Clock className="h-3 w-3 text-amber-600" />
+            Pending
+          </Badge>
+        )
       case 'failed':
-        return <Badge variant="destructive" className="flex items-center gap-1">
-          <XCircle className="h-3 w-3" />
-          Failed ❌
-        </Badge>
+        return (
+          <Badge className="bg-rose-50 text-rose-900 border border-rose-200/80 font-semibold shadow-none flex items-center gap-1 hover:bg-rose-50">
+            <XCircle className="h-3 w-3 text-rose-600" />
+            Failed
+          </Badge>
+        )
       case 'refunded':
-        return <Badge className="bg-gray-100 text-gray-800 flex items-center gap-1">
-          <RefreshCw className="h-3 w-3" />
-          Refunded 🔄
-        </Badge>
+        return (
+          <Badge className="bg-slate-100 text-slate-800 border border-slate-200 font-semibold shadow-none flex items-center gap-1 hover:bg-slate-100">
+            <RefreshCw className="h-3 w-3 text-slate-500" />
+            Refunded
+          </Badge>
+        )
       default:
         return null
     }
   }
 
   /**
-   * Get payment method badge with emoji
+   * Render distinct mobile payment merchant identifiers natively
    */
   const getMethodBadge = (method: string) => {
     if (method === 'mtn_momo') {
-      return <Badge className="bg-yellow-100 text-yellow-800 flex items-center gap-1">
-        <Smartphone className="h-3 w-3" />
-        MTN Momo 💛
-      </Badge>
+      return (
+        <Badge className="bg-amber-100/70 text-amber-950 border border-amber-200 font-semibold shadow-none flex items-center gap-1 hover:bg-amber-100/70">
+          <Smartphone className="h-3 w-3 text-amber-600" />
+          MTN MoMo
+        </Badge>
+      )
     }
-    return <Badge className="bg-orange-100 text-orange-800 flex items-center gap-1">
-      <Smartphone className="h-3 w-3" />
-      Orange Money 🧡
-    </Badge>
-  }
-
-  // Loading skeleton
-  if (loading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-6 w-64" />
-        <div className="flex justify-between items-center">
-          <div>
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-4 w-64" />
-          </div>
-          <Skeleton className="h-10 w-32" />
-        </div>
-        <Skeleton className="h-12 w-full" />
-        <div className="space-y-3">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-16 w-full" />
-          ))}
-        </div>
-        <Skeleton className="h-12 w-full max-w-md mx-auto" />
-      </div>
+      <Badge className="bg-orange-50 text-orange-950 border border-orange-200 font-semibold shadow-none flex items-center gap-1 hover:bg-orange-50">
+        <Smartphone className="h-3 w-3 text-orange-600" />
+        Orange Money
+      </Badge>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Breadcrumb */}
+    <div className="space-y-6 max-w-7xl mx-auto p-6 bg-slate-50/50 min-h-screen text-slate-900 antialiased">
+      {/* Breadcrumb Engine */}
       <Breadcrumb 
         items={[
           { label: 'Admin', href: '/admin/users' },
@@ -261,167 +236,202 @@ export default function AdminTransactionsPage() {
         showHome
       />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Wallet className="h-6 w-6 text-primary" />
+      {/* Header Panel Layout */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-slate-900 p-6 rounded-2xl shadow-sm text-white border border-slate-800">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-white/10 rounded-xl border border-white/15 shadow-inner backdrop-blur-md">
+            <Wallet className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Transaction History 💰</h1>
-            <p className="text-gray-500 mt-1">
-              View and manage all payment transactions on the platform
+            <h1 className="text-2xl font-extrabold tracking-tight">Transaction History</h1>
+            <p className="text-slate-400 text-xs font-medium mt-0.5">
+              Audit operational cash flows, track system revenues, and process manual refund overrides.
             </p>
           </div>
         </div>
-        <Button variant="outline" onClick={fetchTransactions}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh 🔄
+        <Button 
+          variant="outline" 
+          onClick={fetchTransactions}
+          className="bg-white/10 text-white border border-white/10 hover:bg-white/20 hover:text-white font-semibold h-10 px-4 rounded-xl shadow-sm backdrop-blur-sm w-full lg:w-auto"
+        >
+          <RefreshCw className="h-4 w-4 mr-2 text-slate-300" />
+          Refresh Ledger
         </Button>
       </div>
 
-      {/* Search and Filter */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+      {/* Inputs, Filters & Modifiers Container */}
+      <Card className="border-slate-200/80 bg-white shadow-sm rounded-2xl">
+        <CardContent className="p-5">
+          <div className="flex flex-col xl:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 z-10" />
               <Input
-                placeholder="🔍 Search by transaction ID, attendee name, or event..."
+                placeholder="Search entries by reference hash, client name, or event title..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value)
                   setPage(1)
                 }}
-                className="pl-10"
+                className="pl-9 pr-4 h-11 text-sm text-slate-900 placeholder:text-slate-400 font-medium border-slate-200 focus-visible:border-slate-400 focus-visible:ring-0 rounded-xl bg-white shadow-none"
               />
             </div>
-            <Select value={statusFilter} onValueChange={(value) => {
-              setStatusFilter(value)
-              setPage(1)
-            }}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Status 📊" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="paid">✅ Paid</SelectItem>
-                <SelectItem value="pending">⏳ Pending</SelectItem>
-                <SelectItem value="failed">❌ Failed</SelectItem>
-                <SelectItem value="refunded">🔄 Refunded</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={methodFilter} onValueChange={(value) => {
-              setMethodFilter(value)
-              setPage(1)
-            }}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Payment Method 💳" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Methods</SelectItem>
-                <SelectItem value="mtn_momo">💛 MTN Momo</SelectItem>
-                <SelectItem value="orange_money">🧡 Orange Money</SelectItem>
-              </SelectContent>
-            </Select>
-            {(searchTerm || statusFilter !== 'all' || methodFilter !== 'all') && (
-              <Button variant="ghost" onClick={handleResetFilters} className="sm:w-auto">
-                Reset Filters ✕
-              </Button>
-            )}
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Select value={statusFilter} onValueChange={(value) => {
+                setStatusFilter(value)
+                setPage(1)
+              }}>
+                <SelectTrigger className="w-full h-11 border-slate-200 text-slate-700 font-medium focus:border-slate-400 focus:ring-0 bg-white rounded-xl shadow-none">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Filter className="h-3.5 w-3.5 text-slate-400" />
+                    <SelectValue placeholder="Status" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="border-slate-200 bg-white font-medium">
+                  <SelectItem value="all">All Operations</SelectItem>
+                  <SelectItem value="paid">Settled (Paid)</SelectItem>
+                  <SelectItem value="pending">Processing (Pending)</SelectItem>
+                  <SelectItem value="failed">Aborted (Failed)</SelectItem>
+                  <SelectItem value="refunded">Charged-Back (Refunded)</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={methodFilter} onValueChange={(value) => {
+                setMethodFilter(value)
+                setPage(1)
+              }}>
+                <SelectTrigger className="w-full h-11 border-slate-200 text-slate-700 font-medium focus:border-slate-400 focus:ring-0 bg-white rounded-xl shadow-none">
+                  <div className="flex items-center gap-2 text-sm">
+                    <CreditCard className="h-3.5 w-3.5 text-slate-400" />
+                    <SelectValue placeholder="Payment Method" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="border-slate-200 bg-white font-medium">
+                  <SelectItem value="all">All Gateway Channels</SelectItem>
+                  <SelectItem value="mtn_momo">MTN MoMo Engine</SelectItem>
+                  <SelectItem value="orange_money">Orange Money Gateway</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {(searchTerm || statusFilter !== 'all' || methodFilter !== 'all') && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleResetFilters} 
+                  className="border-rose-200 text-rose-700 font-semibold hover:bg-rose-50 hover:text-rose-800 h-11 px-4 rounded-xl"
+                >
+                  Reset Pipelines
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Result Count */}
-      <div className="text-sm text-gray-500 flex items-center gap-2">
-        <CreditCard className="h-4 w-4" />
-        Showing {filteredTransactions.length} of {totalCount} transaction{totalCount !== 1 ? 's' : ''}
+      {/* Row Quantifier Metaspace */}
+      <div className="text-xs text-slate-500 flex items-center gap-2 px-1 font-medium">
+        <CreditCard className="h-3.5 w-3.5 text-slate-400" />
+        Tracking <span className="text-slate-800 font-semibold">{transactions.length}</span> nodes out of <span className="text-slate-800 font-semibold">{totalCount}</span> total pipeline hashes
       </div>
 
-      {/* Transaction Table */}
-      <Card>
+      {/* Transaction Records Structured Table Layout */}
+      <Card className="border border-slate-200/80 bg-white shadow-sm rounded-2xl overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-slate-50/70 border-b border-slate-200">
                 <TableRow>
-                  <TableHead>🔑 Transaction ID</TableHead>
-                  <TableHead>👤 Attendee</TableHead>
-                  <TableHead>📋 Event / Organizer</TableHead>
-                  <TableHead>💰 Amount</TableHead>
-                  <TableHead>💳 Method</TableHead>
-                  <TableHead>📅 Date</TableHead>
-                  <TableHead>📊 Status</TableHead>
-                  <TableHead className="w-12"></TableHead>
+                  <TableHead className="text-slate-700 font-bold text-xs py-3.5">Reference Hash</TableHead>
+                  <TableHead className="text-slate-700 font-bold text-xs py-3.5">Attendee Client</TableHead>
+                  <TableHead className="text-slate-700 font-bold text-xs py-3.5">Registered Context</TableHead>
+                  <TableHead className="text-slate-700 font-bold text-xs py-3.5">Gross Settlement</TableHead>
+                  <TableHead className="text-slate-700 font-bold text-xs py-3.5">Network Provider</TableHead>
+                  <TableHead className="text-slate-700 font-bold text-xs py-3.5">Entry Timestamp</TableHead>
+                  <TableHead className="text-slate-700 font-bold text-xs py-3.5">Gateway Status</TableHead>
+                  <TableHead className="w-12 py-3.5"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTransactions.length === 0 ? (
+                {loading && transactions.length === 0 ? (
+                  /* Fix internal loading paths cleanly inside the table domain */
+                  [1, 2, 3, 4, 5].map((i) => (
+                    <TableRow key={i} className="border-b border-slate-100">
+                      {Array.from({ length: 8 }).map((_, idx) => (
+                        <TableCell key={idx} className="py-4">
+                          <Skeleton className="h-5 w-24 bg-slate-200/60 rounded" />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : transactions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-12">
+                    <TableCell colSpan={8} className="text-center py-16 bg-white">
                       <div className="flex flex-col items-center gap-2">
-                        <AlertCircle className="h-8 w-8 text-gray-400" />
-                        <p className="text-gray-500">No transactions found 📭</p>
+                        <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-200/60">
+                          <AlertCircle className="h-5 w-5 text-slate-400" />
+                        </div>
+                        <p className="text-slate-900 font-bold text-base">No payments located in system registry</p>
+                        <p className="text-xs text-slate-500 font-medium max-w-sm leading-relaxed">
+                          No accounting ledger rows correspond to your filter inputs. Clear keywords to resume normal activity tracking.
+                        </p>
                         {(searchTerm || statusFilter !== 'all' || methodFilter !== 'all') && (
                           <Button
                             variant="link"
                             onClick={handleResetFilters}
+                            className="text-slate-900 text-xs font-semibold underline hover:text-slate-700 mt-1"
                           >
-                            Clear filters
+                            Flush Active Filters
                           </Button>
                         )}
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredTransactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell>
-                        <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">
-                          {transaction.transactionId.slice(0, 12)}...
+                  transactions.map((transaction) => (
+                    <TableRow key={transaction.id} className="hover:bg-slate-50/40 border-b border-slate-100 transition-colors">
+                      <TableCell className="py-3.5">
+                        <code className="text-xs font-mono font-medium text-slate-600 bg-slate-100 border border-slate-200/60 px-1.5 py-0.5 rounded">
+                          {transaction.transactionId ? `${transaction.transactionId.slice(0, 12)}...` : 'N/A'}
                         </code>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-3.5">
                         <div>
-                          <p className="font-medium">{transaction.attendeeName}</p>
-                          <p className="text-xs text-gray-500">{transaction.attendeePhone}</p>
+                          <p className="font-semibold text-slate-900 text-sm">{transaction.attendeeName}</p>
+                          <p className="text-xs text-slate-400 font-medium mt-0.5">{transaction.attendeePhone}</p>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="text-sm">{transaction.eventTitle}</p>
-                          <p className="text-xs text-gray-500">by {transaction.organizerName}</p>
+                      <TableCell className="py-3.5">
+                        <div className="max-w-[200px] md:max-w-xs">
+                          <p className="text-sm font-semibold text-slate-800 truncate">{transaction.eventTitle}</p>
+                          <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">by {transaction.organizerName}</p>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <span className="font-semibold text-green-600">
+                      <TableCell className="py-3.5">
+                        <span className="font-bold text-slate-900 text-sm">
                           {formatCurrency(transaction.amount)}
                         </span>
                       </TableCell>
-                      <TableCell>{getMethodBadge(transaction.paymentMethod)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3 text-gray-400" />
-                          <span className="text-sm">{formatDate(transaction.createdAt)}</span>
-                        </div>
+                      <TableCell className="py-3.5">{getMethodBadge(transaction.paymentMethod)}</TableCell>
+                      <TableCell className="py-3.5">
+                        <span className="text-slate-500 font-medium text-xs">
+                          {formatDate(transaction.createdAt)}
+                        </span>
                       </TableCell>
-                      <TableCell>{getStatusBadge(transaction.status)}</TableCell>
-                      <TableCell>
+                      <TableCell className="py-3.5">{getStatusBadge(transaction.status)}</TableCell>
+                      <TableCell className="py-3.5">
                         {transaction.status === 'paid' && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreVertical className="h-4 w-4" />
+                              <Button variant="ghost" size="icon" className="hover:bg-slate-100 h-8 w-8 rounded-lg">
+                                <MoreVertical className="h-4 w-4 text-slate-500" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
+                            <DropdownMenuContent align="end" className="bg-white border border-slate-200 font-medium shadow-sm rounded-xl">
                               <DropdownMenuItem
                                 onClick={() => setTransactionToRefund(transaction)}
-                                className="text-red-600"
+                                className="text-rose-600 focus:text-rose-700 focus:bg-rose-50 cursor-pointer py-1.5 text-xs font-semibold"
                               >
-                                <RefreshCw className="h-4 w-4 mr-2" />
-                                Refund Payment 🔄
+                                <RefreshCw className="h-3.5 w-3.5 mr-2 text-rose-500" />
+                                Refund Payment
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -436,113 +446,120 @@ export default function AdminTransactionsPage() {
         </CardContent>
       </Card>
 
-      {/* Pagination */}
+      {/* Pagination Module Control Segment */}
       {totalPages > 1 && (
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
-          pageSizeOptions={[10, 25, 50, 100]}
-          totalItems={totalCount}
-          showFirstLast
-        />
+        <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-200/80">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[10, 25, 50, 100]}
+            totalItems={totalCount}
+            showFirstLast
+          />
+        </div>
       )}
 
-      {/* Stats Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <CreditCard className="h-6 w-6 text-primary mx-auto mb-2" />
-              <p className="text-2xl font-bold">{transactions.length}</p>
-              <p className="text-sm text-gray-500">Total Transactions 📊</p>
+      {/* Macro Metric Summaries Block Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-slate-200 bg-white shadow-sm rounded-2xl">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-2xl font-extrabold text-slate-900 tracking-tight">{totalCount.toLocaleString()}</p>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Total Logs</p>
             </div>
+            <CreditCard className="h-6 w-6 text-slate-400 shrink-0" />
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <CheckCircle className="h-6 w-6 text-green-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-green-600">
+        
+        <Card className="border-slate-200 bg-white shadow-sm rounded-2xl">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-2xl font-extrabold text-emerald-800 tracking-tight">
                 {transactions.filter(t => t.status === 'paid').length}
               </p>
-              <p className="text-sm text-gray-500">Successful Payments ✅</p>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Cleared Actions</p>
             </div>
+            <CheckCircle className="h-6 w-6 text-emerald-600 shrink-0" />
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <TrendingUp className="h-6 w-6 text-primary mx-auto mb-2" />
-              <p className="text-2xl font-bold text-primary">
+
+        <Card className="border-slate-200 bg-white shadow-sm rounded-2xl">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xl font-extrabold text-slate-900 truncate max-w-[160px] tracking-tight">
                 {formatCurrency(transactions.filter(t => t.status === 'paid').reduce((sum, t) => sum + t.amount, 0))}
               </p>
-              <p className="text-sm text-gray-500">Total Revenue 💰</p>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Gross Yield</p>
             </div>
+            <TrendingUp className="h-6 w-6 text-indigo-600 shrink-0" />
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="flex justify-center gap-2 mb-2">
-                <Smartphone className="h-5 w-5 text-yellow-600" />
-                <span className="text-sm">+</span>
-                <Smartphone className="h-5 w-5 text-orange-600" />
-              </div>
-              <p className="text-2xl font-bold text-amber-600">
+
+        <Card className="border-slate-200 bg-white shadow-sm rounded-2xl">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-2xl font-extrabold text-slate-900 tracking-tight">
                 {transactions.filter(t => t.paymentMethod === 'mtn_momo').length}
-                <span className="text-sm text-gray-500 mx-1">/</span>
+                <span className="text-xs font-normal text-slate-300 mx-1">/</span>
                 {transactions.filter(t => t.paymentMethod === 'orange_money').length}
               </p>
-              <p className="text-sm text-gray-500">MTN Momo / Orange Money 💛🧡</p>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">MoMo / Orange</p>
+            </div>
+            <div className="flex flex-col gap-0.5 opacity-60 shrink-0">
+              <Smartphone className="h-3.5 w-3.5 text-amber-600" />
+              <Smartphone className="h-3.5 w-3.5 text-orange-600" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Refund Confirmation Dialog */}
-  
+      {/* Refund Management Portal Interstitial Dialog */}
       <ConfirmationDialog
         open={!!transactionToRefund}
         onOpenChange={() => setTransactionToRefund(null)}
         onConfirm={handleRefund}
-        title="🔄 Refund Payment"
-        description={`Are you sure you want to refund this payment to ${transactionToRefund?.attendeeName}?`}
-        confirmText="Yes, Refund Payment"
-        cancelText="Cancel"
+        title="Refund Platform Transaction"
+        description={`Are you absolutely sure you want to initialize a reverse-ledger execution to ${transactionToRefund?.attendeeName}?`}
+        confirmText="Confirm Reversal Payment"
+        cancelText="Abort Operation"
         variant="warning"
         isLoading={isProcessing}
       >
-        <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
-          <div className="flex items-center gap-2 text-amber-700 mb-2">
-            <AlertCircle className="h-4 w-4" />
-            <span className="font-medium">Warning! This action is permanent.</span>
+        <div className="mt-3 p-4 bg-amber-50/50 rounded-xl border border-amber-200 text-slate-900 text-sm font-medium">
+          <div className="flex items-center gap-2 text-amber-900 font-bold mb-3 text-xs uppercase tracking-wider">
+            <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0" />
+            <span>Reverse settlement loops are immutable</span>
           </div>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between py-1">
-              <span className="text-gray-600">Transaction ID:</span>
-              <code className="text-xs font-mono">{transactionToRefund?.transactionId}</code>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between items-center py-1 border-b border-amber-200/40">
+              <span className="text-slate-500">Reference Token:</span>
+              <code className="font-mono font-semibold text-slate-900 bg-white border border-slate-200 px-1 py-0.5 rounded">
+                {transactionToRefund?.transactionId}
+              </code>
             </div>
-            <div className="flex justify-between py-1">
-              <span className="text-gray-600">Attendee:</span>
-              <span>{transactionToRefund?.attendeeName}</span>
+            <div className="flex justify-between items-center py-1 border-b border-amber-200/40">
+              <span className="text-slate-500">Recipient Account:</span>
+              <span className="font-semibold text-slate-900">{transactionToRefund?.attendeeName}</span>
             </div>
-            <div className="flex justify-between py-1">
-              <span className="text-gray-600">Amount:</span>
-              <span className="font-semibold text-red-600">{formatCurrency(transactionToRefund?.amount || 0)}</span>
+            <div className="flex justify-between items-center py-1 border-b border-amber-200/40">
+              <span className="text-slate-500">Reversal Amount:</span>
+              <span className="font-bold text-rose-700 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded">
+                -{formatCurrency(transactionToRefund?.amount || 0)}
+              </span>
             </div>
-            <div className="flex justify-between py-1">
-              <span className="text-gray-600">Event:</span>
-              <span>{transactionToRefund?.eventTitle}</span>
+            <div className="flex justify-between items-center py-1">
+              <span className="text-slate-500">Event Context:</span>
+              <span className="font-semibold text-slate-900 max-w-[180px] truncate">{transactionToRefund?.eventTitle}</span>
             </div>
-            <div className="border-t pt-2 mt-2 text-red-600">
-              <p>⚠️ Refunding will:</p>
-              <ul className="list-disc list-inside ml-2 text-xs">
-                <li>Mark the ticket as invalid</li>
-                <li>Prevent check-in access</li>
-                <li>This action cannot be reversed</li>
+            <div className="border-t border-dashed border-rose-200 pt-2.5 mt-2 text-rose-900 bg-rose-50/40 p-2 rounded-lg border border-rose-100">
+              <p className="font-bold mb-1">Associated Automations Lifecycle Impact:</p>
+              <ul className="list-disc list-inside space-y-0.5 text-rose-900/80 font-medium">
+                <li>Cryptographic validation barcodes on entry tickets instantly decay</li>
+                <li>Physical attendance hardware checkpoints systematically reject access</li>
+                <li>Reversal operations can never be natively re-authorized or rolled back</li>
               </ul>
             </div>
           </div>

@@ -1,16 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Admin Users Management Page
- * 
- * Allows admin to view, search, filter, verify, and suspend organizer accounts.
- * Features include:
- * - Search by name, email, or phone
- * - Filter by verification status
- * - Batch actions (verify/suspend selected)
- * - Individual user actions
- * - Pagination for large user lists
- * - Breadcrumb navigation
- * - Confirmation dialogs for actions
- * 
+ * Allows admin to view, search, filter, verify, and suspend organizer accounts safely.
  * @module AdminUsersPage
  */
 
@@ -30,15 +21,13 @@ import {
   Users,
   UserCheck,
   UserX,
+  RotateCcw,
 } from 'lucide-react'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  Card,
-  CardContent,
-} from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -62,6 +51,7 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Checkbox } from '@/components/ui/checkbox'
 
 // Custom components
 import { Breadcrumb } from '@/components/common/Breadcrumb'
@@ -86,24 +76,47 @@ interface User {
   createdAt: string
 }
 
+interface SystemStats {
+  total: number
+  verified: number
+  suspended: number
+}
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set())
   const [userToSuspend, setUserToSuspend] = useState<User | null>(null)
   const [userToVerify, setUserToVerify] = useState<User | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   
+  // Batch processing confirmation guards
+  const [showBatchVerifyDialog, setShowBatchVerifyDialog] = useState(false)
+  const [showBatchSuspendDialog, setShowBatchSuspendDialog] = useState(false)
+
+  // System-wide Global Counters (instead of local array filtering)
+  const [stats, setStats] = useState<SystemStats>({ total: 0, verified: 0, suspended: 0 })
+  
   // Pagination state
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
-  const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
 
+  // Debounce search term input changes
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+      setPage(1) // Reset page back to index head on query manipulation
+    }, 400)
+
+    return () => clearTimeout(handler)
+  }, [searchTerm])
+
   /**
-   * Fetch all users from API with pagination
+   * Fetch users from API with pagination parameters and search vectors
    */
   const fetchUsers = useCallback(async () => {
     setLoading(true)
@@ -112,62 +125,49 @@ export default function AdminUsersPage() {
         params: {
           page,
           limit: pageSize,
+          search: debouncedSearch || undefined,
+          status: statusFilter !== 'all' ? statusFilter : undefined,
         },
       })
-      setUsers(response.data.users)
-      setTotalCount(response.data.total)
-      setTotalPages(response.data.totalPages || Math.ceil(response.data.total / pageSize))
+      
+      if (response.data) {
+        setUsers(response.data.users || [])
+        setTotalPages(response.data.totalPages || Math.ceil((response.data.total || 0) / pageSize))
+        
+        // Dynamic fallback mapping for platform-wide metrics returned from server response orchestration context
+        setStats({
+          total: response.data.total || 0,
+          verified: response.data.totalVerified || 0, 
+          suspended: response.data.totalSuspended || 0,
+        })
+      }
     } catch (error) {
       console.error('Failed to load users:', error)
-      toast.error('❌ Failed to load users')
+      toast.error('❌ Request failed: Admin records could not be fetched')
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize])
+  }, [page, pageSize, debouncedSearch, statusFilter])
 
-  // Fetch users on component mount or when page/pageSize changes
+  // Clear tracking matrices across selection mutations to prevent state reference drifting
+  useEffect(() => {
+    setSelectedUsers(new Set())
+  }, [page, pageSize, statusFilter])
+
   useEffect(() => {
     fetchUsers()
   }, [fetchUsers])
 
-  /**
-   * Filter users based on search term and status filter (client-side after fetch)
-   */
-  const filteredUsers = users.filter((user) => {
-    // Search filter
-    const matchesSearch =
-      searchTerm === '' ||
-      user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.phone.includes(searchTerm)
+  const filterableUsers = users.filter((user) => user.role !== 'admin')
 
-    // Status filter
-    let matchesStatus = true
-    if (statusFilter === 'verified') {
-      matchesStatus = user.isEmailVerified && user.isActive
-    } else if (statusFilter === 'pending') {
-      matchesStatus = !user.isEmailVerified
-    } else if (statusFilter === 'suspended') {
-      matchesStatus = !user.isActive
-    }
-
-    return matchesSearch && matchesStatus
-  })
-
-  /**
-   * Handle select/deselect all users
-   */
   const handleSelectAll = () => {
-    if (selectedUsers.size === filteredUsers.length) {
+    if (selectedUsers.size === filterableUsers.length && filterableUsers.length > 0) {
       setSelectedUsers(new Set())
     } else {
-      setSelectedUsers(new Set(filteredUsers.map((u) => u.id)))
+      setSelectedUsers(new Set(filterableUsers.map((u) => u.id)))
     }
   }
 
-  /**
-   * Handle select/deselect single user
-   */
   const handleSelectUser = (userId: string) => {
     const newSelected = new Set(selectedUsers)
     if (newSelected.has(userId)) {
@@ -178,158 +178,141 @@ export default function AdminUsersPage() {
     setSelectedUsers(newSelected)
   }
 
-  /**
-   * Verify a user (mark email as verified)
-   */
   const handleVerifyUser = async () => {
     if (!userToVerify) return
-    
     setIsProcessing(true)
     try {
       await api.put(`/admin/users/${userToVerify.id}/verify`)
-      toast.success(`✅ ${userToVerify.fullName} verified successfully`)
+      toast.success(`✅ Profile for ${userToVerify.fullName} verified successfully`)
       fetchUsers()
     } catch (error) {
       console.error('Failed to verify user:', error)
-      toast.error('❌ Failed to verify user')
+      toast.error('❌ Request failed: Target identity verification update rejected')
     } finally {
       setIsProcessing(false)
       setUserToVerify(null)
     }
   }
 
-  /**
-   * Suspend a user
-   */
   const handleSuspendUser = async () => {
     if (!userToSuspend) return
-    
     setIsProcessing(true)
     try {
       await api.put(`/admin/users/${userToSuspend.id}/suspend`)
-      toast.success(`⛔ ${userToSuspend.fullName} suspended successfully`)
+      toast.success(`⛔ Access context for ${userToSuspend.fullName} suspended successfully`)
       fetchUsers()
     } catch (error) {
       console.error('Failed to suspend user:', error)
-      toast.error('❌ Failed to suspend user')
+      toast.error('❌ Request failed: Context suspension command dropped')
     } finally {
       setIsProcessing(false)
       setUserToSuspend(null)
     }
   }
 
-  /**
-   * Restore a suspended user
-   */
   const handleRestoreUser = async (userId: string) => {
     setIsProcessing(true)
     try {
       await api.put(`/admin/users/${userId}/unsuspend`)
-      toast.success(`✅ User restored successfully`)
+      toast.success(`✅ Account permission levels cleared and active access restored`)
       fetchUsers()
     } catch (error) {
       console.error('Failed to restore user:', error)
-      toast.error('❌ Failed to restore user')
+      toast.error('❌ Request failed: Target active structural reset failed')
     } finally {
       setIsProcessing(false)
     }
   }
 
-  /**
-   * Batch verify selected users
-   */
   const handleBatchVerify = async () => {
     if (selectedUsers.size === 0) return
     setIsProcessing(true)
     try {
       await api.post('/admin/users/batch-verify', { userIds: Array.from(selectedUsers) })
-      toast.success(`✅ ${selectedUsers.size} users verified successfully`)
+      toast.success(`✅ Parameters verified for ${selectedUsers.size} accounts`)
       setSelectedUsers(new Set())
       fetchUsers()
     } catch (error) {
       console.error('Failed to batch verify users:', error)
-      toast.error('❌ Failed to verify users')
+      toast.error('❌ Request failed: Batch execution sequence tracking error')
     } finally {
       setIsProcessing(false)
+      setShowBatchVerifyDialog(false)
     }
   }
 
-  /**
-   * Batch suspend selected users
-   */
   const handleBatchSuspend = async () => {
     if (selectedUsers.size === 0) return
     setIsProcessing(true)
     try {
       await api.post('/admin/users/batch-suspend', { userIds: Array.from(selectedUsers) })
-      toast.success(`⛔ ${selectedUsers.size} users suspended successfully`)
+      toast.success(`⛔ Access constraints configured successfully across ${selectedUsers.size} records`)
       setSelectedUsers(new Set())
       fetchUsers()
     } catch (error) {
       console.error('Failed to batch suspend users:', error)
-      toast.error('❌ Failed to suspend users')
+      toast.error('❌ Request failed: Mass modification script failure state')
     } finally {
       setIsProcessing(false)
+      setShowBatchSuspendDialog(false)
     }
   }
 
-  /**
-   * Reset search and filters
-   */
   const handleResetFilters = () => {
     setSearchTerm('')
+    setDebouncedSearch('')
     setStatusFilter('all')
     setPage(1)
   }
 
-  /**
-   * Get status badge for user
-   */
   const getStatusBadge = (user: User) => {
     if (!user.isActive) {
-      return <Badge variant="destructive" className="flex items-center gap-1">
-        <XCircle className="h-3 w-3" />
-        Suspended
-      </Badge>
+      return (
+        <Badge variant="destructive" className="flex items-center gap-1.5 font-bold tracking-wide rounded-md px-2.5 py-0.5">
+          <XCircle className="h-3 w-3 shrink-0" />
+          Suspended
+        </Badge>
+      )
     }
     if (user.isEmailVerified) {
-      return <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
-        <CheckCircle className="h-3 w-3" />
-        Verified
-      </Badge>
+      return (
+        <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm hover:bg-emerald-50 flex items-center gap-1.5 font-bold tracking-wide rounded-md px-2.5 py-0.5">
+          <CheckCircle className="h-3 w-3 text-emerald-600 shrink-0" />
+          Verified
+        </Badge>
+      )
     }
-    return <Badge variant="secondary" className="flex items-center gap-1">
-      <AlertCircle className="h-3 w-3" />
-      Pending
-    </Badge>
+    return (
+      <Badge variant="secondary" className="flex items-center gap-1.5 font-bold text-slate-700 tracking-wide rounded-md px-2.5 py-0.5">
+        <AlertCircle className="h-3 w-3 text-amber-500 shrink-0" />
+        Pending
+      </Badge>
+    )
   }
 
-  // Loading skeleton
-  if (loading) {
+  if (loading && users.length === 0) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-6 w-64" />
-        <div className="flex justify-between items-center">
-          <div>
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-4 w-64" />
+      <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6">
+        <Skeleton className="h-5 w-48 bg-slate-200 rounded-md" />
+        <div className="flex justify-between items-center flex-wrap gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64 bg-slate-200 rounded-lg" />
+            <Skeleton className="h-4 w-80 bg-slate-200 rounded-md" />
           </div>
-          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-10 w-40 bg-slate-200 rounded-xl" />
         </div>
-        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-20 w-full bg-slate-200 rounded-2xl" />
         <div className="space-y-3">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-16 w-full" />
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-16 w-full bg-slate-200 rounded-xl" />
           ))}
         </div>
-        <Skeleton className="h-12 w-full max-w-md mx-auto" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Breadcrumb */}
+    <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 text-slate-900">
       <Breadcrumb 
         items={[
           { label: 'Admin', href: '/admin/users' },
@@ -338,216 +321,242 @@ export default function AdminUsersPage() {
         showHome
       />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Shield className="h-6 w-6 text-primary" />
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-slate-100 pb-5 bg-gradient-br from-blue-500 via-indigo-500 to-purple-500">
+        <div className="flex items-center gap-3.5">
+          <div className="p-2.5 bg-purple-300 rounded-xl border border-purple-400 shadow-sm">
+            <Shield className="h-6 w-6 text-purple-700" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">User Management 👥</h1>
-            <p className="text-gray-500 mt-1">
-              Manage all organizer accounts on the platform
+            <h1 className="text-2xl font-black tracking-tight text-slate-950">User Management 👥</h1>
+            <p className="text-slate-500 font-medium text-sm mt-0.5">
+              Overview operational matrices and configurations across systemic platform organizers.
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2.5 w-full lg:w-auto">
           {selectedUsers.size > 0 && (
             <>
               <Button
                 variant="outline"
-                onClick={handleBatchVerify}
+                onClick={() => setShowBatchVerifyDialog(true)}
                 disabled={isProcessing}
-                className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 font-bold rounded-xl shadow-sm transition-colors text-xs"
               >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Verify Selected ({selectedUsers.size})
+                <CheckCircle className="h-4 w-4 mr-1.5 text-emerald-600" />
+                Verify Targets ({selectedUsers.size})
               </Button>
               <Button
                 variant="outline"
-                onClick={handleBatchSuspend}
+                onClick={() => setShowBatchSuspendDialog(true)}
                 disabled={isProcessing}
-                className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100 font-bold rounded-xl shadow-sm transition-colors text-xs"
               >
-                <XCircle className="h-4 w-4 mr-2" />
-                Suspend Selected ({selectedUsers.size})
+                <XCircle className="h-4 w-4 mr-1.5 text-red-600" />
+                Suspend Targets ({selectedUsers.size})
               </Button>
             </>
           )}
         </div>
       </div>
 
-      {/* Search and Filter */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+      <Card className="border border-slate-200 rounded-2xl shadow-sm overflow-hidden bg-white">
+        <CardContent className="p-5">
+          <div className="flex flex-col md:flex-row gap-3.5">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
-                placeholder="🔍 Search by name, email, or phone..."
+                placeholder="🔍 Track fields by specific profile names, emails, routing contact links..."
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value)
-                  setPage(1)
-                }}
-                className="pl-10"
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-11 rounded-xl bg-slate-50 border-slate-200 text-sm font-medium placeholder:text-slate-400 focus-visible:bg-white"
               />
             </div>
-            <Select value={statusFilter} onValueChange={(value) => {
-              setStatusFilter(value)
-              setPage(1)
-            }}>
-              <SelectTrigger className="w-full sm:w-48">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Users</SelectItem>
-                <SelectItem value="verified">✅ Verified Only</SelectItem>
-                <SelectItem value="pending">⏳ Pending Verification</SelectItem>
-                <SelectItem value="suspended">⛔ Suspended</SelectItem>
-              </SelectContent>
-            </Select>
-            {(searchTerm || statusFilter !== 'all') && (
-              <Button variant="ghost" onClick={handleResetFilters} className="sm:w-auto">
-                Reset Filters ✕
-              </Button>
-            )}
+            <div className="flex flex-wrap sm:flex-nowrap gap-2.5">
+              <Select value={statusFilter} onValueChange={(value) => {
+                setStatusFilter(value)
+                setPage(1)
+              }}>
+                <SelectTrigger className="w-full sm:w-52 h-11 border-slate-200 bg-slate-50 rounded-xl text-sm font-semibold text-slate-700">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-slate-500 shrink-0" />
+                    <SelectValue placeholder="Filter by status" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl bg-white">
+                  <SelectItem value="all" className="font-medium text-slate-800">All System Accounts</SelectItem>
+                  <SelectItem value="verified" className="font-medium text-slate-800"> Verified Profiles Only</SelectItem>
+                  <SelectItem value="pending" className="font-medium text-slate-800"> Pending Validations</SelectItem>
+                  <SelectItem value="suspended" className="font-medium text-slate-800"> Suspended Segments</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {(searchTerm || statusFilter !== 'all') && (
+                <Button 
+                  variant="ghost" 
+                  onClick={handleResetFilters} 
+                  className="h-11 rounded-xl text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 px-4 shrink-0"
+                >
+                  <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                  Reset Configuration Options
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Result Count */}
-      <div className="text-sm text-gray-500 flex items-center gap-2">
-        <Users className="h-4 w-4" />
-        Showing {filteredUsers.length} of {totalCount} user{totalCount !== 1 ? 's' : ''}
+      <div className="text-xs text-slate-500 font-bold tracking-wide uppercase flex items-center gap-1.5 px-1">
+        <Users className="h-4 w-4 text-purple-600" />
+        Evaluation Space Includes: {users.length} Mapped Page Nodes of {stats.total} Profile Records Total
       </div>
 
-      {/* Users table */}
-      <Card>
+      <Card className="border border-slate-200 rounded-2xl shadow-sm overflow-hidden bg-white">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-slate-50/70 border-b border-slate-100">
                 <TableRow>
-                  <TableHead className="w-12">
-                    <input
-                      type="checkbox"
-                      checked={selectedUsers.size === filteredUsers.length && filteredUsers.length > 0}
-                      onChange={handleSelectAll}
-                      className="rounded border-gray-300"
-                    />
+                  <TableHead className="w-12 px-4 py-3.5">
+                    <div className="flex items-center h-5">
+                      <Checkbox
+                        id="select-all-checkbox"
+                        checked={selectedUsers.size === filterableUsers.length && filterableUsers.length > 0}
+                        onCheckedChange={handleSelectAll}
+                        disabled={filterableUsers.length === 0}
+                      />
+                    </div>
                   </TableHead>
-                  <TableHead>👤 User</TableHead>
-                  <TableHead>📧 Contact</TableHead>
-                  <TableHead>🎟️ Events</TableHead>
-                  <TableHead>📊 Status</TableHead>
-                  <TableHead>📅 Joined</TableHead>
-                  <TableHead className="w-12"></TableHead>
+                  <TableHead className="font-bold text-slate-700 text-xs uppercase tracking-wider py-3.5">👤 Operator Identity Details</TableHead>
+                  <TableHead className="font-bold text-slate-700 text-xs uppercase tracking-wider py-3.5">📧 Communication Routing Channels</TableHead>
+                  <TableHead className="font-bold text-slate-700 text-xs uppercase tracking-wider py-3.5">🎟️ Associated Events</TableHead>
+                  <TableHead className="font-bold text-slate-700 text-xs uppercase tracking-wider py-3.5">📊 Verified Matrix State</TableHead>
+                  <TableHead className="font-bold text-slate-700 text-xs uppercase tracking-wider py-3.5">📅 Origin Date Index</TableHead>
+                  <TableHead className="w-12 py-3.5"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.length === 0 ? (
+                {users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12">
-                      <div className="flex flex-col items-center gap-2">
-                        <AlertCircle className="h-8 w-8 text-gray-400" />
-                        <p className="text-gray-500">No users found 📭</p>
-                        {(searchTerm || statusFilter !== 'all') && (
-                          <Button
-                            variant="link"
-                            onClick={handleResetFilters}
-                          >
-                            Clear filters
-                          </Button>
-                        )}
+                    <TableCell colSpan={7} className="text-center py-16 bg-slate-50/20">
+                      <div className="flex flex-col items-center justify-center max-w-sm mx-auto space-y-3">
+                        <div className="p-3 bg-slate-100 rounded-full border border-slate-200">
+                          <AlertCircle className="h-6 w-6 text-slate-400" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-slate-900 font-bold text-sm">No Active User Matches Found 📭</p>
+                          <p className="text-slate-500 text-xs leading-relaxed font-medium">
+                            Your criteria returned an empty index configuration.
+                          </p>
+                        </div>
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredUsers.map((user) => (
-                    <TableRow key={user.id} className={!user.isActive ? 'bg-red-50/50' : ''}>
-                      <TableCell>
-                        <input
-                          type="checkbox"
-                          checked={selectedUsers.has(user.id)}
-                          onChange={() => handleSelectUser(user.id)}
-                          className="rounded border-gray-300"
-                          disabled={user.role === 'admin'}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                            <Shield className="h-4 w-4 text-primary" />
+                  users.map((user) => {
+                    const isSuspendedUser = !user.isActive
+                    const isAdminUser = user.role === 'admin'
+                    
+                    return (
+                      <TableRow 
+                        key={user.id} 
+                        className={`transition-colors border-b border-slate-100 hover:bg-slate-50/50 ${
+                          isSuspendedUser ? 'bg-slate-50/70 opacity-90' : ''
+                        }`}
+                      >
+                        <TableCell className="px-4 py-4">
+                          <div className="flex items-center h-5">
+                            <Checkbox
+                              checked={selectedUsers.has(user.id)}
+                              onCheckedChange={() => handleSelectUser(user.id)}
+                              disabled={isAdminUser}
+                            />
                           </div>
-                          <div>
-                            <p className="font-medium">{user.fullName}</p>
-                            {user.role === 'admin' && (
-                              <Badge variant="outline" className="text-xs bg-purple-50">
-                                👑 Admin
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1 text-sm">
-                            <Mail className="h-3 w-3 text-gray-400" />
-                            <span>{user.email}</span>
-                          </div>
-                          <div className="flex items-center gap-1 text-sm">
-                            <Phone className="h-3 w-3 text-gray-400" />
-                            <span>{user.phone}</span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-medium">{user.eventsCount}</span>
-                        <span className="text-gray-500 text-sm ml-1">events</span>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(user)}</TableCell>
-                      <TableCell className="text-sm text-gray-500">
-                        {formatDate(user.createdAt)}
-                      </TableCell>
-                      <TableCell>
-                        {user.role !== 'admin' && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {!user.isEmailVerified && (
-                                <DropdownMenuItem onClick={() => setUserToVerify(user)}>
-                                  <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                                  ✅ Verify Account
-                                </DropdownMenuItem>
+                        </TableCell>
+                        <TableCell className="py-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-sm border ${
+                              isAdminUser 
+                                ? 'bg-purple-100 border-purple-200 text-purple-700' 
+                                : 'bg-slate-100 border-slate-200 text-slate-600'
+                            }`}>
+                              <Shield className="h-4 w-4 shrink-0" />
+                            </div>
+                            <div className="space-y-0.5">
+                              <p className="font-bold text-slate-950 text-sm tracking-tight">{user.fullName}</p>
+                              {isAdminUser && (
+                                <Badge variant="outline" className="text-[10px] font-black tracking-wider uppercase bg-purple-50 text-purple-700 border-purple-200 rounded-md px-1.5">
+                                   System Admin
+                                </Badge>
                               )}
-                              {user.isActive ? (
-                                <DropdownMenuItem
-                                  onClick={() => setUserToSuspend(user)}
-                                  className="text-red-600"
-                                >
-                                  <XCircle className="h-4 w-4 mr-2" />
-                                  ⛔ Suspend Account
-                                </DropdownMenuItem>
-                              ) : (
-                                <DropdownMenuItem
-                                  onClick={() => handleRestoreUser(user.id)}
-                                >
-                                  <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                                  🔄 Restore Account
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-4">
+                          <div className="space-y-1 font-medium text-xs text-slate-600">
+                            <div className="flex items-center gap-1.5">
+                              <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                              <span className="truncate max-w-[180px]">{user.email}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                              <span>{user.phone || 'N/A'}</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-4">
+                          <div className="flex items-baseline text-slate-900 font-black text-sm">
+                            {user.eventsCount}
+                            <span className="text-slate-400 font-medium text-xs ml-1">listings</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-4">{getStatusBadge(user)}</TableCell>
+                        <TableCell className="py-4 text-xs font-semibold text-slate-500">
+                          {formatDate(user.createdAt)}
+                        </TableCell>
+                        <TableCell className="py-4 text-right pr-4">
+                          {!isAdminUser ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-500">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="rounded-xl min-w-[160px] p-1 shadow-md border border-slate-100">
+                                {!user.isEmailVerified && (
+                                  <DropdownMenuItem 
+                                    onClick={() => setUserToVerify(user)}
+                                    className="rounded-lg text-xs font-bold text-slate-700 focus:bg-slate-50 flex items-center gap-2 cursor-pointer"
+                                  >
+                                    <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+                                    Verify Profile Credentials
+                                  </DropdownMenuItem>
+                                )}
+                                {user.isActive ? (
+                                  <DropdownMenuItem
+                                    onClick={() => setUserToSuspend(user)}
+                                    className="rounded-lg text-xs font-bold text-red-600 focus:bg-red-50 focus:text-red-700 flex items-center gap-2 cursor-pointer"
+                                  >
+                                    <XCircle className="h-4 w-4 text-red-500 shrink-0" />
+                                    Suspend Workspace Access
+                                  </DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem
+                                    onClick={() => handleRestoreUser(user.id)}
+                                    className="rounded-lg text-xs font-bold text-slate-700 focus:bg-slate-50 flex items-center gap-2 cursor-pointer"
+                                  >
+                                    <CheckCircle className="h-4 w-4 text-purple-600 shrink-0" />
+                                    Restore Authorization Permissions
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <div className="w-8 h-8" />
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
                 )}
               </TableBody>
             </Table>
@@ -555,105 +564,107 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      {/* Pagination */}
       {totalPages > 1 && (
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
-          pageSizeOptions={[10, 25, 50, 100]}
-          totalItems={totalCount}
-          showFirstLast
-        />
+        <div className="border border-slate-200 rounded-2xl bg-white p-3 shadow-sm">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[10, 25, 50, 100]}
+            totalItems={stats.total}
+            showFirstLast
+          />
+        </div>
       )}
 
-      {/* Stats Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <Users className="h-6 w-6 text-primary mx-auto mb-2" />
-              <p className="text-2xl font-bold">{users.length}</p>
-              <p className="text-sm text-gray-500">Total Users 👥</p>
+      {/* Analytics System Cards using Global state updates */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+        <Card className="border border-slate-200 rounded-2xl shadow-sm bg-white overflow-hidden">
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="p-3 bg-purple-50 rounded-xl border border-purple-100 text-purple-700">
+              <Users className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-2xl font-black tracking-tight text-slate-950">{stats.total}</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Active Pool Nodes</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <UserCheck className="h-6 w-6 text-green-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-green-600">
-                {users.filter(u => u.isEmailVerified && u.isActive).length}
-              </p>
-              <p className="text-sm text-gray-500">Verified Users ✅</p>
+        <Card className="border border-slate-200 rounded-2xl shadow-sm bg-white overflow-hidden">
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-700">
+              <UserCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-2xl font-black tracking-tight text-emerald-700">{stats.verified}</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Verified Segment Bounds</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <UserX className="h-6 w-6 text-red-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-red-600">
-                {users.filter(u => !u.isActive).length}
-              </p>
-              <p className="text-sm text-gray-500">Suspended Users ⛔</p>
+        <Card className="border border-slate-200 rounded-2xl shadow-sm bg-white overflow-hidden">
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="p-3 bg-red-50 rounded-xl border border-red-100 text-red-700">
+              <UserX className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-2xl font-black tracking-tight text-red-600">{stats.suspended}</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Suspended Isolation Groups</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Verify User Confirmation Dialog */}
+      {/* Individual Action Confirmation Panels */}
       <ConfirmationDialog
         open={!!userToVerify}
         onOpenChange={() => setUserToVerify(null)}
         onConfirm={handleVerifyUser}
         title="✅ Verify User Account"
-        description={`Are you sure you want to verify ${userToVerify?.fullName}'s account?`}
-        confirmText="Yes, Verify Account"
-        cancelText="Cancel"
+        description={`Are you sure you want to verify ${userToVerify?.fullName}'s identity context parameters?`}
+        confirmText="Confirm Verification"
+        cancelText="Abort"
         variant="info"
         isLoading={isProcessing}
-      >
-        <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-          <div className="flex items-center gap-2 text-green-700 mb-2">
-            <CheckCircle className="h-4 w-4" />
-            <span className="font-medium">Verification effects:</span>
-          </div>
-          <ul className="space-y-1 text-sm text-green-600">
-            <li>✓ Mark email as verified</li>
-            <li>✓ Allow user to create events</li>
-            <li>✓ User will have full access to organizer features</li>
-          </ul>
-        </div>
-      </ConfirmationDialog>
+      />
 
-      {/* Suspend Confirmation Dialog */}
       <ConfirmationDialog
         open={!!userToSuspend}
         onOpenChange={() => setUserToSuspend(null)}
         onConfirm={handleSuspendUser}
         title="⛔ Suspend User Account"
-        description={`Are you sure you want to suspend ${userToSuspend?.fullName}'s account?`}
-        confirmText="Yes, Suspend Account"
+        description={`Are you sure you want to restrict platform orchestration access for ${userToSuspend?.fullName}?`}
+        confirmText="Execute Restriction Routine"
         cancelText="Cancel"
         variant="danger"
         isLoading={isProcessing}
-      >
-        <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
-          <div className="flex items-center gap-2 text-red-700 mb-2">
-            <AlertCircle className="h-4 w-4" />
-            <span className="font-medium">Suspension effects:</span>
-          </div>
-          <ul className="space-y-1 text-sm text-red-600">
-            <li>⚠️ User cannot access their dashboard</li>
-            <li>⚠️ User cannot create new events</li>
-            <li>⚠️ Existing events remain visible</li>
-            <li>🔄 This action can be reversed</li>
-          </ul>
-        </div>
-      </ConfirmationDialog>
+      />
+
+      {/* Batch Processing Safety Dialogs */}
+      <ConfirmationDialog
+        open={showBatchVerifyDialog}
+        onOpenChange={() => setShowBatchVerifyDialog(false)}
+        onConfirm={handleBatchVerify}
+        title="⚠️ Batch Verify User Accounts"
+        description={`Are you sure you want to bulk verify all ${selectedUsers.size} selected accounts simultaneously?`}
+        confirmText="Execute Mass Verification"
+        cancelText="Abort Batch"
+        variant="info"
+        isLoading={isProcessing}
+      />
+
+      <ConfirmationDialog
+        open={showBatchSuspendDialog}
+        onOpenChange={() => setShowBatchSuspendDialog(false)}
+        onConfirm={handleBatchSuspend}
+        title="🚨 Bulk Critical Suspension Action"
+        description={`WARNING: You are about to terminate workspace orchestration access for ${selectedUsers.size} user entities. This operation propagates instantly.`}
+        confirmText="Confirm Global Suspension"
+        cancelText="Abort Batch Action"
+        variant="danger"
+        isLoading={isProcessing}
+      />
     </div>
   )
 }

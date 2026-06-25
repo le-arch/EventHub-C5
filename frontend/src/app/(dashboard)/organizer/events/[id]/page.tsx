@@ -1,10 +1,4 @@
-/**
- * Edit Event Page
- * 
- * Allows organizer to edit existing event details and manage ticket types.
- * 
- * @module EditEventPage
- */
+// page.tsx - Updated imports and store usage
 
 'use client'
 
@@ -56,10 +50,11 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Breadcrumb } from '@/components/common/Breadcrumb'
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog'
 
-// Utilities
-import api from '@/lib/api'
+// Stores & Utilities
+import { useEventStore, type Event, type TicketType } from '@/store/eventStore'
 import { toast } from 'sonner'
 import { formatDate, formatTime } from '@/lib/utils'
+import api from '@/lib/api'
 
 // Cameroon cities list
 const CAMEROON_CITIES = [
@@ -68,15 +63,17 @@ const CAMEROON_CITIES = [
   'Bertoua', 'Loum', 'Kribi', 'Mbalmayo', 'Foumban', 'Buea',
 ]
 
-// Validation schemas
+// Validation schemas - include capacityRange
 const eventSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters').max(100),
   description: z.string().max(5000).optional(),
-  venueName: z.string().min(3, 'Venue name is required'),
+  venue: z.string().min(3, 'Venue name and address is required'),
   city: z.string().min(2, 'City is required'),
   startDate: z.string().min(1, 'Start date is required'),
   startTime: z.string().min(1, 'Start time is required'),
   status: z.enum(['draft', 'published', 'cancelled', 'completed']),
+  capacityMin: z.number().min(0).optional(),
+  capacityMax: z.number().min(0).optional(),
 })
 
 const ticketTypeSchema = z.object({
@@ -91,31 +88,24 @@ const ticketFormSchema = z.object({
   ticketTypes: z.array(ticketTypeSchema),
 })
 
-interface Event {
-  id: string
-  title: string
-  description: string
-  venueName: string
-  city: string
-  startDate: string
-  startTime: string
-  status: 'draft' | 'published' | 'cancelled' | 'completed'
-  coverImageUrl: string | null
-}
-
-interface TicketType {
-  id: string
-  name: string
-  price: number
-  quantityAvailable: number
-  quantitySold: number
-}
-
 export default function EditEventPage() {
   const params = useParams()
   const router = useRouter()
+  
+  // Store actions and state
+  const { 
+    currentEvent, 
+    ticketTypes,
+    fetchEvent, 
+    fetchTicketTypes,
+    updateEvent, 
+    publishEvent, 
+    unpublishEvent,
+    isLoading 
+  } = useEventStore()
+  
   const [event, setEvent] = useState<Event | null>(null)
-  const [ticketTypes, setTicketTypes] = useState<TicketType[]>([])
+  const [localTicketTypes, setLocalTicketTypes] = useState<TicketType[]>([])
   const [loading, setLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('details')
@@ -128,11 +118,13 @@ export default function EditEventPage() {
     defaultValues: {
       title: '',
       description: '',
-      venueName: '',
+      venue: '',
       city: '',
       startDate: '',
       startTime: '',
       status: 'draft' as const,
+      capacityMin: undefined,
+      capacityMax: undefined,
     },
   })
 
@@ -147,20 +139,28 @@ export default function EditEventPage() {
     name: 'ticketTypes',
   })
 
-  // Fetch event details on mount
+  // Fetch event details on mount using store
   useEffect(() => {
     fetchEventDetails()
   }, [params.id])
 
   const fetchEventDetails = async () => {
+    setLoading(true)
     try {
-      const [eventRes, ticketsRes] = await Promise.all([
-        api.get(`/events/${params.id}`),
-        api.get(`/events/${params.id}/tickets`),
+      // Fetch event and tickets in parallel
+      const [eventData, ticketsData] = await Promise.all([
+        fetchEvent(params.id as string),
+        fetchTicketTypes(params.id as string),
       ])
       
-      const eventData = eventRes.data.event
+      if (!eventData) {
+        toast.error('❌ Event not found')
+        router.push('/organizer/events')
+        return
+      }
+      
       setEvent(eventData)
+      setLocalTicketTypes(ticketsData || [])
       
       // Format date for input
       const formattedDate = eventData.startDate.split('T')[0]
@@ -168,21 +168,23 @@ export default function EditEventPage() {
       form.reset({
         title: eventData.title,
         description: eventData.description || '',
-        venueName: eventData.venueName,
+        venue: eventData.venue,
         city: eventData.city,
         startDate: formattedDate,
         startTime: eventData.startTime,
         status: eventData.status,
+        capacityMin: eventData.capacityRange?.lower || undefined,
+        capacityMax: eventData.capacityRange?.upper || undefined,
       })
       
-      setTicketTypes(ticketsRes.data.ticket_types)
       ticketForm.reset({
-        ticketTypes: ticketsRes.data.ticket_types.map((t: TicketType) => ({
+        ticketTypes: ticketsData.map((t: TicketType) => ({
           id: t.id,
           name: t.name,
           price: t.price,
           quantityAvailable: t.quantityAvailable,
-        })),
+          quantitySold: t.quantitySold || 0,
+        })) || [],
       })
     } catch (error) {
       toast.error('❌ Failed to load event details')
@@ -193,14 +195,34 @@ export default function EditEventPage() {
   }
 
   /**
-   * Save event details
+   * Save event details using store
    */
   const handleSaveEvent = async (data: z.infer<typeof eventSchema>) => {
     setIsSaving(true)
     try {
-      await api.put(`/events/${params.id}`, data)
-      toast.success('✅ Event updated successfully')
-      setEvent({ ...event!, ...data })
+      const updateData: any = {
+        title: data.title,
+        description: data.description,
+        venue: data.venue,
+        city: data.city,
+        startDate: data.startDate,
+        startTime: data.startTime,
+        status: data.status,
+      }
+      
+      // Add capacity range if both values are provided
+      if (data.capacityMin !== undefined && data.capacityMax !== undefined) {
+        updateData.capacityRange = {
+          lower: data.capacityMin,
+          upper: data.capacityMax,
+        }
+      }
+      
+      const updatedEvent = await updateEvent(params.id as string, updateData)
+      if (updatedEvent) {
+        setEvent(updatedEvent)
+        toast.success('✅ Event updated successfully')
+      }
     } catch (error) {
       toast.error('❌ Failed to update event')
     } finally {
@@ -214,16 +236,19 @@ export default function EditEventPage() {
   const handleSaveTickets = async (data: z.infer<typeof ticketFormSchema>) => {
     setIsSaving(true)
     try {
+      // Update each ticket type individually using the store or direct API
+      // Since store doesn't have a batch update for tickets, use direct API
       const processedTickets = data.ticketTypes.map(t => ({
         id: t.id || undefined,
         name: t.name,
         price: t.price,
         quantityAvailable: t.quantityAvailable,
-        quantitySold: t.quantitySold,
+        quantitySold: t.quantitySold || 0,
       }))
+      
       await api.put(`/events/${params.id}/tickets`, { ticketTypes: processedTickets })
       toast.success('✅ Ticket types updated successfully')
-      fetchEventDetails()
+      await fetchEventDetails()
     } catch (error) {
       toast.error('❌ Failed to update ticket types')
     } finally {
@@ -232,15 +257,16 @@ export default function EditEventPage() {
   }
 
   /**
-   * Publish event
+   * Publish event using store
    */
   const handlePublish = async () => {
     setIsSaving(true)
     try {
-      await api.post(`/events/${params.id}/publish`)
-      toast.success('✅ Event published successfully! Your event is now live.')
-      fetchEventDetails()
-      setShowPublishDialog(false)
+      const success = await publishEvent(params.id as string)
+      if (success) {
+        setShowPublishDialog(false)
+        await fetchEventDetails()
+      }
     } catch (error) {
       toast.error('❌ Failed to publish event')
     } finally {
@@ -249,15 +275,16 @@ export default function EditEventPage() {
   }
 
   /**
-   * Unpublish event
+   * Unpublish event using store
    */
   const handleUnpublish = async () => {
     setIsSaving(true)
     try {
-      await api.post(`/events/${params.id}/unpublish`)
-      toast.success('📝 Event unpublished. It is now hidden from the public.')
-      fetchEventDetails()
-      setShowUnpublishDialog(false)
+      const success = await unpublishEvent(params.id as string)
+      if (success) {
+        setShowUnpublishDialog(false)
+        await fetchEventDetails()
+      }
     } catch (error) {
       toast.error('❌ Failed to unpublish event')
     } finally {
@@ -318,8 +345,8 @@ export default function EditEventPage() {
               disabled={isSaving}
               className="border-amber-500 text-amber-600 hover:bg-amber-50"
             >
-              <EyeOff className="h-4 w-4 mr-2" />
-              Unpublish 📝
+              <EyeOff className="h-4 w-4 mr-2 text-purple-400" />
+              Unpublish 
             </Button>
           ) : (
             <Button 
@@ -327,15 +354,15 @@ export default function EditEventPage() {
               disabled={isSaving}
               className="bg-green-600 hover:bg-green-700"
             >
-              <Eye className="h-4 w-4 mr-2" />
-              Publish Event 🚀
+              <Eye className="h-4 w-4 mr-2 text-purple-400" />
+              Publish Event 
             </Button>
           )}
         </div>
       </div>
 
-      {/*Stats Card */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Stats Card */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -356,7 +383,7 @@ export default function EditEventPage() {
                 <MapPin className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="font-semibold">{event.venueName}</p>
+                <p className="font-semibold">{event.venue}</p>
                 <p className="text-xs text-gray-500">{event.city}</p>
               </div>
             </div>
@@ -370,9 +397,26 @@ export default function EditEventPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">
-                  {ticketTypes.reduce((sum, t) => sum + t.quantitySold, 0)}
+                  {localTicketTypes.reduce((sum, t) => sum + (t.quantitySold || 0), 0)}
                 </p>
-                <p className="text-xs text-gray-500">tickets sold 🎟️</p>
+                <p className="text-xs text-gray-500">tickets sold </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">
+                  {event.capacityRange 
+                    ? `${event.capacityRange.lower} – ${event.capacityRange.upper}` 
+                    : '∞'}
+                </p>
+                <p className="text-xs text-gray-500">capacity range</p>
               </div>
             </div>
           </CardContent>
@@ -383,12 +427,12 @@ export default function EditEventPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="details" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Event Details 📅
+            <Calendar className="h-4 w-4 text-purple-400" />
+            Event Details 
           </TabsTrigger>
           <TabsTrigger value="tickets" className="flex items-center gap-2">
-            <Ticket className="h-4 w-4" />
-            Ticket Types 🎟️
+            <Ticket className="h-4 w-4 text-blue-400" />
+            Ticket Types 
           </TabsTrigger>
         </TabsList>
 
@@ -417,17 +461,17 @@ export default function EditEventPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="description">Description 📝</Label>
+                  <Label htmlFor="description">Description </Label>
                   <Textarea id="description" rows={5} placeholder="Describe your event..." {...form.register('description')} />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="venueName">Venue Name *</Label>
-                    <Input id="venueName" placeholder="e.g., Palais des Congrès" {...form.register('venueName')} />
-                    {form.formState.errors.venueName && (
+                    <Label htmlFor="venue">Venue Name and Address *</Label>
+                    <Input id="venue" placeholder="e.g., Palais des Congrès" {...form.register('venue')} />
+                    {form.formState.errors.venue && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" /> {form.formState.errors.venueName.message}
+                        <AlertCircle className="h-3 w-3" /> {form.formState.errors.venue.message}
                       </p>
                     )}
                   </div>
@@ -437,8 +481,8 @@ export default function EditEventPage() {
                       onValueChange={(value) => form.setValue('city', value)}
                       value={form.watch('city')}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="📍 Select a city" />
+                      <SelectTrigger className="bg-white" >
+                        <SelectValue placeholder=" Select a city" />
                       </SelectTrigger>
                       <SelectContent>
                         {CAMEROON_CITIES.map((city) => (
@@ -474,12 +518,34 @@ export default function EditEventPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Capacity Range */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="capacityMin">Minimum Capacity</Label>
+                    <Input
+                      id="capacityMin"
+                      type="number"
+                      placeholder="e.g., 10"
+                      {...form.register('capacityMin', { valueAsNumber: true })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="capacityMax">Maximum Capacity</Label>
+                    <Input
+                      id="capacityMax"
+                      type="number"
+                      placeholder="e.g., 100"
+                      {...form.register('capacityMax', { valueAsNumber: true })}
+                    />
+                  </div>
+                </div>
               </form>
             </CardContent>
             <CardFooter>
               <Button form="event-form" type="submit" disabled={isSaving}>
                 <Save className="h-4 w-4 mr-2" />
-                {isSaving ? 'Saving...' : 'Save Changes 💾'}
+                {isSaving ? 'Saving...' : 'Save Changes'}
               </Button>
             </CardFooter>
           </Card>
@@ -501,7 +567,7 @@ export default function EditEventPage() {
               <form id="ticket-form" onSubmit={ticketForm.handleSubmit(handleSaveTickets)} className="space-y-4">
                 <div className="space-y-3">
                   {fields.map((field, index) => {
-                    const originalTicket = ticketTypes.find(t => t.id === field.id)
+                    const originalTicket = localTicketTypes.find(t => t.id === field.id)
                     const soldCount = originalTicket?.quantitySold || 0
                     
                     return (
@@ -551,7 +617,7 @@ export default function EditEventPage() {
                         {soldCount > 0 && (
                           <p className="text-sm text-amber-600 flex items-center gap-1">
                             <AlertCircle className="h-3 w-3" />
-                            {soldCount} tickets already sold for this type. Reducing quantity below sold count will prevent further sales.
+                            {soldCount} tickets already sold for this type.
                           </p>
                         )}
                       </div>
@@ -562,7 +628,7 @@ export default function EditEventPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => append({ name: '', price: 0, quantityAvailable: 0 })}
+                  onClick={() => append({ name: '', price: 0, quantityAvailable: 0, quantitySold: 0 })}
                   className="w-full"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -573,7 +639,7 @@ export default function EditEventPage() {
             <CardFooter>
               <Button form="ticket-form" type="submit" disabled={isSaving}>
                 <Save className="h-4 w-4 mr-2" />
-                Save Ticket Types 💾
+                Save Ticket Types
               </Button>
             </CardFooter>
           </Card>

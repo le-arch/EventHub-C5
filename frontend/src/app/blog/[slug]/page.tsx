@@ -1,7 +1,7 @@
 /**
- * Individual Blog Post Page
+ * Individual Blog Post Page (Light Theme)
  * 
- * Displays a single blog post with full content.
+ * Displays a single blog post with full prose styling and premium platform layout accents.
  * 
  * @module BlogPostPage
  */
@@ -11,7 +11,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Calendar, User, Clock, ArrowLeft, Mail } from 'lucide-react'
+import { Calendar, User, Clock, ArrowLeft, Mail, BookOpen, Tag } from 'lucide-react'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
@@ -38,11 +38,11 @@ interface BlogPost {
   readTime: number
   category: string
   tags: string[]
+  gradient: string
 }
 
-// Blog posts content
+// Blog posts content - Upgraded with premium semantic color gradients matching listing styles
 const blogContent: Record<string, BlogPost> = {
-  // Tutorial
   'how-to-sell-tickets-online-in-cameroon': {
     id: '1',
     slug: 'how-to-sell-tickets-online-in-cameroon',
@@ -79,9 +79,8 @@ const blogContent: Record<string, BlogPost> = {
     readTime: 5,
     category: 'Tutorial',
     tags: ['tickets', 'mobile money', 'guide', 'event planning'],
+    gradient: 'from-purple-500/10 via-indigo-500/5 to-transparent border-purple-500/10',
   },
-
-  // Technology
   'qr-code-check-in-benefits': {
     id: '2',
     slug: 'qr-code-check-in-benefits',
@@ -109,9 +108,8 @@ const blogContent: Record<string, BlogPost> = {
     readTime: 4,
     category: 'Technology',
     tags: ['qr code', 'check-in', 'technology'],
+    gradient: 'from-blue-500/10 via-indigo-500/5 to-transparent border-blue-500/10',
   },
-
-  // Trends
   'mobile-money-payments-for-events': {
     id: '3',
     slug: 'mobile-money-payments-for-events',
@@ -138,9 +136,8 @@ const blogContent: Record<string, BlogPost> = {
     readTime: 6,
     category: 'Trends',
     tags: ['mobile money', 'payments', 'trends'],
+    gradient: 'from-pink-500/10 via-purple-500/5 to-transparent border-pink-500/10',
   },
-
-  // News
   'eventhub-launches-in-cameroon': {
     id: '4',
     slug: 'eventhub-launches-in-cameroon',
@@ -169,9 +166,8 @@ const blogContent: Record<string, BlogPost> = {
     readTime: 3,
     category: 'News',
     tags: ['launch', 'announcement', 'eventhub'],
+    gradient: 'from-emerald-500/10 via-teal-500/5 to-transparent border-emerald-500/10',
   },
-
-  // Case Studies
   'douala-music-fest-case-study': {
     id: '5',
     slug: 'douala-music-fest-case-study',
@@ -201,6 +197,7 @@ const blogContent: Record<string, BlogPost> = {
     readTime: 8,
     category: 'Case Studies',
     tags: ['case study', 'music festival', 'success story'],
+    gradient: 'from-amber-500/10 via-orange-500/5 to-transparent border-amber-500/10',
   },
 }
 
@@ -216,7 +213,7 @@ export default function BlogPostPage() {
       const foundPost = blogContent[slug]
       setPost(foundPost || null)
       setLoading(false)
-    }, 500)
+    }, 400)
     return () => clearTimeout(timer)
   }, [params.slug])
 
@@ -244,29 +241,18 @@ export default function BlogPostPage() {
     window.location.href = `mailto:?subject=${encodeURIComponent(post?.title || '')}&body=${encodeURIComponent(`Check out this article: ${window.location.href}`)}`
   }
 
-  const getCategoryEmoji = (category: string) => {
-    switch (category) {
-      case 'Tutorial': return '📚'
-      case 'Technology': return '💻'
-      case 'Trends': return '📈'
-      case 'News': return '📰'
-      case 'Case Studies': return '📊'
-      default: return '📝'
-    }
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <Skeleton className="h-6 w-48 mb-4" />
-          <Skeleton className="h-64 w-full rounded-lg mb-8" />
-          <Skeleton className="h-8 w-3/4 mb-4" />
-          <Skeleton className="h-4 w-1/2 mb-8" />
+      <div className="min-h-screen bg-slate-50">
+        <div className="container mx-auto px-4 py-16 max-w-3xl">
+          <Skeleton className="h-5 w-40 mb-6 rounded-full" />
+          <Skeleton className="h-10 w-5/6 mb-4 rounded-xl" />
+          <Skeleton className="h-5 w-1/2 mb-10 rounded-md" />
+          <Skeleton className="h-72 w-full rounded-2xl mb-10" />
           <div className="space-y-4">
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-5/6" />
           </div>
         </div>
       </div>
@@ -275,12 +261,19 @@ export default function BlogPostPage() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">📭</div>
-          <h1 className="text-2xl font-bold mb-4">Post Not Found</h1>
-          <Link href="/blog">
-            <Button>Back to Blog</Button>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="text-center max-w-sm bg-white p-8 border border-slate-200 shadow-xl rounded-2xl space-y-4">
+          <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center mx-auto">
+            <BookOpen className="h-5 w-5 text-slate-400" />
+          </div>
+          <div className="space-y-1">
+            <h1 className="text-xl font-bold text-slate-900">Post Not Found</h1>
+            <p className="text-sm text-slate-500">The article you are searching for might have been updated or relocated.</p>
+          </div>
+          <Link href="/blog" className="block">
+            <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold h-10">
+              Return to Blog Catalog
+            </Button>
           </Link>
         </div>
       </div>
@@ -288,103 +281,128 @@ export default function BlogPostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Breadcrumb */}
-        <Breadcrumb 
-          items={[
-            { label: 'Blog', href: '/blog' },
-            { label: post.category, href: '#', isActive: true },
-          ]}
-          showHome
-        />
+    <div className="min-h-screen bg-slate-50 text-slate-800 antialiased selection:bg-purple-500/10 relative overflow-hidden">
+      
+      {/* Decorative Blur Background Mesh */}
+      <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-purple-200/10 rounded-full blur-[120px] pointer-events-none z-0" />
+      <div className="absolute top-[400px] left-1/4 w-[600px] h-[600px] bg-indigo-200/10 rounded-full blur-[140px] pointer-events-none z-0" />
 
-        {/* Header */}
-        <div className="mt-8 mb-6">
-          <div className="flex gap-2 mb-4">
-            <Badge className="bg-primary/10 text-primary">
-              {getCategoryEmoji(post.category)} {post.category}
+      <div className="container mx-auto px-4 py-12 max-w-3xl relative z-10">
+        
+        {/* Navigation Breadcrumbs */}
+        <div className="mb-8">
+          <Breadcrumb 
+            items={[
+              { label: 'Blog', href: '/blog' },
+              { label: post.category, href: '#', isActive: true },
+            ]}
+            showHome
+          />
+        </div>
+
+        {/* Hero Meta Header */}
+        <div className="space-y-4 mb-8">
+          <div>
+            <Badge className="bg-white border border-slate-200 shadow-sm text-slate-700 hover:bg-white text-[10px] uppercase tracking-wider rounded-md px-2.5 py-0.5 font-bold">
+              {post.category}
             </Badge>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">{post.title}</h1>
-          <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              <span>{post.author}</span>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+            {post.title}
+          </h1>
+          
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-semibold text-slate-400">
+            <div className="flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5 text-slate-400" />
+              <span className="text-slate-600">{post.author}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
+            <div className="flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5 text-slate-400" />
               <span>{formatDate(post.publishedAt)}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5 text-slate-400" />
               <span>{post.readTime} min read</span>
             </div>
           </div>
         </div>
 
-        {/* Cover Image Placeholder */}
-        <div className="h-64 md:h-96 rounded-lg overflow-hidden mb-8 bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-          <span className="text-8xl">{getCategoryEmoji(post.category)}</span>
+        {/* Structural Visual Cover Section */}
+        <div className={`h-52 sm:h-80 rounded-2xl overflow-hidden mb-10 bg-gradient-to-br ${post.gradient} border border-slate-200/60 flex items-center justify-center relative shadow-inner shadow-slate-100`}>
+          <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,transparent)]" />
+          <BookOpen className="h-16 w-16 text-slate-400/30" />
         </div>
 
-        {/* Content */}
-        <div 
-          className="prose prose-lg max-w-none mb-8 prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-600 prose-a:text-primary prose-strong:text-gray-900 prose-li:text-gray-600"
+        {/* Main Article Content Node */}
+        <article 
+          className="prose prose-slate max-w-none mb-10 prose-headings:font-extrabold prose-headings:tracking-tight prose-headings:text-slate-900 prose-h2:text-xl sm:prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-p:text-slate-600 prose-p:text-sm sm:prose-p:text-base prose-p:leading-relaxed prose-a:text-purple-600 prose-a:font-semibold hover:prose-a:text-purple-700 prose-strong:text-slate-900 prose-li:text-slate-600 prose-li:text-sm sm:prose-li:text-base prose-ul:list-disc prose-ul:pl-5 space-y-2"
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
 
-        {/* Tags */}
-        <div className="flex flex-wrap gap-2 mb-8">
+        {/* Content Metadata Tags Array */}
+        <div className="flex flex-wrap gap-2 mb-10">
           {post.tags.map((tag) => (
-            <Badge key={tag} variant="outline" className="text-sm">
-              #{tag}
+            <Badge key={tag} variant="outline" className="text-[11px] font-semibold text-slate-500 bg-white border-slate-200 px-2.5 py-0.5 rounded-lg">
+              <Tag className="w-2.5 h-2.5 mr-1 text-slate-400" />
+              {tag}
             </Badge>
           ))}
         </div>
 
-        <Separator className="my-8" />
+        <Separator className="my-10 bg-slate-200/80" />
 
-        {/* Author Bio */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex gap-4">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-xl font-bold text-primary">{post.author.charAt(0)}</span>
+        {/* Author Presentation Profile Card */}
+        <Card className="bg-white border-slate-200/80 rounded-2xl shadow-md shadow-slate-100 overflow-hidden mb-10">
+          <CardContent className="p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center">
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-500/10 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm shadow-purple-100">
+                <span className="text-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                  {post.author.charAt(0)}
+                </span>
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold mb-1">About {post.author}</h3>
-                <p className="text-sm text-gray-600 mb-1">{post.authorRole}</p>
-                <p className="text-sm text-gray-600 mb-3">{post.authorBio}</p>
+              <div className="flex-1 space-y-1">
+                <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                  <h3 className="font-bold text-slate-900 text-base">About {post.author}</h3>
+                  <span className="text-xs font-semibold text-purple-600 sm:before:content-['•'] sm:before:mr-1 sm:before:text-slate-300">
+                    {post.authorRole}
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">{post.authorBio}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Share Section */}
-        <div className="flex items-center justify-between flex-wrap gap-4 mt-8">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">Share this article:</span>
-            <div className="flex gap-2">
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={shareOnFacebook}>
+        {/* Share Matrix Footer Area */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-6 bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center gap-3 px-2">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Share:</span>
+            <div className="flex items-center gap-1.5">
+              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 shadow-sm" onClick={shareOnFacebook}>
                 <FacebookIcon href="#" />
               </Button>
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={shareOnTwitter}>
+              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 shadow-sm" onClick={shareOnTwitter}>
                 <TwitterIcon href="#" />
               </Button>
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={shareOnLinkedIn}>
+              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 shadow-sm" onClick={shareOnLinkedIn}>
                 <LinkedinIcon href="#" />
               </Button>
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={shareByEmail}>
-                <Mail className="h-4 w-4" />
+              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 shadow-sm" onClick={shareByEmail}>
+                <Mail className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
-          <Button variant="ghost" onClick={() => router.push('/blog')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Blog
+          
+          <Button 
+            variant="ghost" 
+            onClick={() => router.push('/blog')}
+            className="text-slate-600 hover:text-slate-900 text-xs font-semibold h-9 rounded-xl hover:bg-slate-50"
+          >
+            <ArrowLeft className="h-3.5 w-3.5 mr-2" />
+            Back to Blog Index
           </Button>
         </div>
+
       </div>
     </div>
   )

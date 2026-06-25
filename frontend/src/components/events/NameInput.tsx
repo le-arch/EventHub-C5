@@ -53,10 +53,10 @@ export function NameInput({ eventTitle, onSubmit, isLoading = false }: NameInput
   }
 
   return (
-    <Card className="max-w-md mx-auto shadow-lg">
+    <Card className="max-w-md mx-auto shadow-lg border-l-4">
       <CardHeader className="text-center">
         <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-          <User className="h-6 w-6 text-primary" />
+          <User className="h-6 w-6 text-blue-500" />
         </div>
         <CardTitle className="text-2xl">Enter Your Details</CardTitle>
         <CardDescription>
@@ -81,7 +81,7 @@ export function NameInput({ eventTitle, onSubmit, isLoading = false }: NameInput
             />
             {errors.fullName && (
               <p className="text-sm text-red-500 mt-2 flex items-center gap-1">
-                <span className="text-xs">⚠️</span>
+                <span className="text-xs bg-blue-200">⚠️</span>
                 {errors.fullName.message}
               </p>
             )}

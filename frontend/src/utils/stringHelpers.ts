@@ -39,16 +39,17 @@ export const generateOTP = (length: number = 6): string => {
  * @param text - Text to slugify
  * @returns URL-friendly slug
  */
+// utils/stringHelpers.ts
 export const slugify = (text: string): string => {
   return text
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-')           // Replace spaces with hyphens
-    .replace(/[^\w\-]+/g, '')       // Remove non-word characters
-    .replace(/\-\-+/g, '-')         // Replace multiple hyphens with single
-    .replace(/^-+/, '')             // Remove leading hyphens
-    .replace(/-+$/, '')             // Remove trailing hyphens
+    .replace(/\s+/g, '-')           // Replace spaces with -
+    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+    .replace(/^-+/, '')             // Trim - from start of text
+    .replace(/-+$/, '')             // Trim - from end of text
 }
 
 /**
