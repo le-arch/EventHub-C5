@@ -106,7 +106,7 @@ func (h *EventHubHandler) handleVerifyEmail(c *gin.Context) {
 		Role:            roleVal,
 		PasswordHash:    pendingMap["password_hash"].(string),
 		FullName:        pendingMap["full_name"].(string),
-		IsEmailVerified: &verified,
+		IsEmailVerified: verified,
 	})
 	//handle any errors that occur during user creation
 	if err != nil {
@@ -182,7 +182,7 @@ func (h *EventHubHandler) handleLogin(c *gin.Context) {
 	}
 
 	//check if the user's email is verified before allowing login
-	if user.IsEmailVerified == nil || !*user.IsEmailVerified {
+	if !user.IsEmailVerified {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Email not verified"})
 		return
 	}
