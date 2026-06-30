@@ -57,3 +57,39 @@ WHERE id = $1;
 SELECT * FROM orders
 WHERE qr_code_hash = $1;
 
+
+-- name: MarkOrderUsed :exec
+UPDATE orders 
+SET is_used = TRUE, used_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND is_used = FALSE;
+
+-- name: ListAttendeesByEvent :many
+SELECT id, attendee_name, attendee_phone, attendee_email, is_used, used_at, created_at
+FROM orders
+WHERE event_id = $1 AND payment_status = 'paid'
+ORDER BY created_at DESC;
+
+-- name: GetEventAnalytics :one
+SELECT
+	COUNT(*) AS total_orders,
+	SUM(total_amount) AS total_revenue,
+	COUNT(*) FILTER (WHERE is_used = TRUE) AS checked_in_count,
+	COUNT(*) FILTER (WHERE payment_status = 'paid') AS paid_orders
+FROM orders
+WHERE event_id = $1 AND payment_status = 'paid';
+
+-- name: ListCheckinHistoryByEvent :many
+SELECT id AS order_id, attendee_name, attendee_phone, used_at
+FROM orders
+WHERE event_id = $1 AND is_used = TRUE
+ORDER BY used_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: ListAllTransactions :many
+SELECT o.id AS order_id, e.title AS event_title, o.attendee_name, o.total_amount AS amount, o.payment_status, o.created_at
+FROM orders o
+JOIN events e ON o.event_id = e.id
+WHERE ($1::text = '' OR o.payment_status = $1::payment_status)
+  AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR o.event_id = $2::uuid)
+ORDER BY o.created_at DESC
+LIMIT $3 OFFSET $4;

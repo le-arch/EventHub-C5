@@ -198,7 +198,7 @@ type Order struct {
 	QrCodeHash             string           `json:"qr_code_hash"`
 	QrCodeImageUrl         string           `json:"qr_code_image_url"`
 	QrCodePlaintext        string           `json:"qr_code_plaintext"`
-	IsUsed                 *bool            `json:"is_used"`
+	IsUsed                 bool             `json:"is_used"`
 	UsedAt                 pgtype.Timestamp `json:"used_at"`
 	CheckedInBy            *uuid.UUID       `json:"checked_in_by"`
 	PlatformFee            int32            `json:"platform_fee"`
@@ -234,7 +234,8 @@ type User struct {
 	PasswordHash    string           `json:"password_hash"`
 	FullName        string           `json:"full_name"`
 	Role            UserRole         `json:"role"`
-	IsEmailVerified *bool            `json:"is_email_verified"`
+	IsEmailVerified bool             `json:"is_email_verified"`
+	IsActive        bool             `json:"is_active"`
 	CreatedAt       pgtype.Timestamp `json:"created_at"`
 	UpdatedAt       pgtype.Timestamp `json:"updated_at"`
 }

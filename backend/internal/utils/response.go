@@ -13,7 +13,7 @@ type RegisterResponse struct {
 	FullName string `json:"full_name"`
 	Email string `json:"email"`
 	Role repo.UserRole `json:"role"`
-	IsEmailVerified *bool  `json:"is_email_verified"`
+	IsEmailVerified bool  `json:"is_email_verified"`
 	CreatedAt  string `json:"created_at"`
 }
 
@@ -108,7 +108,7 @@ type OrderResponse struct {
 	TransactionID   *string   `json:"transaction_id,omitempty"`
 	QRCodeHash      string    `json:"qr_code_hash"`
 	QRCodeImageURL  string    `json:"qr_code_image_url"`
-	IsUsed          *bool      `json:"is_used"`
+	IsUsed          bool      `json:"is_used"`
 	CreatedAt       string    `json:"created_at"`
 }
 
@@ -117,4 +117,41 @@ type OrderResponse struct {
 type PaymentResponse struct {
 	TransactionID string `json:"transactionId"`
 	Status        string `json:"status"`
+}
+
+type EventDetailsResponse struct {
+	ID             uuid.UUID `json:"id"`
+	OrganizerID    uuid.UUID `json:"organizer_id"`
+	Title          string    `json:"title"`
+	Slug           string    `json:"slug"`
+	Description    string    `json:"description"`
+	Venue          string    `json:"venue"`
+	City           string    `json:"city"`
+	StartDate      string    `json:"start_date"`
+	EndDate        string    `json:"end_date"`
+	StartTime      string    `json:"start_time"`
+	EndTime        string    `json:"end_time"`
+	CoverImageUrl  string    `json:"cover_image_url"`
+	Status         string    `json:"status"`
+	SalesStartDate string    `json:"sales_start_date"`
+	SalesEndDate   string    `json:"sales_end_date"`
+	CapacityRange  *models.CapacityRangeJSON `json:"capacity_range,omitempty"`
+	CreatedAt      string    `json:"created_at"`
+	UpdatedAt      string    `json:"updated_at"`
+}
+
+type CheckinHistoryResponse struct {
+	OrderID     uuid.UUID `json:"order_id"`
+	AttendeeName string   `json:"attendee_name"`
+	AttendeePhone string `json:"attendee_phone"`
+	CheckedInAt  string   `json:"checked_in_at"`
+}
+
+type TransactionResponse struct {
+	OrderID      uuid.UUID `json:"order_id"`
+	EventTitle   string    `json:"event_title"`
+	AttendeeName string    `json:"attendee_name"`
+	Amount       int32     `json:"amount"`
+	PaymentStatus string   `json:"payment_status"`
+	CreatedAt    string    `json:"created_at"`
 }

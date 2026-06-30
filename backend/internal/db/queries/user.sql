@@ -20,3 +20,21 @@ WHERE email = $2;
 SELECT * FROM users
 WHERE role = $1
 ORDER BY created_at DESC;
+
+-- name: UpdateUserVerification :exec
+UPDATE users 
+SET is_email_verified = $2 
+WHERE id = $1;
+
+-- name: UpdateUserActiveStatus :exec
+UPDATE users 
+SET is_active = $2 
+WHERE id = $1;
+
+-- name: DeleteUser :exec
+DELETE FROM users 
+WHERE id = $1;
+
+-- name: GetUserByIDForAdmin :one
+SELECT id, email, full_name, role, is_email_verified, is_active, created_at
+FROM users WHERE id = $1;
