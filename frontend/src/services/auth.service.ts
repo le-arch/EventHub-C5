@@ -25,7 +25,7 @@ export interface VerifyEmailPayload {
 }
 
 export interface LoginPayload {
-  identifier: string
+  email: string
   password_hash: string  
 }
 
@@ -34,7 +34,7 @@ export interface RefreshTokenPayload {
 }
 
 export interface AuthResponse {
-  access_token: string
+  token: string
   refresh_token: string
   user: UserData
 }
@@ -132,12 +132,12 @@ export const authService = {
    */
   login: async (identifier: string, password: string): Promise<AuthResponse> => {
     const payload: LoginPayload = {
-      identifier,
+      email: identifier,
       password_hash: password,
     }
 
-    const response = await api.post<AuthResponse>('/auth/login', payload)
-    return response.data
+    const response = await api.post<{ message: string; user: AuthResponse }>('/auth/login', payload)
+    return response.data.user
   },
 
   /**

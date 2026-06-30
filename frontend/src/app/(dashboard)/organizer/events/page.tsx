@@ -118,15 +118,15 @@ export default function EventsDashboardPage() {
   const fetchEvents = async () => {
     setLoading(true)
     try {
-      const response = await api.get('/events', {
+      const response = await api.get('/Orgnization/events', {
         params: {
           page,
           limit: pageSize,
           search: debouncedSearch || undefined,
         },
       })
-      setEvents(response.data.events)
-      setTotalCount(response.data.total)
+      setEvents(response.data)
+      setTotalCount(response.data.length)
       setTotalPages(response.data.totalPages || Math.ceil(response.data.total / pageSize))
     } catch (error) {
       toast.error('Failed to load events')

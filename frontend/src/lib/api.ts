@@ -13,8 +13,7 @@ import { toast } from 'sonner'
 
 // Types
 interface RefreshTokenResponse {
-  access_token: string
-  refresh_token: string
+  token: string
 }
 
 // Custom request config with retry flag
@@ -95,15 +94,14 @@ api.interceptors.response.use(
           { refresh_token: refreshToken }
         )
         
-        const { access_token, refresh_token } = response.data
+        const { token } = response.data
         
         // Store new tokens
-        localStorage.setItem('access_token', access_token)
-        localStorage.setItem('refresh_token', refresh_token)
+        localStorage.setItem('access_token', token)
         
         // Retry original request with new token
         if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${access_token}`
+          originalRequest.headers.Authorization = `Bearer ${token}`
         }
         
         return api(originalRequest)

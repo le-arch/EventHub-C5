@@ -131,8 +131,8 @@ export const useAuthStore = create<AuthState>()(
         
         try {
           const response = await authService.login(identifier, password)
-          const { access_token, refresh_token, user: backendUser } = response
-          
+          const { token, refresh_token, user: backendUser } = response
+          const access_token = token
           // Transform backend user data to frontend format
           const user = transformUserData(backendUser)
           
@@ -182,8 +182,8 @@ export const useAuthStore = create<AuthState>()(
         
         try {
           const response = await authService.verifyEmail(email, otp)
-          const { access_token, refresh_token, user: backendUser } = response
-          
+          const {token, refresh_token, user: backendUser } = response
+          const access_token = token
           // Transform backend user data to frontend format
           const user = transformUserData(backendUser)
           
@@ -240,16 +240,11 @@ export const useAuthStore = create<AuthState>()(
         
         try {
           const response = await authService.refreshToken(refreshToken)
-          const { access_token, refresh_token: newRefreshToken, user: backendUser } = response
+          const { token} = response
           
-          // Update user data
-          const user = transformUserData(backendUser)
+          localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token)
           
-          localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, access_token)
-          localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken)
-          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user))
-          
-          set({ user, isAuthenticated: true })
+          set({ isAuthenticated: true })
           
           return true
         } catch (error) {
