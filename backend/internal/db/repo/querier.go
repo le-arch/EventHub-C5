@@ -28,6 +28,7 @@ type Querier interface {
 	GetOrderByID(ctx context.Context, id uuid.UUID) (Order, error)
 	GetOrderByQRHash(ctx context.Context, qrCodeHash string) (Order, error)
 	GetOrderByTransactionID(ctx context.Context, transactionID *string) (Order, error)
+	GetPlatformAnalytics(ctx context.Context) (GetPlatformAnalyticsRow, error)
 	GetTicketTypeByID(ctx context.Context, id uuid.UUID) (TicketType, error)
 	GetTicketTypesByEvent(ctx context.Context, eventID uuid.UUID) ([]TicketType, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)

@@ -2,7 +2,6 @@
 package handlers
 
 import (
-	"crypto/hmac"
 	"net/http"
 	"strconv"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
 	"github.com/le-arch/EventHub-C5/internal/models"
-	"github.com/le-arch/EventHub-C5/internal/qrcode"
 	"github.com/le-arch/EventHub-C5/internal/utils"
 )
 
@@ -38,13 +36,6 @@ func (h *EventHubHandler) handleCheckin(c *gin.Context) {
 	//  Check if already used
 	if order.IsUsed {
 		c.JSON(http.StatusConflict, gin.H{"error": "ticket already used"})
-		return
-	}
-
-	// Recompute HMAC to verify authenticity
-	expectedHash := qrcode.GenerateQRHash(order.AttendeeName, h.qrSecret)
-	if !hmac.Equal([]byte(expectedHash), []byte(req.QRHash)) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid QR signature"})
 		return
 	}
 

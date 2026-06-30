@@ -330,3 +330,34 @@ func (h *EventHubHandler) handleViewAllTransactions(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"transactions": response, "total": len(response)})
 }
+
+func (h *EventHubHandler) handleGetPlatformAnalytics(c *gin.Context) {
+    role, _ := utils.GetUserRole(c)
+    if role != "admin" {
+        c.JSON(http.StatusForbidden, gin.H{"error": "admin only"})
+        return
+    }
+
+    stats, err := h.querier.GetPlatformAnalytics(c)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    // Calculate platform-wide check-in rate
+    checkinRate := 0.0
+    if stats.TotalOrders > 0 {
+        checkinRate = float64(stats.TotalCheckedIn) / float64(stats.TotalOrders) * 100
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "total_users":       stats.TotalUsers,
+        "total_events":      stats.TotalEvents,
+        "total_orders":      stats.TotalOrders,
+        "gross_revenue":     stats.GrossRevenue,
+        "platform_fee":      stats.TotalPlatformFee,
+        "net_revenue":       stats.NetRevenue,
+        "total_checked_in":  stats.TotalCheckedIn,
+        "checkin_rate":      checkinRate,
+    })
+}

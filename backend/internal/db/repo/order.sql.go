@@ -115,30 +115,23 @@ func (q *Queries) DecrementTicketQuantity(ctx context.Context, arg DecrementTick
 
 const getEventAnalytics = `-- name: GetEventAnalytics :one
 SELECT
-	COUNT(*) AS total_orders,
-	SUM(total_amount) AS total_revenue,
-	COUNT(*) FILTER (WHERE is_used = TRUE) AS checked_in_count,
-	COUNT(*) FILTER (WHERE payment_status = 'paid') AS paid_orders
+    COUNT(*) AS paid_orders,
+    COALESCE(SUM(total_amount - platform_fee), 0) AS net_revenue,
+    COUNT(*) FILTER (WHERE is_used = TRUE) AS checked_in_count
 FROM orders
 WHERE event_id = $1 AND payment_status = 'paid'
 `
 
 type GetEventAnalyticsRow struct {
-	TotalOrders    int64 `json:"total_orders"`
-	TotalRevenue   int64 `json:"total_revenue"`
-	CheckedInCount int64 `json:"checked_in_count"`
-	PaidOrders     int64 `json:"paid_orders"`
+	PaidOrders     int64       `json:"paid_orders"`
+	NetRevenue     interface{} `json:"net_revenue"`
+	CheckedInCount int64       `json:"checked_in_count"`
 }
 
 func (q *Queries) GetEventAnalytics(ctx context.Context, eventID uuid.UUID) (GetEventAnalyticsRow, error) {
 	row := q.db.QueryRow(ctx, getEventAnalytics, eventID)
 	var i GetEventAnalyticsRow
-	err := row.Scan(
-		&i.TotalOrders,
-		&i.TotalRevenue,
-		&i.CheckedInCount,
-		&i.PaidOrders,
-	)
+	err := row.Scan(&i.PaidOrders, &i.NetRevenue, &i.CheckedInCount)
 	return i, err
 }
 
@@ -248,6 +241,45 @@ func (q *Queries) GetOrderByTransactionID(ctx context.Context, transactionID *st
 		&i.DeviceInfo,
 		&i.IpAddress,
 		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getPlatformAnalytics = `-- name: GetPlatformAnalytics :one
+SELECT
+    COUNT(DISTINCT u.id) AS total_users,
+    COUNT(DISTINCT e.id) AS total_events,
+    COUNT(o.id) AS total_orders,
+    COALESCE(SUM(o.total_amount), 0) AS gross_revenue,
+    COALESCE(SUM(o.platform_fee), 0) AS total_platform_fee,
+    COALESCE(SUM(o.total_amount - o.platform_fee), 0) AS net_revenue,
+    COUNT(o.id) FILTER (WHERE o.is_used = TRUE) AS total_checked_in
+FROM users u
+JOIN events e ON e.organizer_id = u.id
+LEFT JOIN orders o ON o.event_id = e.id AND o.payment_status = 'paid'
+`
+
+type GetPlatformAnalyticsRow struct {
+	TotalUsers       int64       `json:"total_users"`
+	TotalEvents      int64       `json:"total_events"`
+	TotalOrders      int64       `json:"total_orders"`
+	GrossRevenue     interface{} `json:"gross_revenue"`
+	TotalPlatformFee interface{} `json:"total_platform_fee"`
+	NetRevenue       interface{} `json:"net_revenue"`
+	TotalCheckedIn   int64       `json:"total_checked_in"`
+}
+
+func (q *Queries) GetPlatformAnalytics(ctx context.Context) (GetPlatformAnalyticsRow, error) {
+	row := q.db.QueryRow(ctx, getPlatformAnalytics)
+	var i GetPlatformAnalyticsRow
+	err := row.Scan(
+		&i.TotalUsers,
+		&i.TotalEvents,
+		&i.TotalOrders,
+		&i.GrossRevenue,
+		&i.TotalPlatformFee,
+		&i.NetRevenue,
+		&i.TotalCheckedIn,
 	)
 	return i, err
 }

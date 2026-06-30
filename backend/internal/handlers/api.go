@@ -101,6 +101,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	Protection.GET("/admin/users", h.handleListAllUsers)
 	Protection.GET("/admin/transactions", h.handleViewAllTransactions)
 	Protection.GET("/admin/events", h.handleViewAllEvents)
+	Protection.GET("/admin/analytics", h.handleGetPlatformAnalytics)
 
 	Protection.PUT("/admin/users/:id/verify", h.handleVerifyOrganizer)
 	Protection.PUT("/admin/users/:id/suspend", h.handleSuspendUser)

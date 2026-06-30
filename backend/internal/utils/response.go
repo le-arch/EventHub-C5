@@ -68,6 +68,24 @@ type EventResponse struct{
 	UpdatedAt      string           `json:"updated_at"`
 }
 
+type PublicEventResponse struct{	
+	Title          string           `json:"title"`
+	Slug           string           `json:"slug"`
+	Description    string           `json:"description"`
+	Venue          string           `json:"venue"`
+	City           string           `json:"city"`
+	StartDate      string           `json:"start_date"`       
+	EndDate        string           `json:"end_date"`         
+	StartTime      string           `json:"start_time"`       
+	EndTime        string          `json:"end_time"`         
+	CoverImageUrl  string           `json:"cover_image_url"`
+	Status         repo.EventStatus `json:"status"`
+	SalesStartDate string           `json:"sales_start_date"` 
+	SalesEndDate   string           `json:"sales_end_date"` 
+	CapacityRange  *models.CapacityRangeJSON			`json:"capacity_range"`  
+	UpdatedAt      string           `json:"updated_at"`
+}
+
 type CreateTicketTypeResponse struct {
     ID               uuid.UUID `json:"id"`
     EventID          uuid.UUID `json:"event_id"`

@@ -286,7 +286,7 @@ func (h *EventHubHandler) handleGetPublicEvent(c *gin.Context) {
         return
     }
 
-    response := utils.EventResponse{
+    response := utils.PublicEventResponse{
 	Title: event.Title,
 	Slug: event.Slug,
 	Description: event.Description,
@@ -426,6 +426,7 @@ func (h *EventHubHandler) handleOrganizerUpdateEventStatus(c *gin.Context) {
         c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
         return
     }
+    
     event, err := h.querier.GetEventByID(c, eventID)
     if err != nil || event.OrganizerID != organizerID {
         c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
@@ -763,19 +764,19 @@ func (h *EventHubHandler) handleGetEventAnalytics(c *gin.Context) {
 	}
 
 	stats, err := h.querier.GetEventAnalytics(c, eventID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch analytics"})
-		return
-	}
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch analytics"})
+        return
+    }
 
 	checkinRate := 0.0
-	if stats.PaidOrders > 0 {
-		checkinRate = float64(stats.CheckedInCount) / float64(stats.PaidOrders) * 100
-	}
+    if stats.PaidOrders > 0 {
+        checkinRate = float64(stats.CheckedInCount) / float64(stats.PaidOrders) * 100
+    }
 
 	c.JSON(http.StatusOK, gin.H{
 		"total_tickets_sold": stats.PaidOrders,
-		"total_revenue":      stats.TotalRevenue,
+		"total_revenue":      stats.NetRevenue,
 		"checked_in_count":   stats.CheckedInCount,
 		"checkin_rate":       checkinRate,
 	})
