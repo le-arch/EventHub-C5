@@ -13,7 +13,8 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(255) NOT NULL,
     role user_role NOT NULL DEFAULT 'organizer',
-    is_email_verified BOOLEAN DEFAULT FALSE,
+    is_email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT now() ,
     updated_at TIMESTAMP DEFAULT now() 
 );
@@ -80,7 +81,7 @@ CREATE TABLE orders (
     qr_code_image_url TEXT DEFAULT '',
     qr_code_plaintext TEXT NOT NULL DEFAULT '',
     
-    is_used BOOLEAN DEFAULT FALSE,
+    is_used BOOLEAN NOT NULL DEFAULT FALSE,
     used_at TIMESTAMP,
     checked_in_by UUID REFERENCES users(id),
     platform_fee INT NOT NULL DEFAULT 0,

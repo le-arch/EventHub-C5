@@ -10,6 +10,7 @@ import (
 	"net/netip"
 
 	uuid "github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createOrder = `-- name: CreateOrder :one
@@ -110,6 +111,28 @@ func (q *Queries) DecrementTicketQuantity(ctx context.Context, arg DecrementTick
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const getEventAnalytics = `-- name: GetEventAnalytics :one
+SELECT
+    COUNT(*) AS paid_orders,
+    COALESCE(SUM(total_amount - platform_fee), 0) AS net_revenue,
+    COUNT(*) FILTER (WHERE is_used = TRUE) AS checked_in_count
+FROM orders
+WHERE event_id = $1 AND payment_status = 'paid'
+`
+
+type GetEventAnalyticsRow struct {
+	PaidOrders     int64       `json:"paid_orders"`
+	NetRevenue     interface{} `json:"net_revenue"`
+	CheckedInCount int64       `json:"checked_in_count"`
+}
+
+func (q *Queries) GetEventAnalytics(ctx context.Context, eventID uuid.UUID) (GetEventAnalyticsRow, error) {
+	row := q.db.QueryRow(ctx, getEventAnalytics, eventID)
+	var i GetEventAnalyticsRow
+	err := row.Scan(&i.PaidOrders, &i.NetRevenue, &i.CheckedInCount)
+	return i, err
 }
 
 const getOrderByID = `-- name: GetOrderByID :one
@@ -222,6 +245,45 @@ func (q *Queries) GetOrderByTransactionID(ctx context.Context, transactionID *st
 	return i, err
 }
 
+const getPlatformAnalytics = `-- name: GetPlatformAnalytics :one
+SELECT
+    COUNT(DISTINCT u.id) AS total_users,
+    COUNT(DISTINCT e.id) AS total_events,
+    COUNT(o.id) AS total_orders,
+    COALESCE(SUM(o.total_amount), 0) AS gross_revenue,
+    COALESCE(SUM(o.platform_fee), 0) AS total_platform_fee,
+    COALESCE(SUM(o.total_amount - o.platform_fee), 0) AS net_revenue,
+    COUNT(o.id) FILTER (WHERE o.is_used = TRUE) AS total_checked_in
+FROM users u
+JOIN events e ON e.organizer_id = u.id
+LEFT JOIN orders o ON o.event_id = e.id AND o.payment_status = 'paid'
+`
+
+type GetPlatformAnalyticsRow struct {
+	TotalUsers       int64       `json:"total_users"`
+	TotalEvents      int64       `json:"total_events"`
+	TotalOrders      int64       `json:"total_orders"`
+	GrossRevenue     interface{} `json:"gross_revenue"`
+	TotalPlatformFee interface{} `json:"total_platform_fee"`
+	NetRevenue       interface{} `json:"net_revenue"`
+	TotalCheckedIn   int64       `json:"total_checked_in"`
+}
+
+func (q *Queries) GetPlatformAnalytics(ctx context.Context) (GetPlatformAnalyticsRow, error) {
+	row := q.db.QueryRow(ctx, getPlatformAnalytics)
+	var i GetPlatformAnalyticsRow
+	err := row.Scan(
+		&i.TotalUsers,
+		&i.TotalEvents,
+		&i.TotalOrders,
+		&i.GrossRevenue,
+		&i.TotalPlatformFee,
+		&i.NetRevenue,
+		&i.TotalCheckedIn,
+	)
+	return i, err
+}
+
 const insertWebhookLog = `-- name: InsertWebhookLog :one
 INSERT INTO webhook_logs (
     gateway, payload, headers, signature_valid, processed,error_message, received_at
@@ -260,6 +322,155 @@ func (q *Queries) InsertWebhookLog(ctx context.Context, arg InsertWebhookLogPara
 		&i.ReceivedAt,
 	)
 	return i, err
+}
+
+const listAllTransactions = `-- name: ListAllTransactions :many
+SELECT o.id AS order_id, e.title AS event_title, o.attendee_name, o.total_amount AS amount, o.payment_status, o.created_at
+FROM orders o
+JOIN events e ON o.event_id = e.id
+WHERE ($1::text = '' OR o.payment_status = $1::payment_status)
+  AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR o.event_id = $2::uuid)
+ORDER BY o.created_at DESC
+LIMIT $3 OFFSET $4
+`
+
+type ListAllTransactionsParams struct {
+	Column1 string    `json:"column_1"`
+	Column2 uuid.UUID `json:"column_2"`
+	Limit   int32     `json:"limit"`
+	Offset  int32     `json:"offset"`
+}
+
+type ListAllTransactionsRow struct {
+	OrderID       uuid.UUID        `json:"order_id"`
+	EventTitle    string           `json:"event_title"`
+	AttendeeName  string           `json:"attendee_name"`
+	Amount        int32            `json:"amount"`
+	PaymentStatus PaymentStatus    `json:"payment_status"`
+	CreatedAt     pgtype.Timestamp `json:"created_at"`
+}
+
+func (q *Queries) ListAllTransactions(ctx context.Context, arg ListAllTransactionsParams) ([]ListAllTransactionsRow, error) {
+	rows, err := q.db.Query(ctx, listAllTransactions,
+		arg.Column1,
+		arg.Column2,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListAllTransactionsRow{}
+	for rows.Next() {
+		var i ListAllTransactionsRow
+		if err := rows.Scan(
+			&i.OrderID,
+			&i.EventTitle,
+			&i.AttendeeName,
+			&i.Amount,
+			&i.PaymentStatus,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAttendeesByEvent = `-- name: ListAttendeesByEvent :many
+SELECT id, attendee_name, attendee_phone, attendee_email, is_used, used_at, created_at
+FROM orders
+WHERE event_id = $1 AND payment_status = 'paid'
+ORDER BY created_at DESC
+`
+
+type ListAttendeesByEventRow struct {
+	ID            uuid.UUID        `json:"id"`
+	AttendeeName  string           `json:"attendee_name"`
+	AttendeePhone string           `json:"attendee_phone"`
+	AttendeeEmail *string          `json:"attendee_email"`
+	IsUsed        bool             `json:"is_used"`
+	UsedAt        pgtype.Timestamp `json:"used_at"`
+	CreatedAt     pgtype.Timestamp `json:"created_at"`
+}
+
+func (q *Queries) ListAttendeesByEvent(ctx context.Context, eventID uuid.UUID) ([]ListAttendeesByEventRow, error) {
+	rows, err := q.db.Query(ctx, listAttendeesByEvent, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListAttendeesByEventRow{}
+	for rows.Next() {
+		var i ListAttendeesByEventRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AttendeeName,
+			&i.AttendeePhone,
+			&i.AttendeeEmail,
+			&i.IsUsed,
+			&i.UsedAt,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCheckinHistoryByEvent = `-- name: ListCheckinHistoryByEvent :many
+SELECT id AS order_id, attendee_name, attendee_phone, used_at
+FROM orders
+WHERE event_id = $1 AND is_used = TRUE
+ORDER BY used_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type ListCheckinHistoryByEventParams struct {
+	EventID uuid.UUID `json:"event_id"`
+	Limit   int32     `json:"limit"`
+	Offset  int32     `json:"offset"`
+}
+
+type ListCheckinHistoryByEventRow struct {
+	OrderID       uuid.UUID        `json:"order_id"`
+	AttendeeName  string           `json:"attendee_name"`
+	AttendeePhone string           `json:"attendee_phone"`
+	UsedAt        pgtype.Timestamp `json:"used_at"`
+}
+
+func (q *Queries) ListCheckinHistoryByEvent(ctx context.Context, arg ListCheckinHistoryByEventParams) ([]ListCheckinHistoryByEventRow, error) {
+	rows, err := q.db.Query(ctx, listCheckinHistoryByEvent, arg.EventID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListCheckinHistoryByEventRow{}
+	for rows.Next() {
+		var i ListCheckinHistoryByEventRow
+		if err := rows.Scan(
+			&i.OrderID,
+			&i.AttendeeName,
+			&i.AttendeePhone,
+			&i.UsedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listOrderByEvent = `-- name: ListOrderByEvent :many
@@ -311,6 +522,17 @@ func (q *Queries) ListOrderByEvent(ctx context.Context, eventID uuid.UUID) ([]Or
 		return nil, err
 	}
 	return items, nil
+}
+
+const markOrderUsed = `-- name: MarkOrderUsed :exec
+UPDATE orders 
+SET is_used = TRUE, used_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND is_used = FALSE
+`
+
+func (q *Queries) MarkOrderUsed(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, markOrderUsed, id)
+	return err
 }
 
 const updateOrderPayment = `-- name: UpdateOrderPayment :exec

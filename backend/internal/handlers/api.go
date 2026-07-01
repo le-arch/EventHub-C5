@@ -76,6 +76,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	
 	Protection.POST("/events", h.handleCreateEvent)
 	Protection.POST("/events/:id/ticket-types",h.handleCreateTicketType)
+	Protection.POST("/checkin", h.handleCheckin)
 	
 	// Protection.POST("/checkin", h.handleScanQRCode)
 	Protection.POST("events/upload-image", h.handleUploadImage)
@@ -91,22 +92,27 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	Protection.GET("/Organization/events", h.handleGetOrganisationEvents)
 	Protection.GET("/Organization/:id", h.handleGetOrganisationEvent)
 	Protection.GET("/events/:id/share-link", h.handleShareLink)
-	// Protection.GET("/orders/:id/status", h.handleCheckPayementStatus)
-	// Protection.GET("/orders/:id/ticket", h.handleDownloadQRCode)
-	// Protection.GET("/events/:id/attendees", h.handleGetAttendeeList)
-	// Protection.GET("/events/:id/analytics", h.handleGetEventAnalytics)
-	Protection.GET("/admin/events", h.handleGetEvents)
-	// Protection.GET("/events/:id", h.handleEventDetails)
-	// Protection.GET("/checkin/event/:eventId/history", h.handleGetCheckinHistory)
+	Protection.GET("/orders/:id/ticket", h.handleDownloadQRCode)
+	Protection.GET("/events/:id/attendees", h.handleGetAttendeeList)
+	Protection.GET("/events/:id/analytics", h.handleGetEventAnalytics)
+	Protection.GET("/events/:id", h.handleEventDetails)
+	Protection.GET("/checkin/event/:eventId/history", h.handleGetCheckinHistory)
 	Protection.GET("/events/:id/ticket-types", h.handleListTicketTypes)
 	Protection.GET("/admin/users", h.handleListAllUsers)
-	// Protection.GET("/admin/transactions", h.handleViewAllTransactions)
-	// Protection.GET("/admin/events", h.handleViewAllEvents)
+	Protection.GET("/admin/transactions", h.handleViewAllTransactions)
+	Protection.GET("/admin/events", h.handleViewAllEvents)
+	Protection.GET("/admin/analytics", h.handleGetPlatformAnalytics)
 
-	// Protection.PUT("/admin/users/:id/verify", h.handleVerifyOrganizer)
+	Protection.PUT("/admin/users/:id/verify", h.handleVerifyOrganizer)
+	Protection.PUT("/admin/users/:id/suspend", h.handleSuspendUser)
+	Protection.PUT("/admin/users/:id/unsuspend", h.handleUnsuspendUser)
+
 
 	Protection.DELETE("/events/:id", h.handleDeleteEvent)
 	Protection.DELETE("/events/:id/ticket-types/:ticket_id", h.handleDeleteTicketType)
+	Protection.DELETE("/ticket-type/:id", h.handleDeleteTicketType)
+	Protection.DELETE("/admin/users/:id", h.handleDeleteUser)
+
 	
 	}
 

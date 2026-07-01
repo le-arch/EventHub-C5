@@ -9,7 +9,7 @@ type RegisterRequest struct {
 	Phone           string        `json:"phone"`
 	Role            repo.UserRole `json:"role"`
 	PasswordHash    string        `json:"password_hash" binding:"required,min=6"`
-	IsEmailVerified *bool         `json:"is_email_verified"`
+	IsEmailVerified bool         `json:"is_email_verified"`
 }
 
 type VerifyEmailRequest struct {

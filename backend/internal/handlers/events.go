@@ -260,6 +260,51 @@ func (h *EventHubHandler) handleGetOrganisationEvents(c *gin.Context) {
     c.JSON(http.StatusOK, response)
 }
 
+func (h *EventHubHandler) handleEventDetails(c *gin.Context) {
+    eventIDStr := c.Param("id")
+    eventID, err := uuid.Parse(eventIDStr)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+        return
+    }
+
+    event, err := h.querier.GetEventByID(c, eventID)
+    if err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
+        return
+    }
+
+    // Authorization: only organizer or admin
+    userID, _ := utils.ExtractOrganizerID(c)
+    role, _ := utils.GetUserRole(c)
+    if event.OrganizerID != userID && role != "admin" {
+        c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
+        return
+    }
+
+    response := utils.EventDetailsResponse{
+        ID:             event.ID,
+        OrganizerID:    event.OrganizerID,
+        Title:          event.Title,
+        Slug:           event.Slug,
+        Description:    event.Description,
+        Venue:          event.Venue,
+        City:           event.City,
+        StartDate:      utils.FormatDate(event.StartDate),
+	    EndDate: utils.FormatDate(*event.EndDate),
+	    StartTime: utils.FormatTime(event.StartTime),
+	    EndTime: utils.FormatTime(event.EndTime),
+        CoverImageUrl:  event.CoverImageUrl,
+        Status:         string(event.Status),
+        SalesStartDate: utils.FormatDate(*event.SalesStartDate),
+	    SalesEndDate: utils.FormatDate(*event.SalesEndDate),
+        CapacityRange:  utils.FromDBRange(event.CapacityRange),
+        CreatedAt:      utils.FormatDateTime(event.CreatedAt),
+        UpdatedAt:      utils.FormatDateTime(event.UpdatedAt),
+    }
+    c.JSON(http.StatusOK, response)
+}
+
 func (h *EventHubHandler) handleGetPublicEvent(c *gin.Context) {
     eventID := c.Param("id")
     id, err := uuid.Parse(eventID)
@@ -416,6 +461,7 @@ func (h *EventHubHandler) handleOrganizerUpdateEventStatus(c *gin.Context) {
         c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
         return
     }
+    
     event, err := h.querier.GetEventByID(c, eventID)
     if err != nil || event.OrganizerID != organizerID {
         c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
@@ -725,6 +771,51 @@ func (h *EventHubHandler) handleShareLink(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{"share_link": link})
 }
 
+
+// Event Analytics
+
+func (h *EventHubHandler) handleGetEventAnalytics(c *gin.Context) {
+	eventIDStr := c.Param("id")
+	eventID, err := uuid.Parse(eventIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+		return
+	}
+
+	userID, err := utils.ExtractOrganizerID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+	event, err := h.querier.GetEventByID(c, eventID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
+		return
+	}
+	role, _ := utils.GetUserRole(c)
+	if event.OrganizerID != userID && role != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
+		return
+	}
+
+	stats, err := h.querier.GetEventAnalytics(c, eventID)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch analytics"})
+        return
+    }
+
+	checkinRate := 0.0
+    if stats.PaidOrders > 0 {
+        checkinRate = float64(stats.CheckedInCount) / float64(stats.PaidOrders) * 100
+    }
+
+	c.JSON(http.StatusOK, gin.H{
+		"total_tickets_sold": stats.PaidOrders,
+		"total_revenue":      stats.NetRevenue,
+		"checked_in_count":   stats.CheckedInCount,
+		"checkin_rate":       checkinRate,
+	})
+}
 
 
 

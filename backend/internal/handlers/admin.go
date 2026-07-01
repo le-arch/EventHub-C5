@@ -3,6 +3,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -11,7 +12,7 @@ import (
 	"github.com/le-arch/EventHub-C5/internal/utils"
 )
 
-func (h *EventHubHandler) handleGetEvents(c *gin.Context) {
+func (h *EventHubHandler) handleViewAllEvents(c *gin.Context) {
     UserRole, err := utils.GetUserRole(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
@@ -176,4 +177,188 @@ func (h *EventHubHandler) handleAdminRestoreEvent(c *gin.Context) {
         return
     }
     c.JSON(http.StatusOK, gin.H{"message": "event restored to published", "status": updated.Status})
+}
+
+// handleVerifyOrganizer – Admin marks a user's email as verified
+func (h *EventHubHandler) handleVerifyOrganizer(c *gin.Context) {
+	userIDStr := c.Param("id")
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	// (Optional) Check that the user exists before update
+	_, err = h.querier.GetUserByIDForAdmin(c, userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	err = h.querier.UpdateUserVerification(c, repo.UpdateUserVerificationParams{
+		ID:               userID,
+		IsEmailVerified:  true,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "user verified successfully"})
+}
+
+// handleSuspendUser – Admin suspends a user (set is_active = false)
+func (h *EventHubHandler) handleSuspendUser(c *gin.Context) {
+	userIDStr := c.Param("id")
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	_, err = h.querier.GetUserByIDForAdmin(c, userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	err = h.querier.UpdateUserActiveStatus(c, repo.UpdateUserActiveStatusParams{
+		ID:        userID,
+		IsActive:  false,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "user suspended"})
+}
+
+// handleUnsuspendUser – Admin reactivates a user
+func (h *EventHubHandler) handleUnsuspendUser(c *gin.Context) {
+	userIDStr := c.Param("id")
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	_, err = h.querier.GetUserByIDForAdmin(c, userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	err = h.querier.UpdateUserActiveStatus(c, repo.UpdateUserActiveStatusParams{
+		ID:        userID,
+		IsActive:  true,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "user reactivated"})
+}
+
+// handleDeleteUser – Admin permanently deletes a user
+func (h *EventHubHandler) handleDeleteUser(c *gin.Context) {
+	userIDStr := c.Param("id")
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	// Check if user exists (optional)
+	_, err = h.querier.GetUserByIDForAdmin(c, userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	err = h.querier.DeleteUser(c, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "user deleted"})
+}
+
+func (h *EventHubHandler) handleViewAllTransactions(c *gin.Context) {
+	// Admin only
+	role, _ := utils.GetUserRole(c)
+	if role != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "admin only"})
+		return
+	}
+
+	// Parse filters
+	statusStr := c.Query("status") // e.g., "paid", "pending"
+	var statusFilter string
+	if statusStr != "" {
+		statusFilter = statusStr
+	} // else empty string means no filter
+
+	eventIDStr := c.Query("event_id")
+	var eventIDFilter uuid.UUID
+	if id, err := uuid.Parse(eventIDStr); err == nil {
+		eventIDFilter = id
+	} // else zero UUID means no filter
+
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	offset := (page - 1) * limit
+
+	transactions, err := h.querier.ListAllTransactions(c, repo.ListAllTransactionsParams{
+		Column1: statusFilter,
+		Column2: eventIDFilter,
+		Limit:   int32(limit),
+		Offset:  int32(offset),
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	response := make([]utils.TransactionResponse, len(transactions))
+	for i, t := range transactions {
+		response[i] = utils.TransactionResponse{
+			OrderID:       t.OrderID,
+			EventTitle:    t.EventTitle,
+			AttendeeName:  t.AttendeeName,
+			Amount:        t.Amount,
+			PaymentStatus: string(t.PaymentStatus),
+			CreatedAt:     utils.FormatDateTime(t.CreatedAt),
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{"transactions": response, "total": len(response)})
+}
+
+func (h *EventHubHandler) handleGetPlatformAnalytics(c *gin.Context) {
+    role, _ := utils.GetUserRole(c)
+    if role != "admin" {
+        c.JSON(http.StatusForbidden, gin.H{"error": "admin only"})
+        return
+    }
+
+    stats, err := h.querier.GetPlatformAnalytics(c)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    // Calculate platform-wide check-in rate
+    checkinRate := 0.0
+    if stats.TotalOrders > 0 {
+        checkinRate = float64(stats.TotalCheckedIn) / float64(stats.TotalOrders) * 100
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "total_users":       stats.TotalUsers,
+        "total_events":      stats.TotalEvents,
+        "total_orders":      stats.TotalOrders,
+        "gross_revenue":     stats.GrossRevenue,
+        "platform_fee":      stats.TotalPlatformFee,
+        "net_revenue":       stats.NetRevenue,
+        "total_checked_in":  stats.TotalCheckedIn,
+        "checkin_rate":      checkinRate,
+    })
 }
