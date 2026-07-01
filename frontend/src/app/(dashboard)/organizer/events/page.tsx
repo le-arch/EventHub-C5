@@ -118,7 +118,7 @@ export default function EventsDashboardPage() {
   const fetchEvents = async () => {
     setLoading(true)
     try {
-      const response = await api.get('/Orgnization/events', {
+      const response = await api.get('/Organization/events', {
         params: {
           page,
           limit: pageSize,

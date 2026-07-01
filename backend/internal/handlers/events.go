@@ -35,26 +35,38 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 		return
 	}
 
-	endDate, err := utils.ParseDate(req.EndDate)
-	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
+	var endDate *time.Time
+	if req.EndDate != "" {
+		parsed, err := utils.ParseDate(req.EndDate)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		endDate = &parsed
 	}
-
 
 	if req.Status == ""{
 		req.Status = "draft"
 	}
 	
-    salesStartDate, err := utils.ParseDate(req.SalesStartDate)
-	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
+	var salesStartDate *time.Time
+	if req.SalesStartDate != "" {
+		parsed, err := utils.ParseDate(req.SalesStartDate)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		salesStartDate = &parsed
 	}
-	salesEndDate, err := utils.ParseDate(req.SalesEndDate)
-	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
+
+	var salesEndDate *time.Time
+	if req.SalesEndDate != "" {
+		parsed, err := utils.ParseDate(req.SalesEndDate)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		salesEndDate = &parsed
 	}
 
 	event, err := h.querier.CreateEvent(c, repo.CreateEventParams{
@@ -65,13 +77,13 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 		Venue:          req.Venue,
 		City:           req.City,
 		StartDate:      startDate,
-		EndDate:        &endDate,
+		EndDate:        endDate,
 		StartTime:      req.StartTime,
 		EndTime:        req.EndTime,
 		CoverImageUrl:  req.CoverImageUrl,
 		Status:         req.Status,
-		SalesStartDate: &salesStartDate,
-		SalesEndDate:   &salesEndDate,
+		SalesStartDate: salesStartDate,
+		SalesEndDate:   salesEndDate,
 		CapacityRange: utils.ToDBRange(req.CapacityRange),
 	})
 	if err != nil {
@@ -80,6 +92,25 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 	}
 
 	
+	var endDateStr, salesStartDateStr, salesEndDateStr string
+	if event.EndDate != nil {
+		endDateStr = utils.FormatDate(*event.EndDate)
+	}
+	if event.SalesStartDate != nil {
+		salesStartDateStr = utils.FormatDate(*event.SalesStartDate)
+	}
+	if event.SalesEndDate != nil {
+		salesEndDateStr = utils.FormatDate(*event.SalesEndDate)
+	}
+
+	var startTimeStr, endTimeStr string
+	if event.StartTime != nil {
+		startTimeStr = utils.FormatTime(event.StartTime)
+	}
+	if event.EndTime != nil {
+		endTimeStr = utils.FormatTime(event.EndTime)
+	}
+
 	response := utils.CreateEventResponse{
 		ID: event.ID,
 		OrganizerID: event.OrganizerID,
@@ -89,13 +120,13 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 		Venue: event.Venue,
 		City: event.City,
 		StartDate: utils.FormatDate(event.StartDate),
-		EndDate: utils.FormatDate(*event.EndDate),
-		StartTime: utils.FormatTime(event.StartTime),
-		EndTime: utils.FormatTime(event.EndTime),
+		EndDate: endDateStr,
+		StartTime: startTimeStr,
+		EndTime: endTimeStr,
 		CoverImageUrl: event.CoverImageUrl,
 		Status: event.Status,
-		SalesStartDate: utils.FormatDate(*event.SalesStartDate),
-		SalesEndDate: utils.FormatDate(*event.SalesEndDate),
+		SalesStartDate: salesStartDateStr,
+		SalesEndDate: salesEndDateStr,
 		CapacityRange: utils.FromDBRange(event.CapacityRange),
 		CreatedAt: utils.FormatDateTime(event.CreatedAt),
 	}
@@ -168,6 +199,7 @@ func (h *EventHubHandler) handleGetOrganisationEvent(c *gin.Context) {
 
 	
 	response := utils.EventResponse{
+	ID: event.ID,
 	Title: event.Title,
 	Slug: event.Slug,
 	Description: event.Description,
@@ -206,6 +238,7 @@ func (h *EventHubHandler) handleGetOrganisationEvents(c *gin.Context) {
 	
 	for _, event := range events {
 	response = append(response, utils.EventResponse{
+	ID: event.ID,
 	Title: event.Title,
 	Slug: event.Slug,
 	Description: event.Description,
@@ -242,6 +275,7 @@ func (h *EventHubHandler) handleGetPublicEvent(c *gin.Context) {
     }
 
     response := utils.EventResponse{
+	ID: event.ID,
 	Title: event.Title,
 	Slug: event.Slug,
 	Description: event.Description,
@@ -347,6 +381,7 @@ func (h *EventHubHandler) handleUpdateEvent(c *gin.Context) {
     }
 
 	response := utils.EventResponse{
+		ID: updatedEvent.ID,
 		Title: updatedEvent.Title,
 		Slug:  updatedEvent.Slug,
 		Description: updatedEvent.Description,

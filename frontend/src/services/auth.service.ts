@@ -60,7 +60,7 @@ export interface ForgotPasswordPayload {
 export interface ResetPasswordPayload {
   email: string
   otp: string
-  password: string  // Changed from password_hash to match backend
+  password_hash: string
 }
 
 // User types for admin functions
@@ -157,7 +157,8 @@ export const authService = {
    * Logout user (optional - mostly handled on frontend)
    */
   logout: async (): Promise<void> => {
-    await api.post('/auth/logout')
+    const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null
+    await api.post('/auth/logout', { refresh_token: refreshToken })
   },
 
   /**
@@ -198,7 +199,7 @@ export const authService = {
     const payload: ResetPasswordPayload = {
       email,
       otp,
-      password: newPassword,
+      password_hash: newPassword,
     }
 
     await api.post('/auth/reset-password', payload)

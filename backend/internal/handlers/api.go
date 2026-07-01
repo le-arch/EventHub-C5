@@ -81,7 +81,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	Protection.POST("events/upload-image", h.handleUploadImage)
 
 	Protection.PATCH("/events/:id", h.handleUpdateEvent)
-	Protection.PATCH("/:id/ticket-types",h.handleUpdateTicketType)
+	Protection.PATCH("/events/:id/ticket-types/:ticket_id",h.handleUpdateTicketType)
 	Protection.PATCH("events/:id/status", h.handleOrganizerUpdateEventStatus)
 	Protection.PATCH("/events/:id/publish",h.handlePublishEvent)
 	Protection.PATCH("/events/:id/unpublish", h.handleUnpublishEvent)
@@ -106,7 +106,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	// Protection.PUT("/admin/users/:id/verify", h.handleVerifyOrganizer)
 
 	Protection.DELETE("/events/:id", h.handleDeleteEvent)
-	Protection.DELETE("/ticket-type/:id", h.handleDeleteTicketType)
+	Protection.DELETE("/events/:id/ticket-types/:ticket_id", h.handleDeleteTicketType)
 	
 	}
 

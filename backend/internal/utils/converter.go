@@ -41,6 +41,9 @@ func FormatDate(t time.Time) string {
 
 // formats a time.Time object into a string in the format "HH:MM:SS"
 func FormatTime(t *string) string {
+	if t == nil {
+		return ""
+	}
 	timeStr := strings.Split(*t, ".")[0]
 	return timeStr
 }

@@ -47,9 +47,9 @@ type CreateEventResponse struct {
 }
 
 type EventResponse struct{	
-	OrganizerID	uuid.UUID	`json:"organizer_id,omitempty"`
-
-	OrganizerName string	`json:"organizer_name,omitempty"`
+	ID				uuid.UUID 	`json:"id"`
+	OrganizerID		uuid.UUID	`json:"organizer_id,omitempty"`
+	OrganizerName 	string		`json:"organizer_name,omitempty"`
 
 	Title          string           `json:"title"`
 	Slug           string           `json:"slug"`

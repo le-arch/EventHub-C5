@@ -135,7 +135,7 @@ export const useEventStore = create<EventState>()(
         set({ isLoading: true, error: null })
         
         try {
-          const response = await api.get('/events', {
+          const response = await api.get('/Organization/events', {
             params: {
               page,
               limit: pageSize,
@@ -144,9 +144,10 @@ export const useEventStore = create<EventState>()(
             },
           })
           
+          const events = Array.isArray(response.data) ? response.data : []
           set({
-            events: response.data.events,
-            totalCount: response.data.total,
+            events,
+            totalCount: events.length,
             isLoading: false,
           })
         } catch (error: any) {
@@ -160,9 +161,9 @@ export const useEventStore = create<EventState>()(
         set({ isLoading: true, error: null })
         
         try {
-          const response = await api.get(`/events/${eventId}`)
-          set({ currentEvent: response.data.event, isLoading: false })
-          return response.data.event
+          const response = await api.get(`/Organization/${eventId}`)
+          set({ currentEvent: response.data, isLoading: false })
+          return response.data
         } catch (error: any) {
           const message = error.response?.data?.error || 'Failed to load event'
           set({ error: message, isLoading: false })
@@ -173,9 +174,10 @@ export const useEventStore = create<EventState>()(
 
       fetchTicketTypes: async (eventId: string) => {
         try {
-          const response = await api.get(`/events/${eventId}/tickets`)
-          set({ ticketTypes: response.data.ticket_types })
-          return response.data.ticket_types
+          const response = await api.get(`/events/${eventId}/ticket-types`)
+          const types = Array.isArray(response.data) ? response.data : []
+          set({ ticketTypes: types })
+          return types
         } catch (error) {
           toast.error('Failed to load ticket types')
           return []
@@ -220,31 +222,26 @@ export const useEventStore = create<EventState>()(
         }
       },
 
-      updateEvent: async (eventId: string, data: Partial<CreateEventData>) => {
+      updateEvent: async (eventId: string, data: Record<string, unknown>) => {
         set({ isLoading: true, error: null })
         
         try {
-          const formData = new FormData()
-          
-          Object.entries(data).forEach(([key, value]) => {
-            if (value !== undefined) {
-              if (key === 'ticketTypes') {
-                formData.append(key, JSON.stringify(value))
-              } else if (key === 'coverImage' && value instanceof File) {
-                formData.append(key, value)
-              } else if (typeof value === 'string') {
-                formData.append(key, value)
-              }
-            }
-          })
-          
-          const response = await api.put(`/events/${eventId}`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          })
+          const payload: Record<string, unknown> = {}
+          if (data.title !== undefined) payload.title = data.title
+          if (data.description !== undefined) payload.description = data.description
+          if (data.venue !== undefined) payload.venue = data.venue
+          if (data.city !== undefined) payload.city = data.city
+          if (data.startDate !== undefined) payload.start_date = data.startDate
+          if (data.startTime !== undefined) payload.start_time = data.startTime
+          if (data.endTime !== undefined) payload.end_time = data.endTime
+          if (data.status !== undefined) payload.status = data.status
+          if (data.capacityRange !== undefined) payload.capacity_range = data.capacityRange
+
+          const response = await api.patch(`/events/${eventId}`, payload)
           
           set({ isLoading: false })
           toast.success('Event updated successfully!')
-          return response.data.event
+          return response.data
         } catch (error: any) {
           const message = error.response?.data?.error || 'Failed to update event'
           set({ error: message, isLoading: false })
@@ -273,7 +270,7 @@ export const useEventStore = create<EventState>()(
         set({ isLoading: true })
         
         try {
-          await api.post(`/events/${eventId}/publish`)
+          await api.patch(`/events/${eventId}/publish`)
           set({ isLoading: false })
           toast.success('Event published successfully!')
           return true
@@ -289,7 +286,7 @@ export const useEventStore = create<EventState>()(
         set({ isLoading: true })
         
         try {
-          await api.post(`/events/${eventId}/unpublish`)
+          await api.patch(`/events/${eventId}/unpublish`)
           set({ isLoading: false })
           toast.success('Event unpublished')
           return true

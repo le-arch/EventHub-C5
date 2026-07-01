@@ -33,6 +33,7 @@ func (h *EventHubHandler) handleGetEvents(c *gin.Context) {
 	
 	for _, event := range events {
 	response = append(response, utils.EventResponse{
+	ID: event.ID,
 	OrganizerName: event.OrganizerName,
 	Title: event.Title,
 	Slug: event.Slug,
