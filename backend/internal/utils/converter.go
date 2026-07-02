@@ -39,8 +39,20 @@ func FormatDate(t time.Time) string {
 	return t.Format(DateFormat)
 }
 
+// formats a *time.Time pointer into a string in the format "YYYY-MM-DD".
+// Returns an empty string if the pointer is nil.
+func FormatDatePtr(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return t.Format(DateFormat)
+}
+
 // formats a time.Time object into a string in the format "HH:MM:SS"
 func FormatTime(t *string) string {
+	if t == nil {
+		return ""
+	}
 	timeStr := strings.Split(*t, ".")[0]
 	return timeStr
 }

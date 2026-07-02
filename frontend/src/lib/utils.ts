@@ -14,21 +14,26 @@ export function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
-export function formatDate(date: string | Date): string {
+export function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return '-'
+  const d = new Date(date)
+  if (isNaN(d.getTime())) return '-'
   return new Intl.DateTimeFormat('en-CM', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  }).format(new Date(date))
+  }).format(d)
 }
 
-export function formatTime(time: string): string {
-  // body...
+export function formatTime(time: string | null | undefined): string {
+  if (!time) return '-'
+  const d = new Date(`2026-01-01T${time}`)
+  if (isNaN(d.getTime())) return '-'
   return new Intl.DateTimeFormat('en-CM', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: true,
-  }).format(new Date(`2026-01-01T${time}`))
+  }).format(d)
 }
 
 export function generateUUID(): string {

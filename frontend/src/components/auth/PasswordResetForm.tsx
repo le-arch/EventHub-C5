@@ -11,7 +11,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -55,6 +55,8 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', ''])
   const [resetToken, setResetToken] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const fullOtpRef = useRef<string>('')
+  const [fullOtp, setFullOtp] = useState('')
 
   // Step 1 Form
   const requestForm = useForm<RequestResetForm>({
@@ -67,6 +69,12 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: { password: '', confirmPassword: '' },
   })
+
+  const handleOtpComplete = (completeOtp: string) => {
+    console.log("otp complete:", completeOtp)
+    fullOtpRef.current = completeOtp
+    setFullOtp(completeOtp)
+}
 
   /**
    * Step 1: Request password reset email
@@ -88,11 +96,9 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
     }
   }
 
-  /**
-   * Step 2: Verify OTP and get reset token
-   */
-  const handleVerifyOTP = async () => {
-    const otpString = otp.join('')
+ const handleVerifyAndReset = async (data: ResetPasswordForm) => {
+  const otpString = fullOtpRef.current
+  
     if (otpString.length !== 6) {
       toast.error('Please enter the complete 6-digit code')
       return
@@ -100,13 +106,14 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
 
     setIsLoading(true)
     try {
-      const response = await api.post('/auth/verify-reset-otp', {
+      // Call the backend's reset-password endpoint with email, otp, and new password
+      await api.post('/auth/reset-password', {
         email,
         otp: otpString,
+        password_hash: data.password,
       })
-      setResetToken(response.data.reset_token)
-      setStep('reset')
-      toast.success('Code verified. Please enter your new password.')
+      toast.success('Password reset successfully! Please log in.')
+      onSuccess?.()
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Invalid verification code')
       setOtp(['', '', '', '', '', ''])
@@ -115,28 +122,6 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
     }
   }
 
-  /**
-   * Step 3: Reset password
-   */
-  const handleResetPassword = async (data: ResetPasswordForm) => {
-    setIsLoading(true)
-    try {
-      await api.post('/auth/reset-password', {
-        token: resetToken,
-        new_password: data.password,
-      })
-      toast.success('Password reset successfully! Please log in.')
-      onSuccess?.()
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to reset password')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  /**
-   * Resend OTP code
-   */
   const handleResendCode = async () => {
     setIsLoading(true)
     try {
@@ -198,64 +183,31 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
     )
   }
 
-  // Step 2: Verify OTP
-  if (step === 'verify') {
-    return (
-      <Card className="w-full max-w-md mx-auto">
-        <CardHeader>
-          <div className="flex items-center gap-2 mb-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setStep('request')}
-              className="p-0 h-auto"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back
-            </Button>
-          </div>
-          <CardTitle className="text-2xl">Verify Your Identity</CardTitle>
-          <CardDescription>
-            We sent a 6-digit verification code to <span className="font-medium">{email}</span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+  // Step 2: Verify OTP & Set New Password (combined)
+  return (
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <div className="flex items-center gap-2 mb-2">
+          <Button variant="ghost" size="sm" onClick={() => setStep('request')} className="p-0 h-auto">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
+        </div>
+        <CardTitle className="text-2xl">Verify & Reset Password</CardTitle>
+        <CardDescription>
+          Enter the 6-digit code sent to <span className="font-medium">{email}</span> and choose a new password.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={resetForm.handleSubmit(handleVerifyAndReset)} className="space-y-6">
           <OTPInput
             length={6}
             value={otp}
             onChange={setOtp}
+            onComplete={handleOtpComplete}
             isDisabled={isLoading}
           />
 
-          <Button onClick={handleVerifyOTP} className="w-full" disabled={isLoading || otp.some(d => d === '')}>
-            {isLoading ? 'Verifying...' : 'Verify Code'}
-          </Button>
-
-          <div className="text-center">
-            <button
-              onClick={handleResendCode}
-              disabled={isLoading}
-              className="text-sm text-primary hover:underline disabled:opacity-50"
-            >
-              Didn&apos;t receive code? Resend
-            </button>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  // Step 3: Reset Password
-  return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle className="text-2xl">Create New Password</CardTitle>
-        <CardDescription>
-          Enter your new password below. Make sure it&apos;s secure.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={resetForm.handleSubmit(handleResetPassword)} className="space-y-4">
           <div>
             <Label htmlFor="new-password">New Password</Label>
             <div className="relative mt-1">
@@ -274,9 +226,6 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
                 {resetForm.formState.errors.password.message}
               </p>
             )}
-            <p className="text-xs text-gray-400 mt-1">
-              Must be at least 8 characters with one uppercase letter and one number
-            </p>
           </div>
 
           <div>
@@ -300,8 +249,18 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Resetting Password...' : 'Reset Password'}
+            {isLoading ? 'Resetting...' : 'Reset Password'}
           </Button>
+
+          <div className="text-center">
+            <button
+              onClick={handleResendCode}
+              disabled={isLoading}
+              className="text-sm text-primary hover:underline disabled:opacity-50"
+            >
+              Didn&apos;t receive code? Resend
+            </button>
+          </div>
         </form>
       </CardContent>
     </Card>

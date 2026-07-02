@@ -130,15 +130,13 @@ export default function AdminUsersPage() {
         },
       })
       
-      if (response.data) {
-        setUsers(response.data.users || [])
-        setTotalPages(response.data.totalPages || Math.ceil((response.data.total || 0) / pageSize))
-        
-        // Dynamic fallback mapping for platform-wide metrics returned from server response orchestration context
+      if (Array.isArray(response.data)) {
+        setUsers(response.data)
+        setTotalPages(Math.ceil((response.data.length || 0) / pageSize) || 1)
         setStats({
-          total: response.data.total || 0,
-          verified: response.data.totalVerified || 0, 
-          suspended: response.data.totalSuspended || 0,
+          total: response.data.length,
+          verified: response.data.filter((u: any) => u.isEmailVerified).length,
+          suspended: response.data.filter((u: any) => !u.isActive).length,
         })
       }
     } catch (error) {

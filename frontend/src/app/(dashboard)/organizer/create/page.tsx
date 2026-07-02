@@ -61,6 +61,9 @@ const basicInfoSchema = z.object({
   city: z.string().min(2, 'City is required'),
   startDate: z.string().min(1, 'Start date is required'),
   startTime: z.string().min(1, 'Start time is required'),
+  endTime: z.string().min(1, 'End time is required'),
+  salesStartDate: z.string().min(1, 'Ticket sales start date is required'),
+  salesEndDate: z.string().min(1, 'Ticket sales end date is required'),
   coverImageUrl: z.string().nullable().optional(),
   capacityMin: z.number().min(0).optional(),
   capacityMax: z.number().min(0).optional(),
@@ -94,6 +97,9 @@ export default function CreateEventPage() {
       city: '',
       startDate: '',
       startTime: '',
+      endTime: '',
+      salesStartDate: '',
+      salesEndDate: '',
       coverImageUrl: null,
       capacityMin: undefined,
       capacityMax: undefined,
@@ -117,14 +123,18 @@ export default function CreateEventPage() {
    * Action handler invoked by EventCoverUpload component upon drop/browse selection
    */
   const handleCoverUploadAction = async (file: File): Promise<string> => {
-    try {
-      const response = await apiClient.upload<{ url: string }>('/api/v1/upload', file)
-      return response.data.url
-    } catch (error) {
-      toast.error('Failed to upload image asset')
-      throw error
-    }
+  try {
+    const response = await apiClient.upload<{ url: string }>(
+      '/events/upload-image',
+      file,
+      'image'   
+    )
+    return response.data.url
+  } catch (error) {
+    toast.error('Failed to upload image asset')
+    throw error
   }
+}
 
   /**
    * Handle basic info submission and move to ticket step
@@ -156,31 +166,29 @@ export default function CreateEventPage() {
         description: basicInfo.description,
         venue: basicInfo.venue,
         city: basicInfo.city,
-        startDate: basicInfo.startDate,
-        startTime: basicInfo.startTime,
-        coverImageUrl: basicInfo.coverImageUrl,
+        start_date: basicInfo.startDate,
+        start_time: basicInfo.startTime,
+        end_time: basicInfo.endTime,
+        sales_start_date: basicInfo.salesStartDate,
+        sales_end_date: basicInfo.salesEndDate,
+        cover_image_url: basicInfo.coverImageUrl || '',
         slug,
-        ticketTypes: data.ticketTypes,
-        capacityRange,
+        capacity_range: capacityRange,
       }
 
       const response = await api.post('/events', eventData)
       const eventId = response.data.id
 
       // Create ticket types for the event
-      try {
-        await Promise.all(
-          data.ticketTypes.map((t) =>
-            api.post(`/events/${eventId}/ticket-types`, {
-              name: t.name,
-              price: Math.round(t.price),
-              quantityAvailable: Math.round(t.quantityAvailable),
-            })
-          )
+      await Promise.all(
+        data.ticketTypes.map((t) =>
+          api.post(`/events/${eventId}/ticket-types`, {
+            name: t.name,
+            price: Math.round(t.price),
+            quantity_available: Math.round(t.quantityAvailable),
+          })
         )
-      } catch (err) {
-        console.warn('failed creating ticket types', err)
-      }
+      )
 
       toast.success('✅ Event created successfully!')
       router.push(`/organizer/events`)
@@ -270,7 +278,7 @@ export default function CreateEventPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
-                {/* Custom Specialized Cover Image Uploader Module */}
+                {/* Cover Image */}
                 <div className="space-y-2">
                   <Label className="text-gray-700 font-medium flex items-center gap-1.5">
                     <ImageIcon className="h-4 w-4 text-purple-500" />
@@ -296,7 +304,7 @@ export default function CreateEventPage() {
                   />
                   {basicForm.formState.errors.title && (
                     <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                      <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >⚠️</span> {basicForm.formState.errors.title.message}
+                      <span>⚠️</span> {basicForm.formState.errors.title.message}
                     </p>
                   )}
                 </div>
@@ -314,7 +322,7 @@ export default function CreateEventPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Venue Name */}
+                  {/* Venue */}
                   <div>
                     <Label htmlFor="venue" className="text-gray-700 font-medium">Venue Name and Address *</Label>
                     <Input
@@ -325,7 +333,7 @@ export default function CreateEventPage() {
                     />
                     {basicForm.formState.errors.venue && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >⚠️</span> {basicForm.formState.errors.venue.message}
+                        <span>⚠️</span> {basicForm.formState.errors.venue.message}
                       </p>
                     )}
                   </div>
@@ -350,7 +358,7 @@ export default function CreateEventPage() {
                     </Select>
                     {basicForm.formState.errors.city && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >⚠️</span> {basicForm.formState.errors.city.message}
+                        <span>⚠️</span> {basicForm.formState.errors.city.message}
                       </p>
                     )}
                   </div>
@@ -368,12 +376,12 @@ export default function CreateEventPage() {
                     />
                     {basicForm.formState.errors.startDate && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >⚠️</span> {basicForm.formState.errors.startDate.message}
+                        <span>⚠️</span> {basicForm.formState.errors.startDate.message}
                       </p>
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="startTime" className="text-gray-700 font-medium">Event Time *</Label>
+                    <Label htmlFor="startTime" className="text-gray-700 font-medium">Start Time *</Label>
                     <Input
                       id="startTime"
                       type="time"
@@ -382,7 +390,53 @@ export default function CreateEventPage() {
                     />
                     {basicForm.formState.errors.startTime && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >⚠️</span> {basicForm.formState.errors.startTime.message}
+                        <span>⚠️</span> {basicForm.formState.errors.startTime.message}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="endTime" className="text-gray-700 font-medium">End Time *</Label>
+                    <Input
+                      id="endTime"
+                      type="time"
+                      {...basicForm.register('endTime')}
+                      className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                    />
+                    {basicForm.formState.errors.endTime && (
+                      <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                        <span>⚠️</span> {basicForm.formState.errors.endTime.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Ticket Sales Window */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="salesStartDate" className="text-gray-700 font-medium">Ticket Sales Start Date *</Label>
+                    <Input
+                      id="salesStartDate"
+                      type="date"
+                      {...basicForm.register('salesStartDate')}
+                      className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                    />
+                    {basicForm.formState.errors.salesStartDate && (
+                      <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                        <span>⚠️</span> {basicForm.formState.errors.salesStartDate.message}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="salesEndDate" className="text-gray-700 font-medium">Ticket Sales End Date *</Label>
+                    <Input
+                      id="salesEndDate"
+                      type="date"
+                      {...basicForm.register('salesEndDate')}
+                      className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                    />
+                    {basicForm.formState.errors.salesEndDate && (
+                      <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                        <span>⚠️</span> {basicForm.formState.errors.salesEndDate.message}
                       </p>
                     )}
                   </div>
@@ -527,7 +581,7 @@ export default function CreateEventPage() {
 
                 {ticketForm.formState.errors.ticketTypes?.root && (
                   <p className="text-sm text-red-500 flex items-center gap-1">
-                    <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >⚠️</span> {ticketForm.formState.errors.ticketTypes.root.message}
+                    <span>⚠️</span> {ticketForm.formState.errors.ticketTypes.root.message}
                   </p>
                 )}
               </CardContent>

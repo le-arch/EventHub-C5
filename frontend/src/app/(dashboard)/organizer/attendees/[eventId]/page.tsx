@@ -150,11 +150,12 @@ export default function AttendeeListPage() {
         api.get(`/events/${eventId}/analytics`),
       ])
 
-      setEvent(eventRes.data.event)
-      setAttendees(attendeesRes.data.attendees)
-      setTotalCount(attendeesRes.data.total)
-      setTotalPages(attendeesRes.data.totalPages || Math.ceil(attendeesRes.data.total / pageSize))
-      setSummary(summaryRes.data.summary)
+      setEvent(eventRes.data)
+      const attendeesData = Array.isArray(attendeesRes.data) ? attendeesRes.data : []
+      setAttendees(attendeesData)
+      setTotalCount(attendeesData.length)
+      setTotalPages(Math.ceil(attendeesData.length / pageSize) || 1)
+      setSummary(summaryRes.data)
     } catch (error) {
       toast.error('❌ Failed to load attendees')
       console.error(error)
@@ -165,7 +166,7 @@ export default function AttendeeListPage() {
 
   const handleCheckIn = useCallback(async (attendeeId: string) => {
     try {
-      const response = await api.post(`/attendees/${attendeeId}/checkin`)
+      const response = await api.post('/checkin', { order_id: attendeeId })
       
       setAttendees((prev) =>
         prev.map((a) =>
@@ -183,7 +184,7 @@ export default function AttendeeListPage() {
         })
       }
       
-      toast.success(`✅ ${response.data.attendee_name} checked in successfully!`)
+      toast.success(`✅ ${response.data.attendeeName || response.data.attendee_name} checked in successfully!`)
     } catch (error: any) {
       toast.error(`❌ ${error.response?.data?.error || 'Failed to check in attendee'}`)
     }

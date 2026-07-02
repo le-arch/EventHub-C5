@@ -35,14 +35,14 @@ type CreateEventRequest struct {
 type UpdateEventRequest struct {
     Title          *string `json:"title,omitempty"`
     Slug           *string `json:"slug,omitempty"`
-    Description    string `json:"description,omitempty"`
-    Venue          string `json:"venue,omitempty"`
+    Description    *string `json:"description,omitempty"`
+    Venue          *string `json:"venue,omitempty"`
     City           *string `json:"city,omitempty"`
     StartDate      *string `json:"start_date,omitempty"`  
     EndDate        *string `json:"end_date,omitempty"`
     StartTime      *string `json:"start_time,omitempty"`
     EndTime        *string `json:"end_time,omitempty"`
-    CoverImageUrl  string `json:"cover_image_url,omitempty"`
+    CoverImageUrl  *string `json:"cover_image_url,omitempty"`
     Status         *repo.EventStatus `json:"status,omitempty"`
     SalesStartDate *string `json:"sales_start_date,omitempty"`
     SalesEndDate   *string `json:"sales_end_date,omitempty"`
@@ -68,7 +68,7 @@ type CreateTicketTypeRequest struct {
 
 type UpdateTicketTypeRequest struct {
     Name             *string `json:"name"`
-    Description      string `json:"description"`
+    Description      *string `json:"description"`
     Price            *int32  `json:"price"`
     QuantityAvailable *int32 `json:"quantity_available"`
     IsActive         *bool   `json:"is_active"`

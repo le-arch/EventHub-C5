@@ -25,7 +25,7 @@ export interface VerifyEmailPayload {
 }
 
 export interface LoginPayload {
-  identifier: string
+  email: string
   password_hash: string  
 }
 
@@ -34,19 +34,19 @@ export interface RefreshTokenPayload {
 }
 
 export interface AuthResponse {
-  access_token: string
-  refresh_token: string
+  token: string
+  refreshToken: string
   user: UserData
 }
 
 export interface UserData {
   id: string
-  full_name: string
+  fullName: string
   email: string
   phone: string
   role: 'organizer' | 'admin'
-  is_email_verified: boolean
-  created_at?: string
+  isEmailVerified: boolean
+  createdAt?: string
 }
 
 export interface ResendOTPPayload {
@@ -60,16 +60,7 @@ export interface ForgotPasswordPayload {
 export interface ResetPasswordPayload {
   email: string
   otp: string
-  password: string  // Changed from password_hash to match backend
-}
-
-// User types for admin functions
-export interface UserListResponse {
-  users: UserData[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
+  password_hash: string
 }
 
 export interface UpdateUserPayload {
@@ -132,12 +123,12 @@ export const authService = {
    */
   login: async (identifier: string, password: string): Promise<AuthResponse> => {
     const payload: LoginPayload = {
-      identifier,
+      email: identifier,
       password_hash: password,
     }
 
-    const response = await api.post<AuthResponse>('/auth/login', payload)
-    return response.data
+    const response = await api.post<{ message: string; user: AuthResponse }>('/auth/login', payload)
+    return response.data.user
   },
 
   /**
@@ -157,7 +148,8 @@ export const authService = {
    * Logout user (optional - mostly handled on frontend)
    */
   logout: async (): Promise<void> => {
-    await api.post('/auth/logout')
+    const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null
+    await api.post('/auth/logout', { refresh_token: refreshToken })
   },
 
   /**
@@ -198,7 +190,7 @@ export const authService = {
     const payload: ResetPasswordPayload = {
       email,
       otp,
-      password: newPassword,
+      password_hash: newPassword,
     }
 
     await api.post('/auth/reset-password', payload)
@@ -218,12 +210,12 @@ export const authService = {
     limit: number = 10,
     search?: string,
     status?: string
-  ): Promise<UserListResponse> => {
+  ): Promise<UserData[]> => {
     const params: Record<string, string | number> = { page, limit }
     if (search) params.search = search
     if (status) params.status = status
 
-    const response = await api.get<UserListResponse>('/admin/users', { params })
+    const response = await api.get<UserData[]>('/admin/users', { params })
     return response.data
   },
 

@@ -28,39 +28,41 @@ export function ProtectedRoute({
 }: ProtectedRouteProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const { isAuthenticated, isLoading, user } = useAuthStore()
-  const [isChecking, setIsChecking] = useState(true)
+  const { isAuthenticated, isLoading } = useAuthStore()
+  
+  // Local state to track when we are ready to check auth (after rehydration)
+  const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    // Small delay to ensure auth state is hydrated
+    // Give the persist middleware time to rehydrate the store (usually < 100ms)
     const timer = setTimeout(() => {
-      setIsChecking(false)
-    }, 100)
+      setIsReady(true)
+    }, 200)
 
     return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
-    if (!isChecking && !isLoading && !isAuthenticated) {
-      // Store the attempted URL for redirect after login
+    // Only check authentication after we're ready and not loading
+    if (isReady && !isLoading && !isAuthenticated) {
       sessionStorage.setItem('redirectAfterLogin', pathname)
       router.push(redirectTo)
     }
-  }, [isChecking, isLoading, isAuthenticated, router, redirectTo, pathname])
+  }, [isReady, isLoading, isAuthenticated, router, redirectTo, pathname])
 
-  // Show loading state while checking authentication
-  if (isChecking || isLoading) {
+  // Show loading spinner while waiting for hydration or auth loading
+  if (!isReady || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-gray-500">Checking authentication...</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         </div>
       </div>
     )
   }
 
-  // Show fallback or nothing while redirecting
+  // If not authenticated, show fallback or nothing (redirect will happen)
   if (!isAuthenticated) {
     return fallback ? <>{fallback}</> : null
   }

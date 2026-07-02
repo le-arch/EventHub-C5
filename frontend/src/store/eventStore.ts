@@ -135,7 +135,7 @@ export const useEventStore = create<EventState>()(
         set({ isLoading: true, error: null })
         
         try {
-          const response = await api.get('/events', {
+          const response = await api.get('/Organization/events', {
             params: {
               page,
               limit: pageSize,
@@ -144,9 +144,10 @@ export const useEventStore = create<EventState>()(
             },
           })
           
+          const events = Array.isArray(response.data) ? response.data : []
           set({
-            events: response.data.events,
-            totalCount: response.data.total,
+            events,
+            totalCount: events.length,
             isLoading: false,
           })
         } catch (error: any) {
@@ -160,9 +161,9 @@ export const useEventStore = create<EventState>()(
         set({ isLoading: true, error: null })
         
         try {
-          const response = await api.get(`/events/${eventId}`)
-          set({ currentEvent: response.data.event, isLoading: false })
-          return response.data.event
+          const response = await api.get(`/Organization/${eventId}`)
+          set({ currentEvent: response.data, isLoading: false })
+          return response.data
         } catch (error: any) {
           const message = error.response?.data?.error || 'Failed to load event'
           set({ error: message, isLoading: false })
@@ -173,9 +174,10 @@ export const useEventStore = create<EventState>()(
 
       fetchTicketTypes: async (eventId: string) => {
         try {
-          const response = await api.get(`/events/${eventId}/tickets`)
-          set({ ticketTypes: response.data.ticket_types })
-          return response.data.ticket_types
+          const response = await api.get(`/events/${eventId}/ticket-types`)
+          const types = Array.isArray(response.data) ? response.data : []
+          set({ ticketTypes: types })
+          return types
         } catch (error) {
           toast.error('Failed to load ticket types')
           return []
@@ -185,33 +187,25 @@ export const useEventStore = create<EventState>()(
      createEvent: async (data: CreateEventData) => {
         set({ isLoading: true, error: null })
         try {
-          const formData = new FormData()
-          const toSnakeKey = (k: string) => k.replace(/([A-Z])/g, '_$1').toLowerCase()
-
-          formData.append(toSnakeKey('title'), data.title)
-          if (data.description) formData.append(toSnakeKey('description'), data.description)
-          if (data.venue) formData.append(toSnakeKey('venue'), data.venue)
-         // if (data.venueAddress) formData.append(toSnakeKey('venueAddress'), data.venueAddress)
-          formData.append(toSnakeKey('city'), data.city)
-          formData.append(toSnakeKey('startDate'), data.startDate)
-          formData.append(toSnakeKey('startTime'), data.startTime)
-          if (data.endDate) formData.append(toSnakeKey('endDate'), data.endDate)
-          if (data.endTime) formData.append(toSnakeKey('endTime'), data.endTime)
-          if (data.coverImage) formData.append(toSnakeKey('coverImage'), data.coverImage)
-          formData.append(toSnakeKey('ticketTypes'), JSON.stringify(data.ticketTypes))
-
-          // NEW: append capacity range as JSON string
-          if (data.capacityRange) {
-            formData.append(toSnakeKey('capacityRange'), JSON.stringify(data.capacityRange))
+          const slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+          const payload: Record<string, unknown> = {
+            title: data.title,
+            slug,
+            description: data.description || '',
+            venue: data.venue || '',
+            city: data.city,
+            start_date: data.startDate,
+            start_time: data.startTime,
           }
-          
-          const response = await api.post('/events', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          })
+          if (data.endDate) payload.end_date = data.endDate
+          if (data.endTime) payload.end_time = data.endTime
+          if (data.capacityRange) payload.capacity_range = data.capacityRange
+
+          const response = await api.post('/events', payload)
           
           set({ isLoading: false })
           toast.success('Event created successfully!')
-          return response.data.event
+          return response.data
         } catch (error: any) {
           const message = error.response?.data?.error || 'Failed to create event'
           set({ error: message, isLoading: false })
@@ -220,31 +214,26 @@ export const useEventStore = create<EventState>()(
         }
       },
 
-      updateEvent: async (eventId: string, data: Partial<CreateEventData>) => {
+      updateEvent: async (eventId: string, data: Record<string, unknown>) => {
         set({ isLoading: true, error: null })
         
         try {
-          const formData = new FormData()
-          
-          Object.entries(data).forEach(([key, value]) => {
-            if (value !== undefined) {
-              if (key === 'ticketTypes') {
-                formData.append(key, JSON.stringify(value))
-              } else if (key === 'coverImage' && value instanceof File) {
-                formData.append(key, value)
-              } else if (typeof value === 'string') {
-                formData.append(key, value)
-              }
-            }
-          })
-          
-          const response = await api.put(`/events/${eventId}`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          })
+          const payload: Record<string, unknown> = {}
+          if (data.title !== undefined) payload.title = data.title
+          if (data.description !== undefined) payload.description = data.description
+          if (data.venue !== undefined) payload.venue = data.venue
+          if (data.city !== undefined) payload.city = data.city
+          if (data.startDate !== undefined) payload.start_date = data.startDate
+          if (data.startTime !== undefined) payload.start_time = data.startTime
+          if (data.endTime !== undefined) payload.end_time = data.endTime
+          if (data.status !== undefined) payload.status = data.status
+          if (data.capacityRange !== undefined) payload.capacity_range = data.capacityRange
+
+          const response = await api.patch(`/events/${eventId}`, payload)
           
           set({ isLoading: false })
           toast.success('Event updated successfully!')
-          return response.data.event
+          return response.data?.eventDetails ?? response.data
         } catch (error: any) {
           const message = error.response?.data?.error || 'Failed to update event'
           set({ error: message, isLoading: false })
@@ -273,7 +262,7 @@ export const useEventStore = create<EventState>()(
         set({ isLoading: true })
         
         try {
-          await api.post(`/events/${eventId}/publish`)
+          await api.patch(`/events/${eventId}/publish`)
           set({ isLoading: false })
           toast.success('Event published successfully!')
           return true
@@ -289,7 +278,7 @@ export const useEventStore = create<EventState>()(
         set({ isLoading: true })
         
         try {
-          await api.post(`/events/${eventId}/unpublish`)
+          await api.patch(`/events/${eventId}/unpublish`)
           set({ isLoading: false })
           toast.success('Event unpublished')
           return true

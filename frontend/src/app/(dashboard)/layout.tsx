@@ -19,7 +19,6 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   Calendar,
   Users,
-  BarChart3,
   Settings,
   LogOut,
   Menu,
@@ -51,8 +50,6 @@ import { toast } from 'sonner'
 // Navigation items for organizer role
 const organizerNavItems = [
   { href: '/organizer/events', label: 'Events', icon: Calendar },
-  { href: '/organizer/attendees', label: 'Attendees', icon: Users },
-  { href: '/organizer/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/organizer/settings', label: 'Settings', icon: Settings },
 ]
 
@@ -96,12 +93,12 @@ export default function DashboardLayout({
     setSidebarOpen(false)
   }, [pathname])
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login')
-    }
-  }, [user, isLoading, router])
+  // // Redirect to login if not authenticated
+  // useEffect(() => {
+  //   if (!isLoading && !user) {
+  //     router.push('/login')
+  //   }
+  // }, [user, isLoading, router])
 
   /**
    * Handle user logout
@@ -129,12 +126,12 @@ export default function DashboardLayout({
   }
 
   // Don't render if no user (will redirect)
-  if (!user) return null
+  // if (!user) return null
 
   return (
     <ProtectedRoute redirectTo="/login">
       {/* Dynamic Background Mesh Grid */}
-      <div className="min-h-screen bg-slate-900 text-slate-100 antialiased relative selection:bg-purple-500/30 overflow-x-hidden">
+      <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 ...">
         <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-br from-purple-900/20 via-blue-900/10 to-transparent pointer-events-none blur-3xl z-0" />
         
         {/* Mobile sidebar overlay */}

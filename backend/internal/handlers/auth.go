@@ -135,12 +135,13 @@ func (h *EventHubHandler) handleVerifyEmail(c *gin.Context) {
 		ID:              user.ID,
 		FullName:        user.FullName,
 		Email:           user.Email,
+		Phone:           user.Phone,
 		Role:            user.Role,
 		IsEmailVerified: user.IsEmailVerified,
+		IsActive:        user.IsActive,
 		CreatedAt:       utils.FormatDateTime(user.CreatedAt),
 	}
 
-	// Generate a refresh token to enable auto login for the user after registration without needing to log in again immediately
 	refreshToken, err := auth.CreateRefreshToken(
 		user.ID.String(),
 		h.jwtSecret)
@@ -149,7 +150,6 @@ func (h *EventHubHandler) handleVerifyEmail(c *gin.Context) {
 		return
 	}
 
-	//send the response back to the client
 	c.JSON(http.StatusCreated, gin.H{
 		"message":       "User registered successfully",
 		"token":         token,
@@ -216,8 +216,10 @@ func (h *EventHubHandler) handleLogin(c *gin.Context) {
 			ID:              user.ID,
 			FullName:        user.FullName,
 			Email:           user.Email,
+			Phone:           user.Phone,
 			Role:            user.Role,
 			IsEmailVerified: user.IsEmailVerified,
+			IsActive:        user.IsActive,
 			CreatedAt:       utils.FormatDateTime(user.CreatedAt),
 		},
 	}

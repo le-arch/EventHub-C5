@@ -128,9 +128,10 @@ export default function AdminTransactionsPage() {
           method: methodFilter !== 'all' ? methodFilter : undefined,
         },
       })
-      setTransactions(response.data.transactions || [])
-      setTotalCount(response.data.total || 0)
-      setTotalPages(response.data.totalPages || Math.ceil((response.data.total || 0) / pageSize) || 1)
+      const data = Array.isArray(response.data) ? response.data : []
+      setTransactions(data)
+      setTotalCount(data.length)
+      setTotalPages(Math.ceil(data.length / pageSize) || 1)
     } catch (error) {
       toast.error('Failed to pull platform transactional history ledger')
     } finally {
@@ -386,23 +387,26 @@ export default function AdminTransactionsPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  transactions.map((transaction) => (
-                    <TableRow key={transaction.id} className="hover:bg-slate-50/40 border-b border-slate-100 transition-colors">
+                  transactions.map((transaction) => {
+                    const txId = (transaction as any).orderId || (transaction as any).id || ''
+                    const txStatus = (transaction as any).paymentStatus || (transaction as any).status || ''
+                    return (
+                    <TableRow key={txId} className="hover:bg-slate-50/40 border-b border-slate-100 transition-colors">
                       <TableCell className="py-3.5">
                         <code className="text-xs font-mono font-medium text-slate-600 bg-slate-100 border border-slate-200/60 px-1.5 py-0.5 rounded">
-                          {transaction.transactionId ? `${transaction.transactionId.slice(0, 12)}...` : 'N/A'}
+                          {txId ? `${txId.slice(0, 12)}...` : 'N/A'}
                         </code>
                       </TableCell>
                       <TableCell className="py-3.5">
                         <div>
                           <p className="font-semibold text-slate-900 text-sm">{transaction.attendeeName}</p>
-                          <p className="text-xs text-slate-400 font-medium mt-0.5">{transaction.attendeePhone}</p>
+                          <p className="text-xs text-slate-400 font-medium mt-0.5">{(transaction as any).attendeePhone || ''}</p>
                         </div>
                       </TableCell>
                       <TableCell className="py-3.5">
                         <div className="max-w-[200px] md:max-w-xs">
                           <p className="text-sm font-semibold text-slate-800 truncate">{transaction.eventTitle}</p>
-                          <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">by {transaction.organizerName}</p>
+                          <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">by {(transaction as any).organizerName || 'Organizer'}</p>
                         </div>
                       </TableCell>
                       <TableCell className="py-3.5">
@@ -410,15 +414,15 @@ export default function AdminTransactionsPage() {
                           {formatCurrency(transaction.amount)}
                         </span>
                       </TableCell>
-                      <TableCell className="py-3.5">{getMethodBadge(transaction.paymentMethod)}</TableCell>
+                      <TableCell className="py-3.5">{getMethodBadge((transaction as any).paymentMethod || 'mtn_momo')}</TableCell>
                       <TableCell className="py-3.5">
                         <span className="text-slate-500 font-medium text-xs">
                           {formatDate(transaction.createdAt)}
                         </span>
                       </TableCell>
-                      <TableCell className="py-3.5">{getStatusBadge(transaction.status)}</TableCell>
+                      <TableCell className="py-3.5">{getStatusBadge(txStatus)}</TableCell>
                       <TableCell className="py-3.5">
-                        {transaction.status === 'paid' && (
+                        {txStatus === 'paid' && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="hover:bg-slate-100 h-8 w-8 rounded-lg">
@@ -438,7 +442,8 @@ export default function AdminTransactionsPage() {
                         )}
                       </TableCell>
                     </TableRow>
-                  ))
+                    )
+                  })
                 )}
               </TableBody>
             </Table>

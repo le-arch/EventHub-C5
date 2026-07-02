@@ -163,7 +163,7 @@ export default function EditEventPage() {
       setLocalTicketTypes(ticketsData || [])
       
       // Format date for input
-      const formattedDate = eventData.startDate.split('T')[0]
+      const formattedDate = eventData.startDate?.split('T')[0] ?? ''
       
       form.reset({
         title: eventData.title,
@@ -236,17 +236,29 @@ export default function EditEventPage() {
   const handleSaveTickets = async (data: z.infer<typeof ticketFormSchema>) => {
     setIsSaving(true)
     try {
-      // Update each ticket type individually using the store or direct API
-      // Since store doesn't have a batch update for tickets, use direct API
-      const processedTickets = data.ticketTypes.map(t => ({
-        id: t.id || undefined,
-        name: t.name,
-        price: t.price,
-        quantityAvailable: t.quantityAvailable,
-        quantitySold: t.quantitySold || 0,
-      }))
+      const originalIds = new Set(localTicketTypes.map(t => t.id))
+      const formIds = new Set(data.ticketTypes.filter(t => t.id).map(t => t.id))
       
-      await api.put(`/events/${params.id}/tickets`, { ticketTypes: processedTickets })
+      for (const ticket of data.ticketTypes) {
+        const payload = {
+          name: ticket.name,
+          price: ticket.price,
+          quantity_available: ticket.quantityAvailable,
+        }
+        
+        if (ticket.id) {
+          await api.patch(`/events/${params.id}/ticket-types/${ticket.id}`, payload)
+        } else {
+          await api.post(`/events/${params.id}/ticket-types`, payload)
+        }
+      }
+      
+      for (const original of localTicketTypes) {
+        if (!formIds.has(original.id)) {
+          await api.delete(`/events/${params.id}/ticket-types/${original.id}`)
+        }
+      }
+      
       toast.success('✅ Ticket types updated successfully')
       await fetchEventDetails()
     } catch (error) {

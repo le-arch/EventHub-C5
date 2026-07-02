@@ -68,6 +68,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	r.GET("/api/v1/orders/:id/status", auth.OptionalAuthMiddleware(h.jwtSecret), h.handleGetOrderStatus)
 	
 	r.GET("/api/v1/events/public/:id", h.handleGetPublicEvent)
+	r.GET("/api/v1/events/public/:id/ticket-types", h.handleListTicketTypes)
 
 	Protection := r.Group("/api/v1")
 	Protection.Use(auth.AuthMiddleware(h.jwtSecret))
@@ -82,7 +83,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	Protection.POST("events/upload-image", h.handleUploadImage)
 
 	Protection.PATCH("/events/:id", h.handleUpdateEvent)
-	Protection.PATCH("/:id/ticket-types",h.handleUpdateTicketType)
+	Protection.PATCH("/events/:id/ticket-types/:ticket_id",h.handleUpdateTicketType)
 	Protection.PATCH("events/:id/status", h.handleOrganizerUpdateEventStatus)
 	Protection.PATCH("/events/:id/publish",h.handlePublishEvent)
 	Protection.PATCH("/events/:id/unpublish", h.handleUnpublishEvent)
@@ -93,6 +94,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	Protection.GET("/Organization/:id", h.handleGetOrganisationEvent)
 	Protection.GET("/events/:id/share-link", h.handleShareLink)
 	Protection.GET("/orders/:id/ticket", h.handleDownloadQRCode)
+	Protection.GET("/orders/:id/details", h.handleGetOrderDetails)
 	Protection.GET("/events/:id/attendees", h.handleGetAttendeeList)
 	Protection.GET("/events/:id/analytics", h.handleGetEventAnalytics)
 	Protection.GET("/events/:id", h.handleEventDetails)
@@ -109,6 +111,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 
 
 	Protection.DELETE("/events/:id", h.handleDeleteEvent)
+	Protection.DELETE("/events/:id/ticket-types/:ticket_id", h.handleDeleteTicketType)
 	Protection.DELETE("/ticket-type/:id", h.handleDeleteTicketType)
 	Protection.DELETE("/admin/users/:id", h.handleDeleteUser)
 

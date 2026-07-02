@@ -35,26 +35,38 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 		return
 	}
 
-	endDate, err := utils.ParseDate(req.EndDate)
-	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
+	var endDate *time.Time
+	if req.EndDate != "" {
+		parsed, err := utils.ParseDate(req.EndDate)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		endDate = &parsed
 	}
-
 
 	if req.Status == ""{
 		req.Status = "draft"
 	}
 	
-    salesStartDate, err := utils.ParseDate(req.SalesStartDate)
-	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
+	var salesStartDate *time.Time
+	if req.SalesStartDate != "" {
+		parsed, err := utils.ParseDate(req.SalesStartDate)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		salesStartDate = &parsed
 	}
-	salesEndDate, err := utils.ParseDate(req.SalesEndDate)
-	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
+
+	var salesEndDate *time.Time
+	if req.SalesEndDate != "" {
+		parsed, err := utils.ParseDate(req.SalesEndDate)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		salesEndDate = &parsed
 	}
 
 	event, err := h.querier.CreateEvent(c, repo.CreateEventParams{
@@ -65,13 +77,13 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 		Venue:          req.Venue,
 		City:           req.City,
 		StartDate:      startDate,
-		EndDate:        &endDate,
+		EndDate:        endDate,
 		StartTime:      req.StartTime,
 		EndTime:        req.EndTime,
 		CoverImageUrl:  req.CoverImageUrl,
 		Status:         req.Status,
-		SalesStartDate: &salesStartDate,
-		SalesEndDate:   &salesEndDate,
+		SalesStartDate: salesStartDate,
+		SalesEndDate:   salesEndDate,
 		CapacityRange: utils.ToDBRange(req.CapacityRange),
 	})
 	if err != nil {
@@ -80,6 +92,25 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 	}
 
 	
+	var endDateStr, salesStartDateStr, salesEndDateStr string
+	if event.EndDate != nil {
+		endDateStr = 	utils.FormatDatePtr(event.EndDate)
+	}
+	if event.SalesStartDate != nil {
+		salesStartDateStr = 	utils.FormatDatePtr(event.SalesStartDate)
+	}
+	if event.SalesEndDate != nil {
+		salesEndDateStr = 	utils.FormatDatePtr(event.SalesEndDate)
+	}
+
+	var startTimeStr, endTimeStr string
+	if event.StartTime != nil {
+		startTimeStr = utils.FormatTime(event.StartTime)
+	}
+	if event.EndTime != nil {
+		endTimeStr = utils.FormatTime(event.EndTime)
+	}
+
 	response := utils.CreateEventResponse{
 		ID: event.ID,
 		OrganizerID: event.OrganizerID,
@@ -89,14 +120,15 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 		Venue: event.Venue,
 		City: event.City,
 		StartDate: utils.FormatDate(event.StartDate),
-		EndDate: utils.FormatDate(*event.EndDate),
-		StartTime: utils.FormatTime(event.StartTime),
-		EndTime: utils.FormatTime(event.EndTime),
+		EndDate: endDateStr,
+		StartTime: startTimeStr,
+		EndTime: endTimeStr,
 		CoverImageUrl: event.CoverImageUrl,
 		Status: event.Status,
-		SalesStartDate: utils.FormatDate(*event.SalesStartDate),
-		SalesEndDate: utils.FormatDate(*event.SalesEndDate),
+		SalesStartDate: salesStartDateStr,
+		SalesEndDate: salesEndDateStr,
 		CapacityRange: utils.FromDBRange(event.CapacityRange),
+		TicketStats:   utils.TicketStatsResponse{},
 		CreatedAt: utils.FormatDateTime(event.CreatedAt),
 	}
 
@@ -168,20 +200,22 @@ func (h *EventHubHandler) handleGetOrganisationEvent(c *gin.Context) {
 
 	
 	response := utils.EventResponse{
+	ID: event.ID,
 	Title: event.Title,
 	Slug: event.Slug,
 	Description: event.Description,
 	Venue: event.Venue,
 	City: event.City,
 	StartDate: utils.FormatDate(event.StartDate),
-	EndDate: utils.FormatDate(*event.EndDate),
+	EndDate: 	utils.FormatDatePtr(event.EndDate),
 	StartTime: utils.FormatTime(event.StartTime),
 	EndTime: utils.FormatTime(event.EndTime),
 	CoverImageUrl: event.CoverImageUrl,
 	Status: event.Status,
-	SalesStartDate: utils.FormatDate(*event.SalesStartDate),
-	SalesEndDate: utils.FormatDate(*event.SalesEndDate),
+	SalesStartDate: 	utils.FormatDatePtr(event.SalesStartDate),
+	SalesEndDate: 	utils.FormatDatePtr(event.SalesEndDate),
 	CapacityRange: utils.FromDBRange(event.CapacityRange),
+	TicketStats:   utils.TicketStatsResponse{},
 	UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
 	
 }
@@ -206,21 +240,23 @@ func (h *EventHubHandler) handleGetOrganisationEvents(c *gin.Context) {
 	
 	for _, event := range events {
 	response = append(response, utils.EventResponse{
+	ID: event.ID,
 	Title: event.Title,
 	Slug: event.Slug,
 	Description: event.Description,
 	Venue: event.Venue,
 	City: event.City,
 	StartDate: utils.FormatDate(event.StartDate),
-	EndDate: utils.FormatDate(*event.EndDate),
+	EndDate: 	utils.FormatDatePtr(event.EndDate),
 	StartTime: utils.FormatTime(event.StartTime),
 	EndTime: utils.FormatTime(event.EndTime),
 	CoverImageUrl: event.CoverImageUrl,
 	Status: event.Status,
-	SalesStartDate: utils.FormatDate(*event.SalesStartDate),
-	SalesEndDate: utils.FormatDate(*event.SalesEndDate),
-	CapacityRange: utils.FromDBRange(event.CapacityRange),
-	UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
+	SalesStartDate: 	utils.FormatDatePtr(event.SalesStartDate),
+	SalesEndDate: 	utils.FormatDatePtr(event.SalesEndDate),
+		CapacityRange: utils.FromDBRange(event.CapacityRange),
+		TicketStats:   utils.TicketStatsResponse{},
+		UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
 	})
 }
 
@@ -258,14 +294,15 @@ func (h *EventHubHandler) handleEventDetails(c *gin.Context) {
         Venue:          event.Venue,
         City:           event.City,
         StartDate:      utils.FormatDate(event.StartDate),
-	    EndDate: utils.FormatDate(*event.EndDate),
+	    EndDate: 	utils.FormatDatePtr(event.EndDate),
 	    StartTime: utils.FormatTime(event.StartTime),
 	    EndTime: utils.FormatTime(event.EndTime),
         CoverImageUrl:  event.CoverImageUrl,
         Status:         string(event.Status),
-        SalesStartDate: utils.FormatDate(*event.SalesStartDate),
-	    SalesEndDate: utils.FormatDate(*event.SalesEndDate),
+        SalesStartDate: 	utils.FormatDatePtr(event.SalesStartDate),
+	    SalesEndDate: 	utils.FormatDatePtr(event.SalesEndDate),
         CapacityRange:  utils.FromDBRange(event.CapacityRange),
+        TicketStats:    utils.TicketStatsResponse{},
         CreatedAt:      utils.FormatDateTime(event.CreatedAt),
         UpdatedAt:      utils.FormatDateTime(event.UpdatedAt),
     }
@@ -286,21 +323,23 @@ func (h *EventHubHandler) handleGetPublicEvent(c *gin.Context) {
         return
     }
 
-    response := utils.PublicEventResponse{
+    response := utils.EventResponse{
+	ID: event.ID,
 	Title: event.Title,
 	Slug: event.Slug,
 	Description: event.Description,
 	Venue: event.Venue,
 	City: event.City,
 	StartDate: utils.FormatDate(event.StartDate),
-	EndDate: utils.FormatDate(*event.EndDate),
+	EndDate: 	utils.FormatDatePtr(event.EndDate),
 	StartTime: utils.FormatTime(event.StartTime),
 	EndTime: utils.FormatTime(event.EndTime),
 	CoverImageUrl: event.CoverImageUrl,
 	Status: event.Status,
-	SalesStartDate: utils.FormatDate(*event.SalesStartDate),
-	SalesEndDate: utils.FormatDate(*event.SalesEndDate),
+	SalesStartDate: 	utils.FormatDatePtr(event.SalesStartDate),
+	SalesEndDate: 	utils.FormatDatePtr(event.SalesEndDate),
 	CapacityRange: utils.FromDBRange(event.CapacityRange),
+	TicketStats:   utils.TicketStatsResponse{},
 	UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
 	} 
 
@@ -392,20 +431,22 @@ func (h *EventHubHandler) handleUpdateEvent(c *gin.Context) {
     }
 
 	response := utils.EventResponse{
+		ID: updatedEvent.ID,
 		Title: updatedEvent.Title,
 		Slug:  updatedEvent.Slug,
 		Description: updatedEvent.Description,
 		Venue: updatedEvent.Venue,
 		City: updatedEvent.City,
 		StartDate: utils.FormatDate(updatedEvent.StartDate),
-		EndDate: utils.FormatDate(*updatedEvent.EndDate),
+		EndDate: 	utils.FormatDatePtr(updatedEvent.EndDate),
 		StartTime: utils.FormatTime(updatedEvent.StartTime),
 		EndTime: utils.FormatTime(updatedEvent.EndTime),
 		CoverImageUrl: updatedEvent.CoverImageUrl,
 		Status: updatedEvent.Status,
-		SalesStartDate: utils.FormatDate(*updatedEvent.SalesStartDate),
-		SalesEndDate: utils.FormatDate(*updatedEvent.SalesEndDate),
+		SalesStartDate: 	utils.FormatDatePtr(updatedEvent.SalesStartDate),
+		SalesEndDate: 	utils.FormatDatePtr(updatedEvent.SalesEndDate),
 		CapacityRange: utils.FromDBRange(event.CapacityRange),
+		TicketStats:   utils.TicketStatsResponse{},
 		UpdatedAt: utils.FormatDateTime(updatedEvent.UpdatedAt),
 	}
 
@@ -732,8 +773,8 @@ func (h *EventHubHandler) handleShareLink(c *gin.Context) {
         return
     }
     
-    link := fmt.Sprintf("%s/events/%s", h.frontendOrigin, eventID)
-    c.JSON(http.StatusOK, gin.H{"share_link": link})
+    link := fmt.Sprintf("%s/e/%s", h.frontendOrigin, eventID)
+    c.JSON(http.StatusOK, gin.H{"shareLink": link})
 }
 
 
@@ -769,16 +810,37 @@ func (h *EventHubHandler) handleGetEventAnalytics(c *gin.Context) {
         return
     }
 
-	checkinRate := 0.0
-    if stats.PaidOrders > 0 {
-        checkinRate = float64(stats.CheckedInCount) / float64(stats.PaidOrders) * 100
+	checkinCount := int(stats.CheckedInCount)
+	totalTickets := int(stats.PaidOrders)
+	checkinPercentage := 0.0
+    if totalTickets > 0 {
+        checkinPercentage = float64(checkinCount) / float64(totalTickets) * 100
     }
 
+	recentCheckins := make([]gin.H, 0)
+	history, err := h.querier.ListCheckinHistoryByEvent(c, repo.ListCheckinHistoryByEventParams{
+		EventID: eventID,
+		Limit:   20,
+		Offset:  0,
+	})
+	if err == nil {
+		for _, h := range history {
+			recentCheckins = append(recentCheckins, gin.H{
+				"attendeeName": h.AttendeeName,
+				"ticketType":   "",
+				"checkedInAt":  utils.FormatDateTime(h.UsedAt),
+			})
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"total_tickets_sold": stats.PaidOrders,
-		"total_revenue":      stats.NetRevenue,
-		"checked_in_count":   stats.CheckedInCount,
-		"checkin_rate":       checkinRate,
+		"totalTickets":       totalTickets,
+		"totalRevenue":       stats.NetRevenue,
+		"checkinCount":       checkinCount,
+		"checkinPercentage":  checkinPercentage,
+		"dailySales":         []gin.H{},
+		"ticketBreakdown":    []gin.H{},
+		"recentCheckins":     recentCheckins,
 	})
 }
 
