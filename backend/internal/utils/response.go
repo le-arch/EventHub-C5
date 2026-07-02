@@ -10,62 +10,73 @@ import (
 // RegisterResponse defines the structure of the response sent back to the client after a successful registration
 type RegisterResponse struct {
 	ID uuid.UUID `json:"id"`
-	FullName string `json:"full_name"`
+	FullName string `json:"fullName"`
 	Email string `json:"email"`
+	Phone string `json:"phone"`
 	Role repo.UserRole `json:"role"`
-	IsEmailVerified bool  `json:"is_email_verified"`
-	CreatedAt  string `json:"created_at"`
+	IsEmailVerified bool  `json:"isEmailVerified"`
+	IsActive bool `json:"isActive"`
+	CreatedAt  string `json:"createdAt"`
 }
 
 type LoginResponse struct {
 	Token string `json:"token"`
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"refreshToken"`
 	User RegisterResponse `json:"user"`
+}
+
+type TicketStatsResponse struct {
+	TotalSold       int32 `json:"totalSold"`
+	TotalRevenue    int32 `json:"totalRevenue"`
+	TotalAttendees  int32 `json:"totalAttendees"`
+	AvailableTickets int32 `json:"availableTickets"`
 }
 
 type CreateEventResponse struct {
 	ID             uuid.UUID        `json:"id"`
-	OrganizerID    uuid.UUID        `json:"organizer_id"`
+	OrganizerID    uuid.UUID        `json:"organizerId"`
 	Title          string           `json:"title"`
 	Slug           string           `json:"slug"`
 	Description    string           `json:"description"`
 	Venue          string           `json:"venue"`
 	City           string           `json:"city"`
-	StartDate      string           `json:"start_date"`       
-	EndDate        string           `json:"end_date"`         
-	StartTime      string           `json:"start_time"`       
-	EndTime        string          `json:"end_time"`         
-	CoverImageUrl  string           `json:"cover_image_url"`
+	StartDate      string           `json:"startDate"`
+	EndDate        string           `json:"endDate"`
+	StartTime      string           `json:"startTime"`
+	EndTime        string          `json:"endTime"`
+	CoverImageUrl  string           `json:"coverImageUrl"`
 	Status         repo.EventStatus `json:"status"`
-	SalesStartDate string           `json:"sales_start_date"` 
-	SalesEndDate   string           `json:"sales_end_date"` 
-	CapacityRange  *models.CapacityRangeJSON			`json:"capacity_range"`  
-  
-	CreatedAt      string      		`json:"created_at"`
+	SalesStartDate string           `json:"salesStartDate"`
+	SalesEndDate   string           `json:"salesEndDate"`
+	CapacityRange  *models.CapacityRangeJSON			`json:"capacityRange"`
+	TicketStats    TicketStatsResponse `json:"ticketStats"`
+
+	CreatedAt      string      		`json:"createdAt"`
 	
-	UpdatedAt      string           `json:"updated_at"`
+	UpdatedAt      string           `json:"updatedAt"`
 }
 
 type EventResponse struct{	
 	ID				uuid.UUID 	`json:"id"`
-	OrganizerID		uuid.UUID	`json:"organizer_id,omitempty"`
-	OrganizerName 	string		`json:"organizer_name,omitempty"`
+	OrganizerID		uuid.UUID	`json:"organizerId,omitempty"`
+	OrganizerName 	string		`json:"organizerName,omitempty"`
 
 	Title          string           `json:"title"`
 	Slug           string           `json:"slug"`
 	Description    string           `json:"description"`
 	Venue          string           `json:"venue"`
 	City           string           `json:"city"`
-	StartDate      string           `json:"start_date"`       
-	EndDate        string           `json:"end_date"`         
-	StartTime      string           `json:"start_time"`       
-	EndTime        string          `json:"end_time"`         
-	CoverImageUrl  string           `json:"cover_image_url"`
+	StartDate      string           `json:"startDate"`
+	EndDate        string           `json:"endDate"`
+	StartTime      string           `json:"startTime"`
+	EndTime        string          `json:"endTime"`
+	CoverImageUrl  string           `json:"coverImageUrl"`
 	Status         repo.EventStatus `json:"status"`
-	SalesStartDate string           `json:"sales_start_date"` 
-	SalesEndDate   string           `json:"sales_end_date"` 
-	CapacityRange  *models.CapacityRangeJSON			`json:"capacity_range"`  
-	UpdatedAt      string           `json:"updated_at"`
+	SalesStartDate string           `json:"salesStartDate"`
+	SalesEndDate   string           `json:"salesEndDate"`
+	CapacityRange  *models.CapacityRangeJSON			`json:"capacityRange"`
+	TicketStats    TicketStatsResponse `json:"ticketStats"`
+	UpdatedAt      string           `json:"updatedAt"`
 }
 
 type PublicEventResponse struct{	
@@ -74,60 +85,61 @@ type PublicEventResponse struct{
 	Description    string           `json:"description"`
 	Venue          string           `json:"venue"`
 	City           string           `json:"city"`
-	StartDate      string           `json:"start_date"`       
-	EndDate        string           `json:"end_date"`         
-	StartTime      string           `json:"start_time"`       
-	EndTime        string          `json:"end_time"`         
-	CoverImageUrl  string           `json:"cover_image_url"`
+	StartDate      string           `json:"startDate"`
+	EndDate        string           `json:"endDate"`
+	StartTime      string           `json:"startTime"`
+	EndTime        string          `json:"endTime"`
+	CoverImageUrl  string           `json:"coverImageUrl"`
 	Status         repo.EventStatus `json:"status"`
-	SalesStartDate string           `json:"sales_start_date"` 
-	SalesEndDate   string           `json:"sales_end_date"` 
-	CapacityRange  *models.CapacityRangeJSON			`json:"capacity_range"`  
-	UpdatedAt      string           `json:"updated_at"`
+	SalesStartDate string           `json:"salesStartDate"`
+	SalesEndDate   string           `json:"salesEndDate"`
+	CapacityRange  *models.CapacityRangeJSON			`json:"capacityRange"`
+	TicketStats    TicketStatsResponse `json:"ticketStats"`
+	UpdatedAt      string           `json:"updatedAt"`
 }
 
 type CreateTicketTypeResponse struct {
     ID               uuid.UUID `json:"id"`
-    EventID          uuid.UUID `json:"event_id"`
+    EventID          uuid.UUID `json:"eventId"`
     Name             string    `json:"name"`
     Description      string    `json:"description"`
     Price            int32     `json:"price"`
-    QuantityAvailable int32     `json:"quantity_available"`
-    QuantitySold     int32     `json:"quantity_sold"`
-    IsActive         *bool      `json:"is_active"`
-	UpdatedAt        string    `json:"updated_at"`
-	CreatedAt      string      		`json:"created_at"`
+    QuantityAvailable int32     `json:"quantityAvailable"`
+    QuantitySold     int32     `json:"quantitySold"`
+    IsActive         *bool      `json:"isActive"`
+	UpdatedAt        string    `json:"updatedAt"`
+	CreatedAt      string      		`json:"createdAt"`
 }
 
 type TicketTypeResponse struct {
     ID               uuid.UUID `json:"id"`
-    EventID          uuid.UUID `json:"event_id"`
+    EventID          uuid.UUID `json:"eventId"`
     Name             string    `json:"name,omitempty"`
     Description      string    `json:"description,omitempty"`
     Price            int32     `json:"price,omitempty"`
-    QuantityAvailable int32     `json:"quantity_available,omitempty"`
-    QuantitySold     int32     `json:"quantity_sold,omitempty"`
-    IsActive         *bool      `json:"is_active"`
-	UpdatedAt        string    `json:"updated_at"`
+    QuantityAvailable int32     `json:"quantityAvailable,omitempty"`
+    QuantitySold     int32     `json:"quantitySold,omitempty"`
+    IsActive         *bool      `json:"isActive"`
+	UpdatedAt        string    `json:"updatedAt"`
 	
 }
 
 type OrderResponse struct {
 	ID              uuid.UUID `json:"id"`
-	EventID         uuid.UUID `json:"event_id"`
-	TicketTypeID    uuid.UUID `json:"ticket_type_id"`
-	AttendeeName    string    `json:"attendee_name"`
-	AttendeePhone   string    `json:"attendee_phone"`
-	AttendeeEmail   *string   `json:"attendee_email,omitempty"`
+	EventID         uuid.UUID `json:"eventId"`
+	TicketTypeID    uuid.UUID `json:"ticketTypeId"`
+	AttendeeName    string    `json:"attendeeName"`
+	AttendeePhone   string    `json:"attendeePhone"`
+	AttendeeEmail   *string   `json:"attendeeEmail,omitempty"`
 	Quantity        int32     `json:"quantity"`
-	UnitPrice       int32     `json:"unit_price"`
-	TotalAmount     int32     `json:"total_amount"`
-	PaymentStatus   string    `json:"payment_status"`
-	TransactionID   *string   `json:"transaction_id,omitempty"`
-	QRCodeHash      string    `json:"qr_code_hash"`
-	QRCodeImageURL  string    `json:"qr_code_image_url"`
-	IsUsed          bool      `json:"is_used"`
-	CreatedAt       string    `json:"created_at"`
+	UnitPrice       int32     `json:"unitPrice"`
+	TotalAmount     int32     `json:"totalAmount"`
+	PaymentStatus   string    `json:"paymentStatus"`
+	TransactionID   *string   `json:"transactionId,omitempty"`
+	QRCodeHash      string    `json:"qrCodeHash"`
+	QRCodeImageURL  string    `json:"qrCodeImageUrl"`
+	IsUsed          bool      `json:"isUsed"`
+	CreatedAt       string    `json:"createdAt"`
 }
 
 
@@ -138,38 +150,56 @@ type PaymentResponse struct {
 }
 
 type EventDetailsResponse struct {
-	ID             uuid.UUID `json:"id"`
-	OrganizerID    uuid.UUID `json:"organizer_id"`
-	Title          string    `json:"title"`
-	Slug           string    `json:"slug"`
-	Description    string    `json:"description"`
-	Venue          string    `json:"venue"`
-	City           string    `json:"city"`
-	StartDate      string    `json:"start_date"`
-	EndDate        string    `json:"end_date"`
-	StartTime      string    `json:"start_time"`
-	EndTime        string    `json:"end_time"`
-	CoverImageUrl  string    `json:"cover_image_url"`
-	Status         string    `json:"status"`
-	SalesStartDate string    `json:"sales_start_date"`
-	SalesEndDate   string    `json:"sales_end_date"`
-	CapacityRange  *models.CapacityRangeJSON `json:"capacity_range,omitempty"`
-	CreatedAt      string    `json:"created_at"`
-	UpdatedAt      string    `json:"updated_at"`
+	ID             uuid.UUID              `json:"id"`
+	OrganizerID    uuid.UUID              `json:"organizerId"`
+	Title          string                 `json:"title"`
+	Slug           string                 `json:"slug"`
+	Description    string                 `json:"description"`
+	Venue          string                 `json:"venue"`
+	City           string                 `json:"city"`
+	StartDate      string                 `json:"startDate"`
+	EndDate        string                 `json:"endDate"`
+	StartTime      string                 `json:"startTime"`
+	EndTime        string                 `json:"endTime"`
+	CoverImageUrl  string                 `json:"coverImageUrl"`
+	Status         string                 `json:"status"`
+	SalesStartDate string                 `json:"salesStartDate"`
+	SalesEndDate   string                 `json:"salesEndDate"`
+	CapacityRange  *models.CapacityRangeJSON `json:"capacityRange,omitempty"`
+	TicketStats    TicketStatsResponse    `json:"ticketStats"`
+	CreatedAt      string                 `json:"createdAt"`
+	UpdatedAt      string                 `json:"updatedAt"`
+}
+
+type TicketDetailsResponse struct {
+	ID            uuid.UUID `json:"id"`
+	AttendeeName  string    `json:"attendeeName"`
+	AttendeePhone string    `json:"attendeePhone"`
+	TicketType    string    `json:"ticketType"`
+	Quantity      int32     `json:"quantity"`
+	UnitPrice     int32     `json:"unitPrice"`
+	TotalAmount   int32     `json:"totalAmount"`
+	EventTitle    string    `json:"eventTitle"`
+	EventDate     string    `json:"eventDate"`
+	EventTime     string    `json:"eventTime"`
+	EventVenue    string    `json:"eventVenue"`
+	EventCity     string    `json:"eventCity"`
+	QrCodeData    string    `json:"qrCodeData"`
+	CreatedAt     string    `json:"createdAt"`
 }
 
 type CheckinHistoryResponse struct {
-	OrderID     uuid.UUID `json:"order_id"`
-	AttendeeName string   `json:"attendee_name"`
-	AttendeePhone string `json:"attendee_phone"`
-	CheckedInAt  string   `json:"checked_in_at"`
+	OrderID     uuid.UUID `json:"orderId"`
+	AttendeeName string   `json:"attendeeName"`
+	AttendeePhone string `json:"attendeePhone"`
+	CheckedInAt  string   `json:"checkedInAt"`
 }
 
 type TransactionResponse struct {
-	OrderID      uuid.UUID `json:"order_id"`
-	EventTitle   string    `json:"event_title"`
-	AttendeeName string    `json:"attendee_name"`
+	OrderID      uuid.UUID `json:"orderId"`
+	EventTitle   string    `json:"eventTitle"`
+	AttendeeName string    `json:"attendeeName"`
 	Amount       int32     `json:"amount"`
-	PaymentStatus string   `json:"payment_status"`
-	CreatedAt    string    `json:"created_at"`
+	PaymentStatus string   `json:"paymentStatus"`
+	CreatedAt    string    `json:"createdAt"`
 }

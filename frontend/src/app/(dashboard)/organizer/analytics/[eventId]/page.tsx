@@ -122,7 +122,7 @@ export default function AnalyticsPage() {
         api.get(`/events/${params.eventId}/analytics`),
       ])
       
-      setEvent(eventRes.data.event)
+      setEvent(eventRes.data)
       setAnalytics(analyticsRes.data)
     } catch (error) {
       console.error('Failed to load analytics:', error)
@@ -507,7 +507,7 @@ export default function AnalyticsPage() {
                             </Badge>
                           </td>
                           <td className="py-3 px-4 text-gray-500">
-                            {new Date(checkin.checkedInAt).toLocaleString()}
+                            {checkin.checkedInAt ? new Date(checkin.checkedInAt).toLocaleString() : '-'}
                           </td>
                         </tr>
                       ))}

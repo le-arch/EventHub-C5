@@ -68,6 +68,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	r.GET("/api/v1/orders/:id/status", auth.OptionalAuthMiddleware(h.jwtSecret), h.handleGetOrderStatus)
 	
 	r.GET("/api/v1/events/public/:id", h.handleGetPublicEvent)
+	r.GET("/api/v1/events/public/:id/ticket-types", h.handleListTicketTypes)
 
 	Protection := r.Group("/api/v1")
 	Protection.Use(auth.AuthMiddleware(h.jwtSecret))
@@ -93,6 +94,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	Protection.GET("/Organization/:id", h.handleGetOrganisationEvent)
 	Protection.GET("/events/:id/share-link", h.handleShareLink)
 	Protection.GET("/orders/:id/ticket", h.handleDownloadQRCode)
+	Protection.GET("/orders/:id/details", h.handleGetOrderDetails)
 	Protection.GET("/events/:id/attendees", h.handleGetAttendeeList)
 	Protection.GET("/events/:id/analytics", h.handleGetEventAnalytics)
 	Protection.GET("/events/:id", h.handleEventDetails)

@@ -19,7 +19,6 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   Calendar,
   Users,
-  BarChart3,
   Settings,
   LogOut,
   Menu,
@@ -51,8 +50,6 @@ import { toast } from 'sonner'
 // Navigation items for organizer role
 const organizerNavItems = [
   { href: '/organizer/events', label: 'Events', icon: Calendar },
-  { href: '/organizer/attendees', label: 'Attendees', icon: Users },
-  { href: '/organizer/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/organizer/settings', label: 'Settings', icon: Settings },
 ]
 

@@ -10,7 +10,7 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { authService, UserData } from '@/services/auth.service'
+import { authService } from '@/services/auth.service'
 import { STORAGE_KEYS } from '@/lib/constant'
 
 // Types
@@ -63,29 +63,16 @@ interface AuthState {
   batchSuspendUsers: (userIds: string[]) => Promise<boolean>
 }
 
-/**
- * Transform backend UserData to frontend User format
- */
-const transformUserData = (data: UserData): User => ({
-  id: data.id,
-  email: data.email,
-  phone: data.phone,
-  fullName: data.full_name,
-  role: data.role,
-  isEmailVerified: data.is_email_verified,
-  createdAt: data.created_at,
-})
+// Backend now uses camelCase — direct mapping only
+const transformUserData = (data: any): User => data as User
 
-/**
- * Transform frontend User to backend format for updates
- */
 const transformUserToBackend = (user: Partial<User>): Record<string, any> => {
   const result: Record<string, any> = {}
-  if (user.fullName !== undefined) result.full_name = user.fullName
+  if (user.fullName !== undefined) result.fullName = user.fullName
   if (user.email !== undefined) result.email = user.email
   if (user.phone !== undefined) result.phone = user.phone
   if (user.role !== undefined) result.role = user.role
-  if (user.isEmailVerified !== undefined) result.is_email_verified = user.isEmailVerified
+  if (user.isEmailVerified !== undefined) result.isEmailVerified = user.isEmailVerified
   return result
 }
 
@@ -131,14 +118,12 @@ export const useAuthStore = create<AuthState>()(
         
         try {
           const response = await authService.login(identifier, password)
-          const { token, refresh_token, user: backendUser } = response
+          const { token, refreshToken, user: backendUser } = response
           const access_token = token
-          // Transform backend user data to frontend format
           const user = transformUserData(backendUser)
           
-          // Store tokens
           localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, access_token)
-          localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refresh_token)
+          localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken)
           localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user))
           
           set({
@@ -182,14 +167,13 @@ export const useAuthStore = create<AuthState>()(
         
         try {
           const response = await authService.verifyEmail(email, otp)
-          const {token, refresh_token, user: backendUser } = response
+          const {token, refreshToken, user: backendUser } = response
           const access_token = token
-          // Transform backend user data to frontend format
           const user = transformUserData(backendUser)
           
           // Store tokens and user
           localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, access_token)
-          localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refresh_token)
+          localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken)
           localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user))
           
           set({
@@ -261,12 +245,12 @@ export const useAuthStore = create<AuthState>()(
         set({ usersLoading: true })
         
         try {
-          const response = await authService.getUsers(page, limit, search, status)
-          const users = response.users.map(transformUserData)
+          const data = await authService.getUsers(page, limit, search, status)
+          const users = data.map(transformUserData)
           
           set({
             users,
-            usersTotal: response.total,
+            usersTotal: data.length,
             usersLoading: false,
           })
           

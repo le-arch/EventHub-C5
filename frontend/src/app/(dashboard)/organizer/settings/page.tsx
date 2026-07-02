@@ -343,7 +343,7 @@ export default function SettingsPage() {
 
                 <div className="pt-4 border-t border-slate-100 flex items-center gap-2 text-xs font-medium text-slate-400">
                   <Calendar className="h-4 w-4 text-slate-300" />
-                  <span>Member of platform architecture since {new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                  <span>Member of platform architecture since {user.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : '-'}</span>
                 </div>
               </CardContent>
               <CardFooter className="p-6 md:p-8 bg-slate-50/30 border-t border-slate-100 flex justify-end">

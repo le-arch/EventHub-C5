@@ -127,7 +127,7 @@ export default function EventsDashboardPage() {
       })
       setEvents(response.data)
       setTotalCount(response.data.length)
-      setTotalPages(response.data.totalPages || Math.ceil(response.data.total / pageSize))
+      setTotalPages(Math.ceil(response.data.length / pageSize))
     } catch (error) {
       toast.error('Failed to load events')
       console.error(error)

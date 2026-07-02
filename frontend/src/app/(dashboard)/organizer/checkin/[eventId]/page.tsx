@@ -126,18 +126,18 @@ export default function CheckinPage() {
         const nextResult: CheckinResult = {
           id: executionId,
           success: true,
-          attendeeName: payload.attendee_name,
-          ticketType: payload.ticket_type,
-          checkedInAt: payload.checked_in_at,
+          attendeeName: payload.attendeeName || payload.attendee_name,
+          ticketType: payload.ticketType || payload.ticket_type,
+          checkedInAt: payload.checkedInAt || payload.checked_in_at,
         }
 
         setLastResult(nextResult)
         
         setRecentCheckins(prev => [
           {
-            attendeeName: payload.attendee_name,
-            ticketType: payload.ticket_type,
-            checkedInAt: payload.checked_in_at,
+            attendeeName: payload.attendeeName || payload.attendee_name,
+            ticketType: payload.ticketType || payload.ticket_type,
+            checkedInAt: payload.checkedInAt || payload.checked_in_at,
           },
           ...prev.slice(0, 9),
         ])
@@ -151,7 +151,7 @@ export default function CheckinPage() {
           }
         })
         
-        toast.success(`✅ ${payload.attendee_name} checked in successfully!`)
+        toast.success(`✅ ${payload.attendeeName || payload.attendee_name} checked in successfully!`)
         
         if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current)
         feedbackTimeoutRef.current = setTimeout(() => {
@@ -217,17 +217,14 @@ export default function CheckinPage() {
         api.get(`/checkin/event/${eventId}/history?limit=10`)
       ])
       
-      setEvent(eventRes.data.event)
-      setRecentCheckins(historyRes.data.checkins || [])
+      setEvent(eventRes.data)
+      setRecentCheckins(Array.isArray(historyRes.data) ? historyRes.data : [])
       
-      const summary = statsRes.data.summary
-      if (summary) {
-        setStats({
-          checkedIn: summary.checkedInCount,
-          total: summary.totalAttendees,
-          percentage: summary.checkInPercentage,
-        })
-      }
+      setStats({
+        checkedIn: statsRes.data.checkinCount ?? 0,
+        total: statsRes.data.totalTickets ?? 0,
+        percentage: statsRes.data.checkinPercentage ?? 0,
+      })
     } catch (error) {
       console.error('Failed to update tracking statistics parameters:', error)
     } finally {
@@ -243,13 +240,11 @@ export default function CheckinPage() {
     
     setIsProcessing(true)
     try {
-      // Normalizing manual payload keys to ensure endpoint handling uniformity
       const response = await api.post('/checkin', { 
-        ticket_id: manualTicketId.trim(), 
-        event_id: eventId 
+        qr_hash: manualTicketId.trim() 
       })
       
-      toast.success(`✅ ${response.data.attendee_name} checked in manually!`)
+      toast.success(`✅ ${response.data.attendeeName || response.data.attendee_name} checked in manually!`)
       setShowManualEntry(false)
       setManualTicketId('')
       

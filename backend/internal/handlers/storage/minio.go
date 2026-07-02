@@ -34,15 +34,30 @@ func NewMinioClient(endpoint, accessKey, secretKey, bucketName string, useSSL bo
     if err != nil {
         return nil, err
     }
-    if !exists {
-        err = client.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{})
-        if err != nil {
-            return nil, err
-        }
-        log.Printf("Bucket '%s' created successfully", bucketName)
-    }
+	if !exists {
+		err = client.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{})
+		if err != nil {
+			return nil, err
+		}
+		log.Printf("Bucket '%s' created successfully", bucketName)
+	}
 
-    return &MinioClient{
+	// Set public-read bucket policy so event cover images are accessible without authentication.
+	policyJSON := fmt.Sprintf(`{
+		"Version": "2012-10-17",
+		"Statement": [{
+			"Effect": "Allow",
+			"Principal": {"AWS": ["*"]},
+			"Action": ["s3:GetObject"],
+			"Resource": ["arn:aws:s3:::%s/*"]
+		}]
+	}`, bucketName)
+	if err := client.SetBucketPolicy(context.Background(), bucketName, policyJSON); err != nil {
+		return nil, fmt.Errorf("failed to set public-read policy on bucket %s: %w", bucketName, err)
+	}
+	log.Printf("Bucket '%s' policy set to public-read", bucketName)
+
+	return &MinioClient{
         Client:     client,
         BucketName: bucketName,
         Endpoint:   endpoint,

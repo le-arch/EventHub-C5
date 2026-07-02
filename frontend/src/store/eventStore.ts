@@ -187,33 +187,25 @@ export const useEventStore = create<EventState>()(
      createEvent: async (data: CreateEventData) => {
         set({ isLoading: true, error: null })
         try {
-          const formData = new FormData()
-          const toSnakeKey = (k: string) => k.replace(/([A-Z])/g, '_$1').toLowerCase()
-
-          formData.append(toSnakeKey('title'), data.title)
-          if (data.description) formData.append(toSnakeKey('description'), data.description)
-          if (data.venue) formData.append(toSnakeKey('venue'), data.venue)
-         // if (data.venueAddress) formData.append(toSnakeKey('venueAddress'), data.venueAddress)
-          formData.append(toSnakeKey('city'), data.city)
-          formData.append(toSnakeKey('startDate'), data.startDate)
-          formData.append(toSnakeKey('startTime'), data.startTime)
-          if (data.endDate) formData.append(toSnakeKey('endDate'), data.endDate)
-          if (data.endTime) formData.append(toSnakeKey('endTime'), data.endTime)
-          if (data.coverImage) formData.append(toSnakeKey('coverImage'), data.coverImage)
-          formData.append(toSnakeKey('ticketTypes'), JSON.stringify(data.ticketTypes))
-
-          // NEW: append capacity range as JSON string
-          if (data.capacityRange) {
-            formData.append(toSnakeKey('capacityRange'), JSON.stringify(data.capacityRange))
+          const slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+          const payload: Record<string, unknown> = {
+            title: data.title,
+            slug,
+            description: data.description || '',
+            venue: data.venue || '',
+            city: data.city,
+            start_date: data.startDate,
+            start_time: data.startTime,
           }
-          
-          const response = await api.post('/events', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          })
+          if (data.endDate) payload.end_date = data.endDate
+          if (data.endTime) payload.end_time = data.endTime
+          if (data.capacityRange) payload.capacity_range = data.capacityRange
+
+          const response = await api.post('/events', payload)
           
           set({ isLoading: false })
           toast.success('Event created successfully!')
-          return response.data.event
+          return response.data
         } catch (error: any) {
           const message = error.response?.data?.error || 'Failed to create event'
           set({ error: message, isLoading: false })
@@ -241,7 +233,7 @@ export const useEventStore = create<EventState>()(
           
           set({ isLoading: false })
           toast.success('Event updated successfully!')
-          return response.data
+          return response.data?.eventDetails ?? response.data
         } catch (error: any) {
           const message = error.response?.data?.error || 'Failed to update event'
           set({ error: message, isLoading: false })

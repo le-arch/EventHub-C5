@@ -42,14 +42,15 @@ func (h *EventHubHandler) handleViewAllEvents(c *gin.Context) {
 	Venue: event.Venue,
 	City: event.City,
 	StartDate: utils.FormatDate(event.StartDate),
-	EndDate: utils.FormatDate(*event.EndDate),
+	EndDate: 	utils.FormatDatePtr(event.EndDate),
 	StartTime: utils.FormatTime(event.StartTime),
 	EndTime: utils.FormatTime(event.EndTime),
 	CoverImageUrl: event.CoverImageUrl,
 	Status: event.Status,
-	SalesStartDate: utils.FormatDate(*event.SalesStartDate),
-	SalesEndDate: utils.FormatDate(*event.SalesEndDate),
+	SalesStartDate: 	utils.FormatDatePtr(event.SalesStartDate),
+	SalesEndDate: 	utils.FormatDatePtr(event.SalesEndDate),
 	CapacityRange: utils.FromDBRange(event.CapacityRange),
+	TicketStats:   utils.TicketStatsResponse{},
 	UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
 	})
 }
@@ -86,8 +87,10 @@ func (h *EventHubHandler) handleListAllUsers(c *gin.Context) {
 		ID:              user.ID,
 		FullName:        user.FullName,
 		Email:           user.Email,
+		Phone:           user.Phone,
 		Role:            user.Role,
 		IsEmailVerified: user.IsEmailVerified,
+		IsActive:        user.IsActive,
 		CreatedAt:       utils.FormatDateTime(user.CreatedAt),
 	})
 }
@@ -329,7 +332,7 @@ func (h *EventHubHandler) handleViewAllTransactions(c *gin.Context) {
 			CreatedAt:     utils.FormatDateTime(t.CreatedAt),
 		}
 	}
-	c.JSON(http.StatusOK, gin.H{"transactions": response, "total": len(response)})
+	c.JSON(http.StatusOK, response)
 }
 
 func (h *EventHubHandler) handleGetPlatformAnalytics(c *gin.Context) {
@@ -352,13 +355,13 @@ func (h *EventHubHandler) handleGetPlatformAnalytics(c *gin.Context) {
     }
 
     c.JSON(http.StatusOK, gin.H{
-        "total_users":       stats.TotalUsers,
-        "total_events":      stats.TotalEvents,
-        "total_orders":      stats.TotalOrders,
-        "gross_revenue":     stats.GrossRevenue,
-        "platform_fee":      stats.TotalPlatformFee,
-        "net_revenue":       stats.NetRevenue,
-        "total_checked_in":  stats.TotalCheckedIn,
-        "checkin_rate":      checkinRate,
+        "totalUsers":       stats.TotalUsers,
+        "totalEvents":      stats.TotalEvents,
+        "totalOrders":      stats.TotalOrders,
+        "grossRevenue":     stats.GrossRevenue,
+        "platformFee":      stats.TotalPlatformFee,
+        "netRevenue":       stats.NetRevenue,
+        "totalCheckedIn":   stats.TotalCheckedIn,
+        "checkinRate":      checkinRate,
     })
 }

@@ -35,18 +35,18 @@ export interface RefreshTokenPayload {
 
 export interface AuthResponse {
   token: string
-  refresh_token: string
+  refreshToken: string
   user: UserData
 }
 
 export interface UserData {
   id: string
-  full_name: string
+  fullName: string
   email: string
   phone: string
   role: 'organizer' | 'admin'
-  is_email_verified: boolean
-  created_at?: string
+  isEmailVerified: boolean
+  createdAt?: string
 }
 
 export interface ResendOTPPayload {
@@ -61,15 +61,6 @@ export interface ResetPasswordPayload {
   email: string
   otp: string
   password_hash: string
-}
-
-// User types for admin functions
-export interface UserListResponse {
-  users: UserData[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
 }
 
 export interface UpdateUserPayload {
@@ -219,12 +210,12 @@ export const authService = {
     limit: number = 10,
     search?: string,
     status?: string
-  ): Promise<UserListResponse> => {
+  ): Promise<UserData[]> => {
     const params: Record<string, string | number> = { page, limit }
     if (search) params.search = search
     if (status) params.status = status
 
-    const response = await api.get<UserListResponse>('/admin/users', { params })
+    const response = await api.get<UserData[]>('/admin/users', { params })
     return response.data
   },
 

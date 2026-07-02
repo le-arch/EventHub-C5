@@ -125,20 +125,15 @@ export default function AdminEventsPage() {
     setTotalPages(Math.ceil(totalCount / pageSize) || 1)
   }, [totalCount, pageSize])
 
-  // Map events to AdminEvent type with computed fields
   useEffect(() => {
-    const mappedEvents: AdminEvent[] = events.map((event) => {
-      const organizerInfo = (event as any).organizer || {}
-      
-      return {
-        ...event,
-        organizerId: (event as any).organizerId || (event as any).organizer_id || '',
-        organizerName: organizerInfo.fullName || organizerInfo.full_name || 'Unknown Organizer',
-        organizerEmail: organizerInfo.email || 'No email provided',
-        ticketsSold: event.ticketStats?.totalSold || 0,
-        totalRevenue: event.ticketStats?.totalRevenue || 0,
-      }
-    })
+    const mappedEvents: AdminEvent[] = events.map((event) => ({
+      ...event,
+      organizerId: (event as any).organizerId || '',
+      organizerName: (event as any).organizerName || 'Unknown Organizer',
+      organizerEmail: (event as any).organizerEmail || 'No email provided',
+      ticketsSold: event.ticketStats?.totalSold || 0,
+      totalRevenue: event.ticketStats?.totalRevenue || 0,
+    }))
     setLocalEvents(mappedEvents)
   }, [events])
 

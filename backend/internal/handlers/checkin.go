@@ -4,6 +4,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -19,8 +20,17 @@ func (h *EventHubHandler) handleCheckin(c *gin.Context) {
 		return
 	}
 
-	// 1. Find order by QR hash
-	order, err := h.querier.GetOrderByQRHash(c, req.QRHash)
+	var order repo.Order
+	var err error
+
+	if req.OrderID != uuid.Nil {
+		order, err = h.querier.GetOrderByID(c, req.OrderID)
+	} else if req.QRHash != "" {
+		order, err = h.querier.GetOrderByQRHash(c, req.QRHash)
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "either qr_hash or order_id is required"})
+		return
+	}
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "invalid QR code"})
 		return
@@ -39,6 +49,12 @@ func (h *EventHubHandler) handleCheckin(c *gin.Context) {
 		return
 	}
 
+	ticketType, err := h.querier.GetTicketTypeByID(c, order.TicketTypeID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get ticket type"})
+		return
+	}
+
 	// 5. Mark order as used
 	err = h.querier.MarkOrderUsed(c, order.ID)
 	if err != nil {
@@ -47,9 +63,11 @@ func (h *EventHubHandler) handleCheckin(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":       "Checked in successfully",
-		"attendee_name": order.AttendeeName,
-		"order_id":      order.ID,
+		"message":        "Checked in successfully",
+		"attendeeName":   order.AttendeeName,
+		"orderId":        order.ID,
+		"ticketType":     ticketType.Name,
+		"checkedInAt":    time.Now().Format(time.RFC3339),
 	})
 }
 
@@ -88,15 +106,15 @@ func (h *EventHubHandler) handleGetAttendeeList(c *gin.Context) {
 	for i, a := range attendees {
 		response[i] = gin.H{
 			"id":              a.ID,
-			"attendee_name":   a.AttendeeName,
-			"attendee_phone":  a.AttendeePhone,
-			"attendee_email":  a.AttendeeEmail,
-			"checked_in":      a.IsUsed,
-			"checked_in_at":   utils.FormatDateTime(a.UsedAt),
-			"order_created_at": utils.FormatDateTime(a.CreatedAt),
+			"attendeeName":    a.AttendeeName,
+			"attendeePhone":   a.AttendeePhone,
+			"attendeeEmail":   a.AttendeeEmail,
+			"checkedIn":       a.IsUsed,
+			"checkedInAt":     utils.FormatDateTime(a.UsedAt),
+			"orderCreatedAt":  utils.FormatDateTime(a.CreatedAt),
 		}
 	}
-	c.JSON(http.StatusOK, gin.H{"attendees": response, "total": len(response)})
+	c.JSON(http.StatusOK, response)
 }
 
 func (h *EventHubHandler) handleDownloadQRCode(c *gin.Context) {
@@ -120,6 +138,52 @@ func (h *EventHubHandler) handleDownloadQRCode(c *gin.Context) {
 
 	// Redirect to the stored MinIO URL (or proxy the image)
 	c.Redirect(http.StatusFound, order.QrCodeImageUrl)
+}
+
+func (h *EventHubHandler) handleGetOrderDetails(c *gin.Context) {
+	orderIDStr := c.Param("id")
+	orderID, err := uuid.Parse(orderIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid order id"})
+		return
+	}
+
+	order, err := h.querier.GetOrderByID(c, orderID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "order not found"})
+		return
+	}
+
+	event, err := h.querier.GetEventByIDPublic(c, order.EventID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
+		return
+	}
+
+	ticketType, err := h.querier.GetTicketTypeByID(c, order.TicketTypeID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ticket type not found"})
+		return
+	}
+
+	response := utils.TicketDetailsResponse{
+		ID:            order.ID,
+		AttendeeName:  order.AttendeeName,
+		AttendeePhone: order.AttendeePhone,
+		TicketType:    ticketType.Name,
+		Quantity:      order.Quantity,
+		UnitPrice:     order.UnitPrice,
+		TotalAmount:   order.TotalAmount,
+		EventTitle:    event.Title,
+		EventDate:     utils.FormatDate(event.StartDate),
+		EventTime:     utils.FormatTime(event.StartTime),
+		EventVenue:    event.Venue,
+		EventCity:     event.City,
+		QrCodeData:    order.QrCodePlaintext,
+		CreatedAt:     utils.FormatDateTime(order.CreatedAt),
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func (h *EventHubHandler) handleGetCheckinHistory(c *gin.Context) {
@@ -167,5 +231,5 @@ func (h *EventHubHandler) handleGetCheckinHistory(c *gin.Context) {
             CheckedInAt:   utils.FormatDateTime(h.UsedAt),
         }
     }
-    c.JSON(http.StatusOK, gin.H{"history": response, "total": len(response)})
+    c.JSON(http.StatusOK, response)
 }

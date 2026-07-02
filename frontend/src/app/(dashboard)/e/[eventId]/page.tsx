@@ -82,10 +82,15 @@ export default function PublicEventPage() {
     const fetchEventDetails = async () => {
       if (!eventId) return
       try {
-        const response = await api.get(`/events/public/${eventId}`)
-        if (response.data?.event) {
-          setEvent(response.data.event)
-          setTickets(response.data.ticket_types || [])
+        const [eventRes, ticketsRes] = await Promise.all([
+          api.get(`/events/public/${eventId}`),
+          api.get(`/events/public/${eventId}/ticket-types`).catch(() => null),
+        ])
+        if (eventRes.data) {
+          setEvent(eventRes.data)
+          if (ticketsRes && Array.isArray(ticketsRes.data)) {
+            setTickets(ticketsRes.data)
+          }
         } else {
           throw new Error('Event data payload is invalid')
         }

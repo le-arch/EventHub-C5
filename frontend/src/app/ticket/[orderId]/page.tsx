@@ -57,7 +57,7 @@ export default function TicketPage() {
 
   const fetchOrderDetails = async () => {
     try {
-      const response = await api.get(`/orders/${orderId}/ticket`)
+      const response = await api.get(`/orders/${orderId}/details`)
       setOrder(response.data)
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Ticket not found'

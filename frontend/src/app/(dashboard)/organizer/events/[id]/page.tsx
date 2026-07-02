@@ -163,7 +163,7 @@ export default function EditEventPage() {
       setLocalTicketTypes(ticketsData || [])
       
       // Format date for input
-      const formattedDate = eventData.startDate.split('T')[0]
+      const formattedDate = eventData.startDate?.split('T')[0] ?? ''
       
       form.reset({
         title: eventData.title,
