@@ -21,6 +21,12 @@ SELECT * FROM users
 WHERE role = $1
 ORDER BY created_at DESC;
 
+-- name: GetAllUsersForAdmin :many
+SELECT u.id, u.email, u.phone, u.full_name, u.role, u.is_email_verified, u.is_active, u.created_at,
+       COALESCE((SELECT COUNT(*) FROM events e WHERE e.organizer_id = u.id), 0)::int AS events_count
+FROM users u
+ORDER BY u.created_at DESC;
+
 -- name: UpdateUserVerification :exec
 UPDATE users 
 SET is_email_verified = $2 

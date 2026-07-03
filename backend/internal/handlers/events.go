@@ -199,8 +199,10 @@ func (h *EventHubHandler) handleGetOrganisationEvent(c *gin.Context) {
     }
 
 	
+	stats, _ := h.querier.GetEventTicketStats(c, event.ID)
 	response := utils.EventResponse{
 	ID: event.ID,
+	OrganizerID: event.OrganizerID,
 	Title: event.Title,
 	Slug: event.Slug,
 	Description: event.Description,
@@ -215,7 +217,12 @@ func (h *EventHubHandler) handleGetOrganisationEvent(c *gin.Context) {
 	SalesStartDate: 	utils.FormatDatePtr(event.SalesStartDate),
 	SalesEndDate: 	utils.FormatDatePtr(event.SalesEndDate),
 	CapacityRange: utils.FromDBRange(event.CapacityRange),
-	TicketStats:   utils.TicketStatsResponse{},
+		TicketStats: utils.TicketStatsResponse{
+			TotalSold:       stats.TotalSold,
+			TotalRevenue:    stats.TotalRevenue,
+			TotalAttendees:  stats.TotalAttendees,
+			AvailableTickets: stats.AvailableTickets,
+		},
 	UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
 	
 }
@@ -239,8 +246,10 @@ func (h *EventHubHandler) handleGetOrganisationEvents(c *gin.Context) {
 	response := make([]utils.EventResponse, 0, len(events))
 	
 	for _, event := range events {
+		stats, _ := h.querier.GetEventTicketStats(c, event.ID)
 	response = append(response, utils.EventResponse{
 	ID: event.ID,
+	OrganizerID: event.OrganizerID,
 	Title: event.Title,
 	Slug: event.Slug,
 	Description: event.Description,
@@ -255,12 +264,17 @@ func (h *EventHubHandler) handleGetOrganisationEvents(c *gin.Context) {
 	SalesStartDate: 	utils.FormatDatePtr(event.SalesStartDate),
 	SalesEndDate: 	utils.FormatDatePtr(event.SalesEndDate),
 		CapacityRange: utils.FromDBRange(event.CapacityRange),
-		TicketStats:   utils.TicketStatsResponse{},
+		TicketStats: utils.TicketStatsResponse{
+			TotalSold:       stats.TotalSold,
+			TotalRevenue:    stats.TotalRevenue,
+			TotalAttendees:  stats.TotalAttendees,
+			AvailableTickets: stats.AvailableTickets,
+		},
 		UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
 	})
 }
 
-    c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, response)
 }
 
 func (h *EventHubHandler) handleEventDetails(c *gin.Context) {
@@ -285,6 +299,7 @@ func (h *EventHubHandler) handleEventDetails(c *gin.Context) {
         return
     }
 
+    stats, _ := h.querier.GetEventTicketStats(c, eventID)
     response := utils.EventDetailsResponse{
         ID:             event.ID,
         OrganizerID:    event.OrganizerID,
@@ -302,7 +317,12 @@ func (h *EventHubHandler) handleEventDetails(c *gin.Context) {
         SalesStartDate: 	utils.FormatDatePtr(event.SalesStartDate),
 	    SalesEndDate: 	utils.FormatDatePtr(event.SalesEndDate),
         CapacityRange:  utils.FromDBRange(event.CapacityRange),
-        TicketStats:    utils.TicketStatsResponse{},
+        TicketStats: utils.TicketStatsResponse{
+            TotalSold:       stats.TotalSold,
+            TotalRevenue:    stats.TotalRevenue,
+            TotalAttendees:  stats.TotalAttendees,
+            AvailableTickets: stats.AvailableTickets,
+        },
         CreatedAt:      utils.FormatDateTime(event.CreatedAt),
         UpdatedAt:      utils.FormatDateTime(event.UpdatedAt),
     }
@@ -323,6 +343,7 @@ func (h *EventHubHandler) handleGetPublicEvent(c *gin.Context) {
         return
     }
 
+    stats, _ := h.querier.GetEventTicketStats(c, id)
     response := utils.EventResponse{
 	ID: event.ID,
 	Title: event.Title,
@@ -339,7 +360,12 @@ func (h *EventHubHandler) handleGetPublicEvent(c *gin.Context) {
 	SalesStartDate: 	utils.FormatDatePtr(event.SalesStartDate),
 	SalesEndDate: 	utils.FormatDatePtr(event.SalesEndDate),
 	CapacityRange: utils.FromDBRange(event.CapacityRange),
-	TicketStats:   utils.TicketStatsResponse{},
+		TicketStats: utils.TicketStatsResponse{
+			TotalSold:       stats.TotalSold,
+			TotalRevenue:    stats.TotalRevenue,
+			TotalAttendees:  stats.TotalAttendees,
+			AvailableTickets: stats.AvailableTickets,
+		},
 	UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
 	} 
 
@@ -826,20 +852,50 @@ func (h *EventHubHandler) handleGetEventAnalytics(c *gin.Context) {
 	if err == nil {
 		for _, h := range history {
 			recentCheckins = append(recentCheckins, gin.H{
-				"attendeeName": h.AttendeeName,
-				"ticketType":   "",
-				"checkedInAt":  utils.FormatDateTime(h.UsedAt),
+				"name":        h.AttendeeName,
+				"ticketType":  h.TicketTypeName,
+				"checkedInAt": utils.FormatDateTime(h.UsedAt),
 			})
 		}
 	}
 
+	dailySales, _ := h.querier.GetEventDailySales(c, eventID)
+	dailySalesRes := make([]gin.H, 0, len(dailySales))
+	for _, d := range dailySales {
+		dailySalesRes = append(dailySalesRes, gin.H{
+			"date":    d.Date,
+			"tickets": d.Sales,
+			"revenue": d.Revenue,
+		})
+	}
+
+	ticketBreakdown, _ := h.querier.GetEventTicketBreakdown(c, eventID)
+	totalSoldAll := 0
+	for _, t := range ticketBreakdown {
+		totalSoldAll += int(t.Sold)
+	}
+	ticketBreakdownRes := make([]gin.H, 0, len(ticketBreakdown))
+	for _, t := range ticketBreakdown {
+		percentage := 0.0
+		if totalSoldAll > 0 {
+			percentage = float64(t.Sold) / float64(totalSoldAll) * 100
+		}
+		ticketBreakdownRes = append(ticketBreakdownRes, gin.H{
+			"name":       t.Name,
+			"sold":       t.Sold,
+			"revenue":    t.Revenue,
+			"available":  t.Available,
+			"percentage": percentage,
+		})
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"totalTickets":       totalTickets,
-		"totalRevenue":       stats.NetRevenue,
+		"totalRevenue":       stats.GrossRevenue,
 		"checkinCount":       checkinCount,
 		"checkinPercentage":  checkinPercentage,
-		"dailySales":         []gin.H{},
-		"ticketBreakdown":    []gin.H{},
+		"dailySales":         dailySalesRes,
+		"ticketBreakdown":    ticketBreakdownRes,
 		"recentCheckins":     recentCheckins,
 	})
 }

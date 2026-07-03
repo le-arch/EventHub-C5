@@ -101,29 +101,44 @@ if deviceInfo != "" {
 		return
 	}
 
-	// Initiate Momo payment
-	momoReq := models.PaymentRequest{
-		Amount:       fmt.Sprintf("%d", total),
-		Currency:     "EUR",
-		ExternalID:   order.ID.String(),
-		Payer:      models.Party{
-			PartyIDType: "MSISDN",
-		 	PartyID: req.AttendeePhone,
-		 } ,
-		PayerMessage: "Ticket payment",
-		PayeeNote:    "Order " + order.ID.String(),
-	}
-	momoResp, err := h.momoClient.RequestPayment(c.Request.Context(), momoReq)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "payment initiation failed: " + err.Error()})
-		return
+	// Initiate MoMo payment (or simulate in dev mode)
+	var txID string
+	var paymentStatus repo.PaymentStatus
+
+	if h.momoClient.IsConfigured() {
+		paymentStatus = repo.PaymentStatusPending
+		momoReq := models.PaymentRequest{
+			Amount:       fmt.Sprintf("%d", total),
+			Currency:     "EUR",
+			ExternalID:   order.ID.String(),
+			Payer:      models.Party{
+				PartyIDType: "MSISDN",
+				PartyID: req.AttendeePhone,
+			} ,
+			PayerMessage: "Ticket payment",
+			PayeeNote:    "Order " + order.ID.String(),
+		}
+		momoResp, err := h.momoClient.RequestPayment(c.Request.Context(), momoReq)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "payment initiation failed: " + err.Error()})
+			return
+		}
+		txID = momoResp.TransactionID
+	} else {
+		paymentStatus = repo.PaymentStatusPaid
+		simulatedID := uuid.New().String()
+		txID = simulatedID
+		log.Printf("DEV MODE: Simulated MoMo payment for order %s (tx: %s) - auto-confirmed", order.ID, txID)
+		_, _ = h.querier.DecrementTicketQuantity(c, repo.DecrementTicketQuantityParams{
+			ID:                req.TicketTypeID,
+			QuantityAvailable: int32(req.Quantity),
+		})
 	}
 
-	// Update order with transaction ID
-	txID := momoResp.TransactionID
+	// Update order with transaction ID and payment status
 	_ = h.querier.UpdateOrderPayment(c, repo.UpdateOrderPaymentParams{
 		ID:            order.ID,
-		PaymentStatus: repo.PaymentStatusPending,
+		PaymentStatus: paymentStatus,
 		TransactionID: &txID,
 	})
 
@@ -150,7 +165,7 @@ if deviceInfo != "" {
 		Quantity:       order.Quantity,
 		UnitPrice:      order.UnitPrice,
 		TotalAmount:    order.TotalAmount,
-		PaymentStatus:  string(order.PaymentStatus),
+		PaymentStatus:  string(paymentStatus),
 		TransactionID:  &txID,
 		QRCodeHash:     order.QrCodeHash,
 		QRCodeImageURL: qrImageURL,

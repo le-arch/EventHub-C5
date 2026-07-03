@@ -117,6 +117,7 @@ const getEventAnalytics = `-- name: GetEventAnalytics :one
 SELECT
     COUNT(*) AS paid_orders,
     COALESCE(SUM(total_amount - platform_fee), 0) AS net_revenue,
+    COALESCE(SUM(total_amount), 0) AS gross_revenue,
     COUNT(*) FILTER (WHERE is_used = TRUE) AS checked_in_count
 FROM orders
 WHERE event_id = $1 AND payment_status = 'paid'
@@ -125,13 +126,128 @@ WHERE event_id = $1 AND payment_status = 'paid'
 type GetEventAnalyticsRow struct {
 	PaidOrders     int64       `json:"paid_orders"`
 	NetRevenue     interface{} `json:"net_revenue"`
+	GrossRevenue   interface{} `json:"gross_revenue"`
 	CheckedInCount int64       `json:"checked_in_count"`
 }
 
 func (q *Queries) GetEventAnalytics(ctx context.Context, eventID uuid.UUID) (GetEventAnalyticsRow, error) {
 	row := q.db.QueryRow(ctx, getEventAnalytics, eventID)
 	var i GetEventAnalyticsRow
-	err := row.Scan(&i.PaidOrders, &i.NetRevenue, &i.CheckedInCount)
+	err := row.Scan(
+		&i.PaidOrders,
+		&i.NetRevenue,
+		&i.GrossRevenue,
+		&i.CheckedInCount,
+	)
+	return i, err
+}
+
+const getEventDailySales = `-- name: GetEventDailySales :many
+SELECT
+    DATE(o.created_at)::text AS date,
+    COUNT(*)::int AS sales,
+    SUM(o.total_amount)::int AS revenue
+FROM orders o
+WHERE o.event_id = $1 AND o.payment_status = 'paid'
+GROUP BY DATE(o.created_at)
+ORDER BY date
+`
+
+type GetEventDailySalesRow struct {
+	Date    string `json:"date"`
+	Sales   int32  `json:"sales"`
+	Revenue int32  `json:"revenue"`
+}
+
+func (q *Queries) GetEventDailySales(ctx context.Context, eventID uuid.UUID) ([]GetEventDailySalesRow, error) {
+	rows, err := q.db.Query(ctx, getEventDailySales, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetEventDailySalesRow{}
+	for rows.Next() {
+		var i GetEventDailySalesRow
+		if err := rows.Scan(&i.Date, &i.Sales, &i.Revenue); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEventTicketBreakdown = `-- name: GetEventTicketBreakdown :many
+SELECT
+    tt.name,
+    COALESCE(tt.quantity_sold, 0)::int AS sold,
+    (COALESCE(tt.quantity_sold, 0) * tt.price)::int AS revenue,
+    COALESCE(tt.quantity_available, 0)::int AS available
+FROM ticket_types tt
+WHERE tt.event_id = $1 AND (tt.is_active IS NULL OR tt.is_active = TRUE)
+ORDER BY tt.name
+`
+
+type GetEventTicketBreakdownRow struct {
+	Name      string `json:"name"`
+	Sold      int32  `json:"sold"`
+	Revenue   int32  `json:"revenue"`
+	Available int32  `json:"available"`
+}
+
+func (q *Queries) GetEventTicketBreakdown(ctx context.Context, eventID uuid.UUID) ([]GetEventTicketBreakdownRow, error) {
+	rows, err := q.db.Query(ctx, getEventTicketBreakdown, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetEventTicketBreakdownRow{}
+	for rows.Next() {
+		var i GetEventTicketBreakdownRow
+		if err := rows.Scan(
+			&i.Name,
+			&i.Sold,
+			&i.Revenue,
+			&i.Available,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEventTicketStats = `-- name: GetEventTicketStats :one
+SELECT
+    COUNT(DISTINCT o.id)::int AS total_sold,
+    COALESCE(SUM(o.total_amount), 0)::int AS total_revenue,
+    COUNT(DISTINCT o.attendee_name)::int AS total_attendees,
+    COALESCE((SELECT SUM(tt.quantity_available - COALESCE(tt.quantity_sold, 0)) FROM ticket_types tt WHERE tt.event_id = $1), 0)::int AS available_tickets
+FROM orders o
+WHERE o.event_id = $1 AND o.payment_status = 'paid'
+`
+
+type GetEventTicketStatsRow struct {
+	TotalSold        int32 `json:"total_sold"`
+	TotalRevenue     int32 `json:"total_revenue"`
+	TotalAttendees   int32 `json:"total_attendees"`
+	AvailableTickets int32 `json:"available_tickets"`
+}
+
+func (q *Queries) GetEventTicketStats(ctx context.Context, eventID uuid.UUID) (GetEventTicketStatsRow, error) {
+	row := q.db.QueryRow(ctx, getEventTicketStats, eventID)
+	var i GetEventTicketStatsRow
+	err := row.Scan(
+		&i.TotalSold,
+		&i.TotalRevenue,
+		&i.TotalAttendees,
+		&i.AvailableTickets,
+	)
 	return i, err
 }
 
@@ -255,7 +371,7 @@ SELECT
     COALESCE(SUM(o.total_amount - o.platform_fee), 0) AS net_revenue,
     COUNT(o.id) FILTER (WHERE o.is_used = TRUE) AS total_checked_in
 FROM users u
-JOIN events e ON e.organizer_id = u.id
+LEFT JOIN events e ON e.organizer_id = u.id
 LEFT JOIN orders o ON o.event_id = e.id AND o.payment_status = 'paid'
 `
 
@@ -428,10 +544,11 @@ func (q *Queries) ListAttendeesByEvent(ctx context.Context, eventID uuid.UUID) (
 }
 
 const listCheckinHistoryByEvent = `-- name: ListCheckinHistoryByEvent :many
-SELECT id AS order_id, attendee_name, attendee_phone, used_at
-FROM orders
-WHERE event_id = $1 AND is_used = TRUE
-ORDER BY used_at DESC
+SELECT o.id AS order_id, o.attendee_name, o.attendee_phone, o.used_at, COALESCE(tt.name, '') AS ticket_type_name
+FROM orders o
+LEFT JOIN ticket_types tt ON o.ticket_type_id = tt.id
+WHERE o.event_id = $1 AND o.is_used = TRUE
+ORDER BY o.used_at DESC
 LIMIT $2 OFFSET $3
 `
 
@@ -442,10 +559,11 @@ type ListCheckinHistoryByEventParams struct {
 }
 
 type ListCheckinHistoryByEventRow struct {
-	OrderID       uuid.UUID        `json:"order_id"`
-	AttendeeName  string           `json:"attendee_name"`
-	AttendeePhone string           `json:"attendee_phone"`
-	UsedAt        pgtype.Timestamp `json:"used_at"`
+	OrderID        uuid.UUID        `json:"order_id"`
+	AttendeeName   string           `json:"attendee_name"`
+	AttendeePhone  string           `json:"attendee_phone"`
+	UsedAt         pgtype.Timestamp `json:"used_at"`
+	TicketTypeName string           `json:"ticket_type_name"`
 }
 
 func (q *Queries) ListCheckinHistoryByEvent(ctx context.Context, arg ListCheckinHistoryByEventParams) ([]ListCheckinHistoryByEventRow, error) {
@@ -462,6 +580,7 @@ func (q *Queries) ListCheckinHistoryByEvent(ctx context.Context, arg ListCheckin
 			&i.AttendeeName,
 			&i.AttendeePhone,
 			&i.UsedAt,
+			&i.TicketTypeName,
 		); err != nil {
 			return nil, err
 		}

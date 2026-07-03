@@ -27,6 +27,7 @@ import {
   FileText,
   ChevronDown,
   User,
+  BarChart3,
 } from 'lucide-react'
 import Image from 'next/image'
 
@@ -58,6 +59,7 @@ const adminNavItems = [
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/events', label: 'Events', icon: Calendar },
   { href: '/admin/transactions', label: 'Transactions', icon: CreditCard },
+  { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/logs', label: 'Logs', icon: FileText },
 ]
 

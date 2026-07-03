@@ -9,6 +9,7 @@
 
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Calendar, MapPin, Users, Ticket, MoreVertical, Edit, Eye, QrCode, Trash2 } from 'lucide-react'
@@ -47,7 +48,8 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, onEdit, onDelete, onDuplicate, onViewAttendees, onCheckin }: EventCardProps) {
-  const hasCoverImage = event.coverImageUrl && event.coverImageUrl !== ''
+  const [imageError, setImageError] = useState(false)
+  const hasCoverImage = event.coverImageUrl && event.coverImageUrl !== '' && !imageError
 
   return (
     <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300">
@@ -60,6 +62,7 @@ export function EventCard({ event, onEdit, onDelete, onDuplicate, onViewAttendee
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

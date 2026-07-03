@@ -74,7 +74,7 @@ func (h *EventHubHandler) handleListAllUsers(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "your not authorized to perform this action"})
 		return
 	}
-    users, err := h.querier.GetAllUsers(c, repo.UserRole(UserRole))
+    users, err := h.querier.GetAllUsersForAdmin(c)
 	if err != nil {
         c.JSON(http.StatusNotFound, gin.H{"error": "no event created"})
         return
@@ -91,6 +91,7 @@ func (h *EventHubHandler) handleListAllUsers(c *gin.Context) {
 		Role:            user.Role,
 		IsEmailVerified: user.IsEmailVerified,
 		IsActive:        user.IsActive,
+		EventsCount:     user.EventsCount,
 		CreatedAt:       utils.FormatDateTime(user.CreatedAt),
 	})
 }

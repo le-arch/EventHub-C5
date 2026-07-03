@@ -20,10 +20,14 @@ type Querier interface {
 	DeleteTicketType(ctx context.Context, arg DeleteTicketTypeParams) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	GetAllUsers(ctx context.Context, role UserRole) ([]User, error)
+	GetAllUsersForAdmin(ctx context.Context) ([]GetAllUsersForAdminRow, error)
 	GetEventAnalytics(ctx context.Context, eventID uuid.UUID) (GetEventAnalyticsRow, error)
 	GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
 	GetEventByIDPublic(ctx context.Context, id uuid.UUID) (Event, error)
 	GetEventBySlugPublic(ctx context.Context, slug string) (GetEventBySlugPublicRow, error)
+	GetEventDailySales(ctx context.Context, eventID uuid.UUID) ([]GetEventDailySalesRow, error)
+	GetEventTicketBreakdown(ctx context.Context, eventID uuid.UUID) ([]GetEventTicketBreakdownRow, error)
+	GetEventTicketStats(ctx context.Context, eventID uuid.UUID) (GetEventTicketStatsRow, error)
 	GetEventsBySlug(ctx context.Context, slug string) (Event, error)
 	GetOrderByID(ctx context.Context, id uuid.UUID) (Order, error)
 	GetOrderByQRHash(ctx context.Context, qrCodeHash string) (Order, error)

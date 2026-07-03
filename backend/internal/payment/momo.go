@@ -39,6 +39,10 @@ func NewClient(cfg Config) *Client {
 	}
 }
 
+func (c *Client) IsConfigured() bool {
+	return c.cfg.APIURL != "" && c.cfg.SubscriptionKey != ""
+}
+
 
 // getAccessToken obtains a new OAuth2 token from MTN.
 func (c *Client) getAccessToken(ctx context.Context) (string, error) {

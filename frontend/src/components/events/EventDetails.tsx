@@ -52,11 +52,12 @@ export function EventDetails({
     <div className="space-y-6">
       {/* Cover Image */}
       {event.coverImageUrl && (
-        <div className="aspect-video rounded-xl overflow-hidden">
+        <div className="relative aspect-video rounded-xl overflow-hidden">
           <Image
             src={event.coverImageUrl}
             alt={event.title}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
           />
         </div>
       )}

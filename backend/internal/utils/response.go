@@ -16,6 +16,7 @@ type RegisterResponse struct {
 	Role repo.UserRole `json:"role"`
 	IsEmailVerified bool  `json:"isEmailVerified"`
 	IsActive bool `json:"isActive"`
+	EventsCount int32 `json:"eventsCount"`
 	CreatedAt  string `json:"createdAt"`
 }
 
@@ -189,10 +190,11 @@ type TicketDetailsResponse struct {
 }
 
 type CheckinHistoryResponse struct {
-	OrderID     uuid.UUID `json:"orderId"`
-	AttendeeName string   `json:"attendeeName"`
-	AttendeePhone string `json:"attendeePhone"`
-	CheckedInAt  string   `json:"checkedInAt"`
+	OrderID      uuid.UUID `json:"orderId"`
+	AttendeeName string    `json:"attendeeName"`
+	AttendeePhone string   `json:"attendeePhone"`
+	TicketType   string    `json:"ticketType"`
+	CheckedInAt  string    `json:"checkedInAt"`
 }
 
 type TransactionResponse struct {

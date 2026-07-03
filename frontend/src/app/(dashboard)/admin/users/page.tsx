@@ -132,7 +132,8 @@ export default function AdminUsersPage() {
       
       if (Array.isArray(response.data)) {
         setUsers(response.data)
-        setTotalPages(Math.ceil((response.data.length || 0) / pageSize) || 1)
+        // Backend returns all users in one response (no server-side pagination)
+        setTotalPages(1)
         setStats({
           total: response.data.length,
           verified: response.data.filter((u: any) => u.isEmailVerified).length,
@@ -503,7 +504,7 @@ export default function AdminUsersPage() {
                         </TableCell>
                         <TableCell className="py-4">
                           <div className="flex items-baseline text-slate-900 font-black text-sm">
-                            {user.eventsCount}
+                            {user.eventsCount ?? 0}
                             <span className="text-slate-400 font-medium text-xs ml-1">listings</span>
                           </div>
                         </TableCell>

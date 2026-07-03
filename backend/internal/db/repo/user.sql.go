@@ -99,6 +99,55 @@ func (q *Queries) GetAllUsers(ctx context.Context, role UserRole) ([]User, error
 	return items, nil
 }
 
+const getAllUsersForAdmin = `-- name: GetAllUsersForAdmin :many
+SELECT u.id, u.email, u.phone, u.full_name, u.role, u.is_email_verified, u.is_active, u.created_at,
+       COALESCE((SELECT COUNT(*) FROM events e WHERE e.organizer_id = u.id), 0)::int AS events_count
+FROM users u
+ORDER BY u.created_at DESC
+`
+
+type GetAllUsersForAdminRow struct {
+	ID              uuid.UUID        `json:"id"`
+	Email           string           `json:"email"`
+	Phone           string           `json:"phone"`
+	FullName        string           `json:"full_name"`
+	Role            UserRole         `json:"role"`
+	IsEmailVerified bool             `json:"is_email_verified"`
+	IsActive        bool             `json:"is_active"`
+	CreatedAt       pgtype.Timestamp `json:"created_at"`
+	EventsCount     int32            `json:"events_count"`
+}
+
+func (q *Queries) GetAllUsersForAdmin(ctx context.Context) ([]GetAllUsersForAdminRow, error) {
+	rows, err := q.db.Query(ctx, getAllUsersForAdmin)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetAllUsersForAdminRow{}
+	for rows.Next() {
+		var i GetAllUsersForAdminRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.Phone,
+			&i.FullName,
+			&i.Role,
+			&i.IsEmailVerified,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.EventsCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, email, phone, password_hash, full_name, role, is_email_verified, is_active, created_at, updated_at FROM users 
 WHERE email = $1

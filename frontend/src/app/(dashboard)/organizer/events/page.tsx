@@ -37,7 +37,6 @@ import {
   DollarSign,
   ArrowRight,
 } from 'lucide-react'
-import Image from 'next/image'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
@@ -99,6 +98,7 @@ export default function EventsDashboardPage() {
   
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
   const clearSearch = () => {
     setSearchInput('')
   }
@@ -317,13 +317,12 @@ export default function EventsDashboardPage() {
                 
                 {/* Media Anchor Block */}
                 <div className="relative h-44 bg-slate-100 overflow-hidden">
-                  {event.coverImageUrl ? (
-                    <Image
+                  {event.coverImageUrl && !imageErrors.has(event.id) ? (
+                    <img
                       src={event.coverImageUrl}
                       alt={event.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={() => setImageErrors(prev => new Set(prev).add(event.id))}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-50/50 to-slate-100">
