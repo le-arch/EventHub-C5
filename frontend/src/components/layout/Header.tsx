@@ -142,7 +142,7 @@ export function Header({ onMobileMenuClick }: HeaderProps) {
                     <ChevronDown className="h-4 w-4 text-gray-500" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-56 bg-white">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => router.push('/organizer/settings')}>

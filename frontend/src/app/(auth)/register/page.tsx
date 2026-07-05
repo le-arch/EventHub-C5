@@ -108,9 +108,12 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card className="shadow-lg border-l-4">
-      <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
+    <Card className="shadow-lg border-border relative overflow-hidden">
+      {/* Gradient accent bar */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 to-blue-500" />
+      
+      <CardHeader className="space-y-1 text-center pt-6">
+        <CardTitle className="text-2xl font-bold text-foreground">Create Account</CardTitle>
         <CardDescription>
           Join EventHub to start managing your events
         </CardDescription>
@@ -131,12 +134,12 @@ export default function RegisterPage() {
               {...register('fullName')}
               aria-invalid={!!errors.fullName}
               disabled={isLoading}
-              className={errors.fullName ? 'border-red-500' : ''}
+              className={errors.fullName ? 'border-red-500 focus-visible:ring-red-500/20 focus-visible:border-red-500' : 'focus-visible:ring-primary/20 focus-visible:border-primary'}
             />
             {errors.fullName && (
               <p className="text-sm text-red-500 mt-1">{errors.fullName.message}</p>
             )}
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Your full name will be displayed on your organizer profile
             </p>
           </div>
@@ -153,12 +156,12 @@ export default function RegisterPage() {
               {...register('email')}
               aria-invalid={!!errors.email}
               disabled={isLoading}
-              className={errors.email ? 'border-red-500' : ''}
+              className={errors.email ? 'border-red-500 focus-visible:ring-red-500/20 focus-visible:border-red-500' : 'focus-visible:ring-primary/20 focus-visible:border-primary'}
             />
             {errors.email && (
               <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
             )}
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               We&apos;ll send a verification code to this email
             </p>
           </div>
@@ -169,14 +172,14 @@ export default function RegisterPage() {
               Phone Number <span className="text-red-500">*</span>
             </Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                 +237
               </span>
               <Input
                 id="phone"
                 type="tel"
                 placeholder="612345678"
-                className="pl-14"
+                className={`pl-14 ${errors.phone ? 'border-red-500 focus-visible:ring-red-500/20 focus-visible:border-red-500' : 'focus-visible:ring-primary/20 focus-visible:border-primary'}`}
                 {...register('phone')}
                 aria-invalid={!!errors.phone}
                 disabled={isLoading}
@@ -185,7 +188,7 @@ export default function RegisterPage() {
             {errors.phone && (
               <p className="text-sm text-red-500 mt-1">{errors.phone.message}</p>
             )}
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Enter your phone number without the country code (e.g., 612345678)
             </p>
           </div>
@@ -203,12 +206,13 @@ export default function RegisterPage() {
                 {...register('password')}
                 aria-invalid={!!errors.password}
                 disabled={isLoading}
-                className={errors.password ? 'border-red-500' : ''}
+                className={errors.password ? 'border-red-500 focus-visible:ring-red-500/20 focus-visible:border-red-500' : 'focus-visible:ring-primary/20 focus-visible:border-primary'}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? (<EyeOff className="h-4 w-4" aria-hidden="true" />) : (<Eye className="h-4 w-4" aria-hidden="true" />)}
               </button>
@@ -216,7 +220,7 @@ export default function RegisterPage() {
             {errors.password && (
               <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
             )}
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Must be at least 8 characters with one uppercase letter and one number
             </p>
           </div>
@@ -234,12 +238,13 @@ export default function RegisterPage() {
                 {...register('confirmPassword')}
                 aria-invalid={!!errors.confirmPassword}
                 disabled={isLoading}
-                className={errors.confirmPassword ? 'border-red-500' : ''}
+                className={errors.confirmPassword ? 'border-red-500 focus-visible:ring-red-500/20 focus-visible:border-red-500' : 'focus-visible:ring-primary/20 focus-visible:border-primary'}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
               >
                 {showConfirmPassword ? (<EyeOff className="h-4 w-4" aria-hidden="true" />) : (<Eye className="h-4 w-4" aria-hidden="true" />)}
               </button>
@@ -266,7 +271,7 @@ export default function RegisterPage() {
           </Button>
 
           {/* Terms Agreement Notice */}
-          <p className="text-xs text-center text-gray-500">
+          <p className="text-xs text-center text-muted-foreground">
             By creating an account, you agree to our{' '}
             <Link href="/terms" className="text-primary hover:underline">
               Terms of Service
@@ -278,7 +283,7 @@ export default function RegisterPage() {
           </p>
 
           {/* Link to Login Page */}
-          <p className="text-center text-sm text-gray-600">
+          <p className="text-center text-sm text-muted-foreground">
             Already have an account?{' '}
             <Link href="/login" className="text-primary hover:underline font-medium">
               Log in

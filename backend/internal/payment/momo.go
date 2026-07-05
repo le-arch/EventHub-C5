@@ -39,6 +39,18 @@ func NewClient(cfg Config) *Client {
 	}
 }
 
+func (c *Client) IsConfigured() bool {
+	if c.cfg.APIURL == "" || c.cfg.SubscriptionKey == "" {
+		return false
+	}
+	// Reject placeholder/default values — treat as not configured
+	if c.cfg.SubscriptionKey == "change-me" || c.cfg.APIKey == "change-me" {
+		log.Println("[momo] skipping MoMo: placeholder credentials detected (change-me)")
+		return false
+	}
+	return true
+}
+
 
 // getAccessToken obtains a new OAuth2 token from MTN.
 func (c *Client) getAccessToken(ctx context.Context) (string, error) {

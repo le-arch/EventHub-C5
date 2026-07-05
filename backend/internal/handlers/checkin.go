@@ -228,6 +228,7 @@ func (h *EventHubHandler) handleGetCheckinHistory(c *gin.Context) {
             OrderID:       h.OrderID,
             AttendeeName:  h.AttendeeName,
             AttendeePhone: h.AttendeePhone,
+            TicketType:    h.TicketTypeName,
             CheckedInAt:   utils.FormatDateTime(h.UsedAt),
         }
     }

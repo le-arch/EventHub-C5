@@ -215,7 +215,7 @@ export function CheckinScanner({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="ticketId">Ticket ID / QR Code</Label>
               <Input
                 id="ticketId"

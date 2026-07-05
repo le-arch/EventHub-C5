@@ -101,7 +101,7 @@ export function Pagination({
             <SelectTrigger className="w-20">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white">
               {pageSizeOptions.map((size) => (
                 <SelectItem key={size} value={size.toString()}>
                   {size}

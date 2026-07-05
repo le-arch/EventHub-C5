@@ -185,7 +185,7 @@ export function AttendeeTable({ attendees, onCheckIn, onViewDetails, isLoading =
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="bg-white">
                     {!attendee.checkedIn && onCheckIn && (
                       <DropdownMenuItem onClick={() => onCheckIn(attendee.id)}>
                         <UserCheck className="h-4 w-4 mr-2" />

@@ -711,3 +711,92 @@ func (q *Queries) UpdateEventStatus(ctx context.Context, arg UpdateEventStatusPa
 	)
 	return i, err
 }
+
+const listEventsAdmin = `-- name: ListEventsAdmin :many
+SELECT e.id, e.organizer_id, e.title, e.slug, e.description, e.venue, e.city, e.start_date, e.end_date, e.start_time, e.end_time, e.cover_image_url, e.status, e.sales_start_date, e.sales_end_date, e.capacity_range, e.created_at, e.updated_at, u.full_name as organizer_name, u.email as organizer_email
+FROM events e
+INNER JOIN users u ON e.organizer_id = u.id
+WHERE ($1 = '' OR e.status::text = $1)
+AND ($2 = '' OR e.title ILIKE '%' || $2 || '%' OR u.full_name ILIKE '%' || $2 || '%')
+ORDER BY e.created_at DESC
+LIMIT $3 OFFSET $4
+`
+
+type ListEventsAdminRow struct {
+	ID             uuid.UUID                  `json:"id"`
+	OrganizerID    uuid.UUID                  `json:"organizer_id"`
+	Title          string                     `json:"title"`
+	Slug           string                     `json:"slug"`
+	Description    string                     `json:"description"`
+	Venue          string                     `json:"venue"`
+	City           string                     `json:"city"`
+	StartDate      time.Time                  `json:"start_date"`
+	EndDate        *time.Time                 `json:"end_date"`
+	StartTime      *string                    `json:"start_time"`
+	EndTime        *string                    `json:"end_time"`
+	CoverImageUrl  string                     `json:"cover_image_url"`
+	Status         EventStatus                `json:"status"`
+	SalesStartDate *time.Time                 `json:"sales_start_date"`
+	SalesEndDate   *time.Time                 `json:"sales_end_date"`
+	CapacityRange  *pgtype.Range[pgtype.Int4] `json:"capacity_range"`
+	CreatedAt      pgtype.Timestamp           `json:"created_at"`
+	UpdatedAt      pgtype.Timestamp           `json:"updated_at"`
+	OrganizerName  string                     `json:"organizer_name"`
+	OrganizerEmail string                     `json:"organizer_email"`
+}
+
+func (q *Queries) ListEventsAdmin(ctx context.Context, status string, search string, limit int32, offset int32) ([]ListEventsAdminRow, error) {
+	rows, err := q.db.Query(ctx, listEventsAdmin, status, search, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListEventsAdminRow{}
+	for rows.Next() {
+		var i ListEventsAdminRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrganizerID,
+			&i.Title,
+			&i.Slug,
+			&i.Description,
+			&i.Venue,
+			&i.City,
+			&i.StartDate,
+			&i.EndDate,
+			&i.StartTime,
+			&i.EndTime,
+			&i.CoverImageUrl,
+			&i.Status,
+			&i.SalesStartDate,
+			&i.SalesEndDate,
+			&i.CapacityRange,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.OrganizerName,
+			&i.OrganizerEmail,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const countEventsAdmin = `-- name: CountEventsAdmin :one
+SELECT COUNT(*)
+FROM events e
+INNER JOIN users u ON e.organizer_id = u.id
+WHERE ($1 = '' OR e.status::text = $1)
+AND ($2 = '' OR e.title ILIKE '%' || $2 || '%' OR u.full_name ILIKE '%' || $2 || '%')
+`
+
+func (q *Queries) CountEventsAdmin(ctx context.Context, status string, search string) (int64, error) {
+	row := q.db.QueryRow(ctx, countEventsAdmin, status, search)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}

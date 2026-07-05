@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/le-arch/EventHub-C5/internal/auth"
@@ -52,16 +53,20 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	
 	r.Use(middleware.RecoveryMiddleware())
 
+	// Rate limiters: auth routes get stricter limits
+	authLimiter := middleware.NewRateLimiter(10, time.Minute)
+	orderLimiter := middleware.NewRateLimiter(30, time.Minute)
+
 	r.GET("/health", HealthCheck)
-	r.POST("/api/v1/auth/register", h.handleRegister)
-	r.POST("/api/v1/auth/verify-otp", h.handleVerifyEmail)
-	r.POST("/api/v1/auth/login", h.handleLogin)
-	r.POST("/api/v1/auth/refresh", h.handleRefreshToken)
+	r.POST("/api/v1/auth/register", middleware.RateLimitMiddleware(authLimiter), h.handleRegister)
+	r.POST("/api/v1/auth/verify-otp", middleware.RateLimitMiddleware(authLimiter), h.handleVerifyEmail)
+	r.POST("/api/v1/auth/login", middleware.RateLimitMiddleware(authLimiter), h.handleLogin)
+	r.POST("/api/v1/auth/refresh", middleware.RateLimitMiddleware(authLimiter), h.handleRefreshToken)
 	r.POST("/api/v1/auth/logout", h.handleLogout)
-	r.POST("/api/v1/auth/forgot-password", h.handleForgotPassword)
-	r.POST("/api/v1/auth/reset-password", h.handlePasswrordReset)
-	r.POST("/api/v1/auth/resend-otp", h.handleResendOTP)
-	r.POST("/api/v1/orders", h.handleCreateOrder)
+	r.POST("/api/v1/auth/forgot-password", middleware.RateLimitMiddleware(authLimiter), h.handleForgotPassword)
+	r.POST("/api/v1/auth/reset-password", middleware.RateLimitMiddleware(authLimiter), h.handlePasswrordReset)
+	r.POST("/api/v1/auth/resend-otp", middleware.RateLimitMiddleware(authLimiter), h.handleResendOTP)
+	r.POST("/api/v1/orders", middleware.RateLimitMiddleware(orderLimiter), h.handleCreateOrder)
 	r.POST("/api/v1/webhooks/momo", h.payment.HandleMomoWebhook)
 
 	// Public routes (no auth required, but optional JWT parsing)
@@ -69,6 +74,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	
 	r.GET("/api/v1/events/public/:id", h.handleGetPublicEvent)
 	r.GET("/api/v1/events/public/:id/ticket-types", h.handleListTicketTypes)
+	r.GET("/api/v1/orders/:id/details", h.handleGetOrderDetails)
 
 	Protection := r.Group("/api/v1")
 	Protection.Use(auth.AuthMiddleware(h.jwtSecret))
@@ -94,7 +100,6 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	Protection.GET("/Organization/:id", h.handleGetOrganisationEvent)
 	Protection.GET("/events/:id/share-link", h.handleShareLink)
 	Protection.GET("/orders/:id/ticket", h.handleDownloadQRCode)
-	Protection.GET("/orders/:id/details", h.handleGetOrderDetails)
 	Protection.GET("/events/:id/attendees", h.handleGetAttendeeList)
 	Protection.GET("/events/:id/analytics", h.handleGetEventAnalytics)
 	Protection.GET("/events/:id", h.handleEventDetails)
@@ -108,7 +113,10 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	Protection.PUT("/admin/users/:id/verify", h.handleVerifyOrganizer)
 	Protection.PUT("/admin/users/:id/suspend", h.handleSuspendUser)
 	Protection.PUT("/admin/users/:id/unsuspend", h.handleUnsuspendUser)
-
+	Protection.PUT("/admin/events/:id/cancel", h.handleAdminCancelEvent)
+	Protection.PUT("/admin/events/:id/suspend", h.handleAdminSuspendEvent)
+	Protection.POST("/admin/users/batch-verify", h.handleBatchVerifyOrganizer)
+	Protection.POST("/admin/users/batch-suspend", h.handleBatchSuspendUser)
 
 	Protection.DELETE("/events/:id", h.handleDeleteEvent)
 	Protection.DELETE("/events/:id/ticket-types/:ticket_id", h.handleDeleteTicketType)

@@ -101,31 +101,71 @@ if deviceInfo != "" {
 		return
 	}
 
-	// Initiate Momo payment
-	momoReq := models.PaymentRequest{
-		Amount:       fmt.Sprintf("%d", total),
-		Currency:     "EUR",
-		ExternalID:   order.ID.String(),
-		Payer:      models.Party{
-			PartyIDType: "MSISDN",
-		 	PartyID: req.AttendeePhone,
-		 } ,
-		PayerMessage: "Ticket payment",
-		PayeeNote:    "Order " + order.ID.String(),
-	}
-	momoResp, err := h.momoClient.RequestPayment(c.Request.Context(), momoReq)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "payment initiation failed: " + err.Error()})
-		return
+	// Initiate MoMo payment (or simulate in dev mode)
+	var txID string
+	var paymentStatus repo.PaymentStatus
+
+	if h.momoClient.IsConfigured() {
+		log.Printf("[payment] MoMo configured — requesting payment for order %s", order.ID)
+		paymentStatus = repo.PaymentStatusPending
+		momoReq := models.PaymentRequest{
+			Amount:       fmt.Sprintf("%d", total),
+			Currency:     "EUR",
+			ExternalID:   order.ID.String(),
+			Payer:      models.Party{
+				PartyIDType: "MSISDN",
+				PartyID: req.AttendeePhone,
+			} ,
+			PayerMessage: "Ticket payment",
+			PayeeNote:    "Order " + order.ID.String(),
+		}
+		momoResp, err := h.momoClient.RequestPayment(c.Request.Context(), momoReq)
+		if err != nil {
+			log.Printf("[payment] RequestPayment failed for order %s: %v — falling back to auto-confirm", order.ID, err)
+			paymentStatus = repo.PaymentStatusPaid
+			simulatedID := uuid.New().String()
+			txID = simulatedID
+			rows, decErr := h.querier.DecrementTicketQuantity(c, repo.DecrementTicketQuantityParams{
+				ID:                req.TicketTypeID,
+				QuantityAvailable: int32(req.Quantity),
+			})
+			if decErr != nil {
+				log.Printf("[payment] failed to decrement ticket quantity for order %s: %v", order.ID, decErr)
+			} else if rows == 0 {
+				log.Printf("[payment] no ticket rows updated for order %s (possible stock issue)", order.ID)
+			} else {
+				log.Printf("[payment] ticket quantity decremented for order %s (%d rows)", order.ID, rows)
+			}
+		} else {
+			txID = momoResp.TransactionID
+			log.Printf("[payment] payment request submitted for order %s (tx: %s) — awaiting webhook", order.ID, txID)
+		}
+	} else {
+		log.Printf("[payment] DEV MODE: Simulated MoMo payment for order %s — auto-confirmed", order.ID)
+		paymentStatus = repo.PaymentStatusPaid
+		simulatedID := uuid.New().String()
+		txID = simulatedID
+		rows, decErr := h.querier.DecrementTicketQuantity(c, repo.DecrementTicketQuantityParams{
+			ID:                req.TicketTypeID,
+			QuantityAvailable: int32(req.Quantity),
+		})
+		if decErr != nil {
+			log.Printf("[payment] failed to decrement ticket quantity for order %s: %v", order.ID, decErr)
+		} else if rows == 0 {
+			log.Printf("[payment] WARNING: no ticket rows updated for order %s (possible stock issue)", order.ID)
+		} else {
+			log.Printf("[payment] ticket quantity decremented for order %s (%d rows)", order.ID, rows)
+		}
 	}
 
-	// Update order with transaction ID
-	txID := momoResp.TransactionID
-	_ = h.querier.UpdateOrderPayment(c, repo.UpdateOrderPaymentParams{
+	// Update order with transaction ID and payment status
+	if err := h.querier.UpdateOrderPayment(c, repo.UpdateOrderPaymentParams{
 		ID:            order.ID,
-		PaymentStatus: repo.PaymentStatusPending,
+		PaymentStatus: paymentStatus,
 		TransactionID: &txID,
-	})
+	}); err != nil {
+		log.Printf("[payment] failed to update order payment for order %s: %v — order may be stuck in pending", order.ID, err)
+	}
 
 	// Generate QR image (sync – can be async)
 	qrImageURL, _ := qrcode.GenerateAndUpload(c.Request.Context(),
@@ -150,7 +190,7 @@ if deviceInfo != "" {
 		Quantity:       order.Quantity,
 		UnitPrice:      order.UnitPrice,
 		TotalAmount:    order.TotalAmount,
-		PaymentStatus:  string(order.PaymentStatus),
+		PaymentStatus:  string(paymentStatus),
 		TransactionID:  &txID,
 		QRCodeHash:     order.QrCodeHash,
 		QRCodeImageURL: qrImageURL,

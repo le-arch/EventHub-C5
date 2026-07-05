@@ -21,7 +21,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Save, Key, Bell, Shield, AlertCircle, User, Mail, Phone, Lock, Eye, EyeOff, Trash2, Settings, Calendar } from 'lucide-react'
+import { Save, Key, Bell, Shield, AlertCircle, User, Mail, Phone, Lock, Eye, EyeOff, Trash2, Settings, Calendar, Sun } from 'lucide-react'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
@@ -43,6 +43,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 // Custom components
 import { Breadcrumb } from '@/components/common/Breadcrumb'
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog'
+import { ThemeSelector } from '@/components/settings/ThemeSelector'
 
 // Utilities
 import api from '@/lib/api'
@@ -120,11 +121,11 @@ export default function SettingsPage() {
   const fetchUserProfile = async () => {
     try {
       const response = await api.get('/auth/me')
-      setUser(response.data.user)
+      setUser(response.data)
       profileForm.reset({
-        fullName: response.data.user.fullName,
-        email: response.data.user.email,
-        phone: response.data.user.phone,
+        fullName: response.data.fullName,
+        email: response.data.email,
+        phone: response.data.phone,
       })
       const savedPrefs = localStorage.getItem('notification_preferences')
       if (savedPrefs) {
@@ -226,39 +227,45 @@ export default function SettingsPage() {
             Account Settings
           </h1>
           <p className="text-slate-500 mt-1 text-sm md:text-base">
-            Manage your credentials, preferences, and personal visibility records
+            Manage your profile, security, and notification preferences
           </p>
         </div>
       </div>
 
-      {/* Horizontal Tabs Infrastructure Container */}
-      <Tabs defaultValue="profile" className="space-y-8">
-        <div className="border-b border-slate-200">
-          <TabsList className="flex bg-transparent h-auto p-0 gap-6 w-full justify-start overflow-x-auto rounded-none">
-            <TabsTrigger 
-              value="profile" 
-              className="flex items-center gap-2 border-b-2 border-transparent bg-transparent rounded-none px-1 pb-3 text-slate-500 font-medium transition-all data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 data-[state=active]:shadow-none hover:text-slate-800 text-sm md:text-base"
-            >
-              <User className="h-4 w-4" />
-              Profile Details
-            </TabsTrigger>
-            <TabsTrigger 
-              value="security" 
-              className="flex items-center gap-2 border-b-2 border-transparent bg-transparent rounded-none px-1 pb-3 text-slate-500 font-medium transition-all data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 data-[state=active]:shadow-none hover:text-slate-800 text-sm md:text-base"
-            >
-              <Lock className="h-4 w-4" />
-              Security & Credentials
-            </TabsTrigger>
-            <TabsTrigger 
-              value="notifications" 
-              className="flex items-center gap-2 border-b-2 border-transparent bg-transparent rounded-none px-1 pb-3 text-slate-500 font-medium transition-all data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 data-[state=active]:shadow-none hover:text-slate-800 text-sm md:text-base"
-            >
-              <Bell className="h-4 w-4" />
-              Notifications
-            </TabsTrigger>
-          </TabsList>
-        </div>
+      {/* Vertical Tabs Layout */}
+      <Tabs defaultValue="profile" className="flex flex-col md:flex-row gap-6 md:gap-8">
+        <TabsList className="flex flex-row md:flex-col bg-card border border-border rounded-2xl p-2 shadow-sm h-fit w-full md:w-56 shrink-0 gap-1">
+          <TabsTrigger 
+            value="profile" 
+            className="flex items-center gap-3 justify-start w-full px-4 py-3 text-sm font-medium rounded-xl data-active:bg-indigo-50 dark:data-active:bg-indigo-900/30 data-active:text-indigo-700 dark:data-active:text-indigo-300 data-active:border-l-indigo-500 dark:data-active:border-l-indigo-400 data-active:shadow-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+          >
+            <User className="h-4 w-4 shrink-0" />
+            Profile Details
+          </TabsTrigger>
+          <TabsTrigger 
+            value="security" 
+            className="flex items-center gap-3 justify-start w-full px-4 py-3 text-sm font-medium rounded-xl data-active:bg-indigo-50 dark:data-active:bg-indigo-900/30 data-active:text-indigo-700 dark:data-active:text-indigo-300 data-active:border-l-indigo-500 dark:data-active:border-l-indigo-400 data-active:shadow-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+          >
+            <Lock className="h-4 w-4 shrink-0" />
+            Security
+          </TabsTrigger>
+          <TabsTrigger 
+            value="notifications" 
+            className="flex items-center gap-3 justify-start w-full px-4 py-3 text-sm font-medium rounded-xl data-active:bg-indigo-50 dark:data-active:bg-indigo-900/30 data-active:text-indigo-700 dark:data-active:text-indigo-300 data-active:border-l-indigo-500 dark:data-active:border-l-indigo-400 data-active:shadow-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+          >
+            <Bell className="h-4 w-4 shrink-0" />
+            Notifications
+          </TabsTrigger>
+          <TabsTrigger 
+            value="appearance" 
+            className="flex items-center gap-3 justify-start w-full px-4 py-3 text-sm font-medium rounded-xl data-active:bg-indigo-50 dark:data-active:bg-indigo-900/30 data-active:text-indigo-700 dark:data-active:text-indigo-300 data-active:border-l-indigo-500 dark:data-active:border-l-indigo-400 data-active:shadow-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+          >
+            <Sun className="h-4 w-4 shrink-0" />
+            Appearance
+          </TabsTrigger>
+        </TabsList>
 
+        <div className="flex-1 min-w-0">
         {/* Profile Content Segment */}
         <TabsContent value="profile" className="mt-0 focus-visible:outline-none">
           <Card className="border border-slate-100 shadow-sm rounded-2xl overflow-hidden">
@@ -268,7 +275,7 @@ export default function SettingsPage() {
                 Profile Information
               </CardTitle>
               <CardDescription className="text-slate-500 text-sm">
-                Update your identity data metrics and core organizer records.
+                Update your personal information and contact details.
               </CardDescription>
             </CardHeader>
             <form onSubmit={profileForm.handleSubmit(handleUpdateProfile)}>
@@ -316,7 +323,7 @@ export default function SettingsPage() {
                   {!user.isEmailVerified && (
                     <div className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2.5 mt-2 flex items-center gap-2">
                       <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
-                      <span>Email pending verification. Check your inbox for a modern activation token link.</span>
+                      <span>Email not verified. Check your inbox for the verification link.</span>
                     </div>
                   )}
                 </div>
@@ -343,7 +350,7 @@ export default function SettingsPage() {
 
                 <div className="pt-4 border-t border-slate-100 flex items-center gap-2 text-xs font-medium text-slate-400">
                   <Calendar className="h-4 w-4 text-slate-300" />
-                  <span>Member of platform architecture since {user.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : '-'}</span>
+                  <span>Member since {user.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : '-'}</span>
                 </div>
               </CardContent>
               <CardFooter className="p-6 md:p-8 bg-slate-50/30 border-t border-slate-100 flex justify-end">
@@ -365,7 +372,7 @@ export default function SettingsPage() {
                 Change Password
               </CardTitle>
               <CardDescription className="text-slate-500 text-sm">
-                Regularly cycle passwords to insulate parameters against system vector attacks.
+                Update your password to keep your account secure.
               </CardDescription>
             </CardHeader>
             <form onSubmit={passwordForm.handleSubmit(handleChangePassword)}>
@@ -422,7 +429,7 @@ export default function SettingsPage() {
                     </p>
                   )}
                   <p className="text-[11px] font-medium text-slate-400 leading-normal bg-slate-50 border border-slate-100 rounded-lg p-2">
-                    Complexity verification triggers: Requires at least 8 alphanumeric elements containing one localized uppercase item and a dynamic numerical digit value.
+                    Must be at least 8 characters with at least one uppercase letter and one number.
                   </p>
                 </div>
 
@@ -466,29 +473,47 @@ export default function SettingsPage() {
             <CardHeader className="p-6 md:p-8 border-b border-rose-100/60 bg-rose-50/40">
               <CardTitle className="text-rose-700 text-xl font-bold flex items-center gap-2">
                 <AlertCircle className="h-5 w-5 text-rose-600" />
-                Danger Mitigation Zone
+                Danger Zone
               </CardTitle>
               <CardDescription className="text-rose-600/80 text-sm">
-                Destructive operational configuration adjustments. Proceed with absolute certainty.
+                Irreversible account actions. Proceed with caution.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 md:p-8">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div className="space-y-1">
-                  <p className="font-bold text-slate-800">Close Account System Linkages</p>
+                  <p className="font-bold text-slate-800">Delete Account</p>
                   <p className="text-sm text-slate-500 leading-relaxed max-w-xl">
-                    Permanently drop individual structural access instances. Purgatory process yields instant removal across multi-region databases.
+                    Permanently delete your account and remove all associated data. This cannot be undone.
                   </p>
                 </div>
                 <Button
                   variant="destructive"
                   onClick={() => setShowDeleteDialog(true)}
-                  className="w-full md:w-auto bg-rose-600 hover:bg-rose-700 active:scale-98 font-semibold rounded-xl px-5"
+                  className="w-full md:w-auto bg-rose-600 hover:bg-rose-700 active:scale-98 font-semibold rounded-xl px-5 text-white"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Close Account
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Appearance Content Segment */}
+        <TabsContent value="appearance" className="mt-0 focus-visible:outline-none">
+          <Card className="border border-slate-100 shadow-sm rounded-2xl overflow-hidden">
+            <CardHeader className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-100">
+              <CardTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <Sun className="h-5 w-5 text-indigo-600" />
+                Appearance
+              </CardTitle>
+              <CardDescription className="text-slate-500 text-sm">
+                Choose how EventHub looks for you. Changes apply instantly.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6 md:p-8">
+              <ThemeSelector />
             </CardContent>
           </Card>
         </TabsContent>
@@ -499,10 +524,10 @@ export default function SettingsPage() {
             <CardHeader className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-100">
               <CardTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
                 <Bell className="h-5 w-5 text-indigo-600" />
-                Notification Routing Preferences
+                Notification Preferences
               </CardTitle>
               <CardDescription className="text-slate-500 text-sm">
-                Control the alert dispatch frequencies matching connected webhook and gateway relays.
+                Choose which notifications you want to receive.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 md:p-8">
@@ -510,10 +535,10 @@ export default function SettingsPage() {
                 <div className="space-y-1 pr-4">
                   <p className="font-bold text-slate-800 flex items-center gap-2">
                     <Mail className="h-4 w-4 text-indigo-500" />
-                    Transaction & Ticketing Webhook Summaries
+                    Email Notifications
                   </p>
                   <p className="text-sm text-slate-500 leading-relaxed">
-                    Receive programmatic automated accounting updates alongside immediate public ticket sale notices.
+                    Receive email updates about ticket sales and event activity.
                   </p>
                 </div>
                 <Switch
@@ -526,11 +551,12 @@ export default function SettingsPage() {
             <CardFooter className="p-6 md:p-8 bg-slate-50/30 border-t border-slate-100 flex justify-end">
               <Button onClick={handleSavePreferences} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium px-5 shadow-sm">
                 <Bell className="h-4 w-4 mr-2" />
-                Save Channel Preferences
+                Save Preferences
               </Button>
             </CardFooter>
           </Card>
         </TabsContent>
+      </div>
       </Tabs>
 
       {/* Structured Account Purge Confirmation Overlays */}
@@ -538,21 +564,21 @@ export default function SettingsPage() {
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         onConfirm={handleDeleteAccount}
-        title="Confirm Irrevocable Account Purge"
-        description="Are you absolutely sure you want to initialize complete system deletion metrics?"
-        confirmText="Initialize Complete Deletion"
-        cancelText="Abort Deletion Request"
+        title="Delete Account"
+        description="Are you sure you want to permanently delete your account?"
+        confirmText="Delete Account"
+        cancelText="Cancel"
         variant="danger"
       >
         <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-left space-y-3">
           <div className="flex items-center gap-2 text-rose-700">
             <AlertCircle className="h-5 w-5 text-rose-600 shrink-0" />
-            <span className="font-bold text-sm">Irreversible Processing Cascade Active</span>
+            <span className="font-bold text-sm">This action cannot be undone</span>
           </div>
           <ul className="space-y-1.5 text-xs text-rose-600 font-medium pl-5 list-disc leading-relaxed">
-            <li>All event configuration catalogs will drop instantly from indexing endpoints.</li>
-            <li>Historical sales registries, financial receipts, and seat distributions dissolve.</li>
-            <li>System identity structures lock indefinitely against reuse rules.</li>
+            <li>All your events and ticket types will be permanently deleted.</li>
+            <li>All sales records, attendee data, and revenue history will be removed.</li>
+            <li>Your account cannot be recovered after deletion.</li>
           </ul>
         </div>
       </ConfirmationDialog>

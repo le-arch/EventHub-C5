@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN is_organizer_verified BOOLEAN NOT NULL DEFAULT FALSE;

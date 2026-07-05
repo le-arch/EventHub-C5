@@ -9,6 +9,7 @@
 
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Calendar, MapPin, Users, Ticket, MoreVertical, Edit, Eye, QrCode, Trash2 } from 'lucide-react'
@@ -32,7 +33,7 @@ interface EventCardProps {
     startDate: string
     venue: string
     city: string
-    status: 'draft' | 'published' | 'cancelled' | 'completed'
+    status: 'draft' | 'published' | 'cancelled' | 'suspended' | 'archived'
     ticketStats: {
       totalSold: number
       totalRevenue: number
@@ -47,7 +48,8 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, onEdit, onDelete, onDuplicate, onViewAttendees, onCheckin }: EventCardProps) {
-  const hasCoverImage = event.coverImageUrl && event.coverImageUrl !== ''
+  const [imageError, setImageError] = useState(false)
+  const hasCoverImage = event.coverImageUrl && event.coverImageUrl !== '' && !imageError
 
   return (
     <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300">
@@ -60,6 +62,7 @@ export function EventCard({ event, onEdit, onDelete, onDuplicate, onViewAttendee
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -83,7 +86,7 @@ export function EventCard({ event, onEdit, onDelete, onDuplicate, onViewAttendee
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
+          <DropdownMenuContent align="start" className="bg-popover">
             <DropdownMenuItem onClick={() => onEdit?.(event.id)}>
               <Edit className="h-4 w-4 mr-2" />
               Edit Event
@@ -117,12 +120,12 @@ export function EventCard({ event, onEdit, onDelete, onDuplicate, onViewAttendee
           {event.title}
         </h3>
         
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
           <Calendar className="h-3 w-3" />
           <span>{formatDate(event.startDate)}</span>
         </div>
         
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
           <MapPin className="h-3 w-3" />
           <span className="line-clamp-1">{event.venue}, {event.city}</span>
         </div>
@@ -130,14 +133,14 @@ export function EventCard({ event, onEdit, onDelete, onDuplicate, onViewAttendee
         {/* Ticket Stats */}
         <div className="grid grid-cols-2 gap-2 pt-3 border-t">
           <div className="text-center">
-            <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
+            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
               <Ticket className="h-3 w-3" />
               <span>Sold</span>
             </div>
             <p className="font-semibold text-sm">{event.ticketStats.totalSold}</p>
           </div>
           <div className="text-center">
-            <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
+            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
               <Users className="h-3 w-3" />
               <span>Revenue</span>
             </div>
@@ -154,8 +157,8 @@ export function EventCard({ event, onEdit, onDelete, onDuplicate, onViewAttendee
             Check-in
           </Button>
         </Link>
-        <Link href={`/organizer/events/${event.id}`} className="flex-1">
-          <Button size="sm" className="w-full">
+        <Link href={`/organizer/events/${event.id}`} className="flex-1 no-underline">
+          <Button size="sm" className="w-full !text-white hover:!text-white">
             Manage
           </Button>
         </Link>

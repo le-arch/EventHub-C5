@@ -118,19 +118,19 @@ export function EventForm({
             )}>
               {step === 'basic' ? '1' : '✓'}
             </div>
-            <span className={step === 'basic' ? 'font-medium' : 'text-gray-500'}>
+            <span className={step === 'basic' ? 'font-medium' : 'text-muted-foreground'}>
               Basic Info
             </span>
           </div>
-          <div className="w-16 h-px bg-gray-300" />
+          <div className="w-16 h-px bg-border" />
           <div className="flex items-center gap-2">
             <div className={cn(
               "w-8 h-8 rounded-full flex items-center justify-center",
-              step === 'tickets' ? "bg-primary text-white" : "text-gray-400"
+              step === 'tickets' ? "bg-primary text-white" : "text-muted-foreground"
             )}>
               2
             </div>
-            <span className={step === 'tickets' ? 'font-medium' : 'text-gray-500'}>
+            <span className={step === 'tickets' ? 'font-medium' : 'text-muted-foreground'}>
               Ticket Types
             </span>
           </div>
@@ -145,7 +145,7 @@ export function EventForm({
               <h2 className="font-semibold text-lg">Event Details</h2>
               
               {/* Title */}
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="title">Event Title *</Label>
                 <Input
                   id="title"
@@ -158,7 +158,7 @@ export function EventForm({
               </div>
 
               {/* Description */}
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
@@ -176,7 +176,7 @@ export function EventForm({
 
               {/* Venue */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="venueName">Venue Name *</Label>
                   <Input
                     id="venueName"
@@ -187,7 +187,7 @@ export function EventForm({
                     <p className="text-sm text-red-500 mt-1">{form.formState.errors.venueName.message}</p>
                   )}
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="venueAddress">Venue Address (Optional)</Label>
                   <Input
                     id="venueAddress"
@@ -198,11 +198,11 @@ export function EventForm({
               </div>
 
               {/* City */}
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="city">City *</Label>
                 <select
                   id="city"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground dark:bg-input/30 dark:border-input"
                   {...form.register('city')}
                 >
                   <option value="">Select a city</option>
@@ -217,14 +217,14 @@ export function EventForm({
 
               {/* Date and Time */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-2">
                   <Label>Start Date *</Label>
                   <DatePicker
                     value={form.watch('startDate')}
                     onChange={(date) => form.setValue('startDate', date as Date)}
                   />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label>Start Time *</Label>
                   <TimePicker
                     value={form.watch('startTime')}
@@ -280,14 +280,14 @@ export function EventForm({
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
+                    <div className="space-y-2">
                       <Label>Ticket Name</Label>
                       <Input
                         placeholder="e.g., Early Bird, VIP"
                         {...ticketForm.register(`tickets.${index}.name`)}
                       />
                     </div>
-                    <div>
+                    <div className="space-y-2">
                       <Label>Price (XAF)</Label>
                       <Input
                         type="number"
@@ -295,7 +295,7 @@ export function EventForm({
                         {...ticketForm.register(`tickets.${index}.price`, { valueAsNumber: true })}
                       />
                     </div>
-                    <div>
+                    <div className="space-y-2">
                       <Label>Quantity Available</Label>
                       <Input
                         type="number"
@@ -308,7 +308,7 @@ export function EventForm({
               ))}
 
               {fields.length === 0 && (
-                <p className="text-center text-gray-500 py-4">
+                <p className="text-center text-muted-foreground py-4">
                   Click &quot;Add Ticket&quot; to create ticket types
                 </p>
               )}

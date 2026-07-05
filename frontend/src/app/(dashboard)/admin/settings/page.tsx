@@ -27,6 +27,7 @@ import {
   Server,
   Mail,
   Zap,
+  Sun,
 } from 'lucide-react'
 
 // shadcn/ui components
@@ -48,11 +49,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 
 // Custom components
 import { Breadcrumb as CustomBreadcrumb } from '@/components/common/Breadcrumb'
+import { ThemeSelector } from '@/components/settings/ThemeSelector'
 
 // Types
 interface SystemSettings {
@@ -74,7 +77,7 @@ interface SystemSettings {
   maintenanceMode: boolean
 }
 
-type TabKey = 'general' | 'security' | 'notifications' | 'system'
+type TabKey = 'general' | 'security' | 'notifications' | 'system' | 'appearance'
 
 export default function AdminSettingsPage() {
   const router = useRouter()
@@ -129,14 +132,8 @@ export default function AdminSettingsPage() {
     { key: 'security', label: 'Security', icon: <Shield className="h-4 w-4" />, accent: 'blue' },
     { key: 'notifications', label: 'Notifications', icon: <Bell className="h-4 w-4" />, accent: 'amber' },
     { key: 'system', label: 'System', icon: <Server className="h-4 w-4" />, accent: 'emerald' },
+    { key: 'appearance', label: 'Appearance', icon: <Sun className="h-4 w-4" />, accent: 'violet' },
   ]
-
-  const accentColors: Record<string, string> = {
-    purple: 'text-purple-700 border-b-purple-600 bg-purple-50',
-    blue: 'text-blue-700 border-b-blue-600 bg-blue-50',
-    amber: 'text-amber-700 border-b-amber-600 bg-amber-50',
-    emerald: 'text-emerald-700 border-b-emerald-600 bg-emerald-50',
-  }
 
   if (loading) {
     return (
@@ -166,7 +163,7 @@ export default function AdminSettingsPage() {
             <Settings className="h-7 w-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">System Settings <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >⚙️</span> </h1>
+            <h1 className="text-2xl font-bold">System Settings <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600">⚙️</span></h1>
             <p className="text-white/80 text-sm mt-0.5">
               Configure platform settings and preferences
             </p>
@@ -201,37 +198,24 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      {/* 
-          NAVIGATION TABS – FULL WIDTH (Separate Component) */}
-      <div className="w-full bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-        <div className="flex w-full overflow-x-auto">
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.key
-            const activeClass = isActive ? accentColors[tab.accent] : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`
-                  flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200
-                  border-b-2 border-transparent whitespace-nowrap flex-1 justify-center
-                  ${activeClass}
-                  ${isActive ? `border-b-${tab.accent === 'purple' ? 'purple' : tab.accent}-600` : 'hover:border-gray-300'}
-                `}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            )
-          })}
-        </div>
-      </div>
+      {/* Vertical Tabs Layout */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabKey)} className="flex flex-col md:flex-row gap-6 md:gap-8">
+        <TabsList className="flex flex-row md:flex-col bg-card border border-border rounded-2xl p-2 shadow-sm h-fit w-full md:w-56 shrink-0 gap-1">
+          {tabs.map((tab) => (
+            <TabsTrigger
+              key={tab.key}
+              value={tab.key}
+              className="flex items-center gap-3 justify-start w-full px-4 py-3 text-sm font-medium rounded-xl data-active:bg-purple-50 dark:data-active:bg-purple-900/30 data-active:text-purple-700 dark:data-active:text-purple-300 data-active:border-l-purple-500 dark:data-active:border-l-purple-400 data-active:shadow-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+            >
+              {tab.icon}
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-      {/* 
-          CONTENT PANELS – FULL WIDTH (Separate Component) */}
-      <div className="w-full">
+        <div className="flex-1 min-w-0">
         {/* General Panel */}
-        {activeTab === 'general' && (
+        <TabsContent value="general" className="mt-0">
           <Card className="w-full border-l-4 border-l-purple-500 shadow-md">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -244,7 +228,7 @@ export default function AdminSettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="siteName">Site Name</Label>
                   <Input
                     id="siteName"
@@ -253,7 +237,7 @@ export default function AdminSettingsPage() {
                     className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                   />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="siteDescription">Site Description</Label>
                   <Input
                     id="siteDescription"
@@ -264,7 +248,7 @@ export default function AdminSettingsPage() {
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="contactEmail">Contact Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-400" />
@@ -277,7 +261,7 @@ export default function AdminSettingsPage() {
                     />
                   </div>
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="supportEmail">Support Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-400" />
@@ -292,7 +276,7 @@ export default function AdminSettingsPage() {
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="timezone">Timezone</Label>
                   <Select
                     value={settings.timezone}
@@ -308,7 +292,7 @@ export default function AdminSettingsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="dateFormat">Date Format</Label>
                   <Select
                     value={settings.dateFormat}
@@ -324,7 +308,7 @@ export default function AdminSettingsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="currency">Currency</Label>
                   <Select
                     value={settings.currency}
@@ -343,10 +327,9 @@ export default function AdminSettingsPage() {
               </div>
             </CardContent>
           </Card>
-        )}
+        </TabsContent>
 
-        {/* Security Panel */}
-        {activeTab === 'security' && (
+        <TabsContent value="security" className="mt-0">
           <Card className="w-full border-l-4 border-l-blue-500 shadow-md">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -359,7 +342,7 @@ export default function AdminSettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
                   <Input
                     id="sessionTimeout"
@@ -369,7 +352,7 @@ export default function AdminSettingsPage() {
                     className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="passwordMinLength">Minimum Password Length</Label>
                   <Input
                     id="passwordMinLength"
@@ -424,10 +407,9 @@ export default function AdminSettingsPage() {
               </div>
             </CardContent>
           </Card>
-        )}
+        </TabsContent>
 
-        {/* Notifications Panel */}
-        {activeTab === 'notifications' && (
+        <TabsContent value="notifications" className="mt-0">
           <Card className="w-full border-l-4 border-l-amber-500 shadow-md">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -466,7 +448,7 @@ export default function AdminSettingsPage() {
                 />
               </div>
               <Separator />
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="notificationEmail">Notification Email Address</Label>
                 <Input
                   id="notificationEmail"
@@ -478,10 +460,9 @@ export default function AdminSettingsPage() {
               </div>
             </CardContent>
           </Card>
-        )}
+        </TabsContent>
 
-        {/* System Panel */}
-        {activeTab === 'system' && (
+        <TabsContent value="system" className="mt-0">
           <Card className="w-full border-l-4 border-l-emerald-500 shadow-md">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -513,7 +494,7 @@ export default function AdminSettingsPage() {
                     <AlertCircle className="h-5 w-5 text-amber-600" />
                     <span className="font-medium">Email Service</span>
                   </div>
-                  <p className="text-sm text-amber-700 mt-1"> Not Configured</p>
+                  <p className="text-sm text-amber-700 mt-1">Not Configured</p>
                 </div>
               </div>
 
@@ -547,8 +528,27 @@ export default function AdminSettingsPage() {
               </div>
             </CardContent>
           </Card>
-        )}
+        </TabsContent>
+
+        <TabsContent value="appearance" className="mt-0">
+          <Card className="w-full border-l-4 border-l-violet-500 shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sun className="h-5 w-5 text-violet-600" />
+                Appearance
+              </CardTitle>
+              <CardDescription>
+                Choose your preferred theme for the admin panel
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ThemeSelector />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
       </div>
+      </Tabs>
 
       {/* Save Changes Footer */}
       <div className="flex justify-end gap-3 pt-4 border-t">

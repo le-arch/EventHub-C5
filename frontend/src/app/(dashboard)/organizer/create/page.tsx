@@ -8,12 +8,12 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Trash2, ArrowLeft, ArrowRight, Check, Calendar, Ticket, ImageIcon } from 'lucide-react'
+import { Plus, Trash2, ArrowLeft, ArrowRight, Check, Calendar, Ticket, ImageIcon, AlertCircle } from 'lucide-react'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
@@ -119,15 +119,27 @@ export default function CreateEventPage() {
     name: 'ticketTypes',
   })
 
+  const hasInteracted = basicForm.formState.isDirty || ticketForm.formState.isDirty
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (hasInteracted) {
+        e.preventDefault()
+      }
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [hasInteracted])
+
   /**
    * Action handler invoked by EventCoverUpload component upon drop/browse selection
    */
-  const handleCoverUploadAction = async (file: File): Promise<string> => {
+  const handleCoverUploadAction = async (file: File, onProgress?: (percent: number) => void): Promise<string> => {
   try {
     const response = await apiClient.upload<{ url: string }>(
       '/events/upload-image',
       file,
-      'image'   
+      'image',
+      onProgress
     )
     return response.data.url
   } catch (error) {
@@ -190,11 +202,11 @@ export default function CreateEventPage() {
         )
       )
 
-      toast.success('✅ Event created successfully!')
+      toast.success('Event created successfully!')
       router.push(`/organizer/events`)
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to create event'
-      toast.error(`❌ ${errorMessage}`)
+      toast.error(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
@@ -252,7 +264,7 @@ export default function CreateEventPage() {
             <Calendar className="h-7 w-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Create New Event ✨</h1>
+            <h1 className="text-2xl font-bold">Create New Event</h1>
             <p className="text-white/80 text-sm mt-0.5">
               Fill in the details below to create your event and start selling tickets
             </p>
@@ -294,7 +306,7 @@ export default function CreateEventPage() {
                 </div>
 
                 {/* Title */}
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="title" className="text-gray-700 font-medium">Event Title *</Label>
                   <Input
                     id="title"
@@ -304,14 +316,14 @@ export default function CreateEventPage() {
                   />
                   {basicForm.formState.errors.title && (
                     <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                      <span>⚠️</span> {basicForm.formState.errors.title.message}
+                      <AlertCircle className="h-3 w-3" /> {basicForm.formState.errors.title.message}
                     </p>
                   )}
                 </div>
 
                 {/* Description */}
-                <div>
-                  <Label htmlFor="description" className="text-gray-700 font-medium">Description </Label>
+                <div className="space-y-2">
+                  <Label htmlFor="description" className="text-gray-700 font-medium">Description</Label>
                   <Textarea
                     id="description"
                     placeholder="Describe your event..."
@@ -323,7 +335,7 @@ export default function CreateEventPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Venue */}
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="venue" className="text-gray-700 font-medium">Venue Name and Address *</Label>
                     <Input
                       id="venue"
@@ -333,13 +345,13 @@ export default function CreateEventPage() {
                     />
                     {basicForm.formState.errors.venue && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <span>⚠️</span> {basicForm.formState.errors.venue.message}
+                        <AlertCircle className="h-3 w-3" /> {basicForm.formState.errors.venue.message}
                       </p>
                     )}
                   </div>
 
                   {/* City */}
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="city" className="text-gray-700 font-medium">City *</Label>
                     <Select
                       onValueChange={(value) => basicForm.setValue('city', value)}
@@ -358,7 +370,7 @@ export default function CreateEventPage() {
                     </Select>
                     {basicForm.formState.errors.city && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <span>⚠️</span> {basicForm.formState.errors.city.message}
+                        <AlertCircle className="h-3 w-3" /> {basicForm.formState.errors.city.message}
                       </p>
                     )}
                   </div>
@@ -366,7 +378,7 @@ export default function CreateEventPage() {
 
                 {/* Date and Time */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="startDate" className="text-gray-700 font-medium">Event Date *</Label>
                     <Input
                       id="startDate"
@@ -376,11 +388,11 @@ export default function CreateEventPage() {
                     />
                     {basicForm.formState.errors.startDate && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <span>⚠️</span> {basicForm.formState.errors.startDate.message}
+                        <AlertCircle className="h-3 w-3" /> {basicForm.formState.errors.startDate.message}
                       </p>
                     )}
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="startTime" className="text-gray-700 font-medium">Start Time *</Label>
                     <Input
                       id="startTime"
@@ -390,11 +402,11 @@ export default function CreateEventPage() {
                     />
                     {basicForm.formState.errors.startTime && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <span>⚠️</span> {basicForm.formState.errors.startTime.message}
+                        <AlertCircle className="h-3 w-3" /> {basicForm.formState.errors.startTime.message}
                       </p>
                     )}
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="endTime" className="text-gray-700 font-medium">End Time *</Label>
                     <Input
                       id="endTime"
@@ -404,7 +416,7 @@ export default function CreateEventPage() {
                     />
                     {basicForm.formState.errors.endTime && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <span>⚠️</span> {basicForm.formState.errors.endTime.message}
+                        <AlertCircle className="h-3 w-3" /> {basicForm.formState.errors.endTime.message}
                       </p>
                     )}
                   </div>
@@ -412,7 +424,7 @@ export default function CreateEventPage() {
 
                 {/* Ticket Sales Window */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="salesStartDate" className="text-gray-700 font-medium">Ticket Sales Start Date *</Label>
                     <Input
                       id="salesStartDate"
@@ -422,11 +434,11 @@ export default function CreateEventPage() {
                     />
                     {basicForm.formState.errors.salesStartDate && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <span>⚠️</span> {basicForm.formState.errors.salesStartDate.message}
+                        <AlertCircle className="h-3 w-3" /> {basicForm.formState.errors.salesStartDate.message}
                       </p>
                     )}
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="salesEndDate" className="text-gray-700 font-medium">Ticket Sales End Date *</Label>
                     <Input
                       id="salesEndDate"
@@ -436,7 +448,7 @@ export default function CreateEventPage() {
                     />
                     {basicForm.formState.errors.salesEndDate && (
                       <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <span>⚠️</span> {basicForm.formState.errors.salesEndDate.message}
+                        <AlertCircle className="h-3 w-3" /> {basicForm.formState.errors.salesEndDate.message}
                       </p>
                     )}
                   </div>
@@ -444,7 +456,7 @@ export default function CreateEventPage() {
 
                 {/* Capacity Range */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="capacityMin" className="text-gray-700 font-medium">Minimum Capacity</Label>
                     <Input
                       id="capacityMin"
@@ -454,7 +466,7 @@ export default function CreateEventPage() {
                       className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                     />
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="capacityMax" className="text-gray-700 font-medium">Maximum Capacity</Label>
                     <Input
                       id="capacityMax"
@@ -523,7 +535,7 @@ export default function CreateEventPage() {
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
+                          <div className="space-y-2">
                             <Label className="text-gray-700 font-medium">Ticket Name</Label>
                             <Input
                               placeholder="e.g., Early Bird"
@@ -534,7 +546,7 @@ export default function CreateEventPage() {
                               <p className="text-xs text-red-500 mt-1"> {errorsForField.name.message}</p>
                             )}
                           </div>
-                          <div>
+                          <div className="space-y-2">
                             <Label className="text-gray-700 font-medium">Price (XAF)</Label>
                             <Input
                               type="number"
@@ -548,7 +560,7 @@ export default function CreateEventPage() {
                               <p className="text-xs text-red-500 mt-1"> {errorsForField.price.message}</p>
                             )}
                           </div>
-                          <div>
+                          <div className="space-y-2">
                             <Label className="text-gray-700 font-medium">Quantity Available</Label>
                             <Input
                               type="number"
@@ -576,12 +588,12 @@ export default function CreateEventPage() {
                   className="w-full border-dashed border-2 border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Another Ticket Type ➕
+                  Add Another Ticket Type
                 </Button>
 
                 {ticketForm.formState.errors.ticketTypes?.root && (
                   <p className="text-sm text-red-500 flex items-center gap-1">
-                    <span>⚠️</span> {ticketForm.formState.errors.ticketTypes.root.message}
+                    <AlertCircle className="h-3 w-3" /> {ticketForm.formState.errors.ticketTypes.root.message}
                   </p>
                 )}
               </CardContent>
@@ -604,7 +616,7 @@ export default function CreateEventPage() {
                   ) : (
                     <span className="flex items-center gap-2">
                       <Check className="h-4 w-4" />
-                      Create Event ✨
+                      Create Event
                     </span>
                   )}
                 </Button>

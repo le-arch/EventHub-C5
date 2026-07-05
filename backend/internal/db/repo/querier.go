@@ -20,10 +20,14 @@ type Querier interface {
 	DeleteTicketType(ctx context.Context, arg DeleteTicketTypeParams) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	GetAllUsers(ctx context.Context, role UserRole) ([]User, error)
+	GetAllUsersForAdmin(ctx context.Context) ([]GetAllUsersForAdminRow, error)
 	GetEventAnalytics(ctx context.Context, eventID uuid.UUID) (GetEventAnalyticsRow, error)
 	GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
 	GetEventByIDPublic(ctx context.Context, id uuid.UUID) (Event, error)
 	GetEventBySlugPublic(ctx context.Context, slug string) (GetEventBySlugPublicRow, error)
+	GetEventDailySales(ctx context.Context, eventID uuid.UUID) ([]GetEventDailySalesRow, error)
+	GetEventTicketBreakdown(ctx context.Context, eventID uuid.UUID) ([]GetEventTicketBreakdownRow, error)
+	GetEventTicketStats(ctx context.Context, eventID uuid.UUID) (GetEventTicketStatsRow, error)
 	GetEventsBySlug(ctx context.Context, slug string) (Event, error)
 	GetOrderByID(ctx context.Context, id uuid.UUID) (Order, error)
 	GetOrderByQRHash(ctx context.Context, qrCodeHash string) (Order, error)
@@ -39,6 +43,8 @@ type Querier interface {
 	ListAttendeesByEvent(ctx context.Context, eventID uuid.UUID) ([]ListAttendeesByEventRow, error)
 	ListCheckinHistoryByEvent(ctx context.Context, arg ListCheckinHistoryByEventParams) ([]ListCheckinHistoryByEventRow, error)
 	ListEvents(ctx context.Context) ([]ListEventsRow, error)
+	ListEventsAdmin(ctx context.Context, status string, search string, limit int32, offset int32) ([]ListEventsAdminRow, error)
+	CountEventsAdmin(ctx context.Context, status string, search string) (int64, error)
 	ListEventsByCity(ctx context.Context, city string) ([]Event, error)
 	ListEventsByStatus(ctx context.Context, status EventStatus) ([]Event, error)
 	ListOrderByEvent(ctx context.Context, eventID uuid.UUID) ([]Order, error)
@@ -56,6 +62,7 @@ type Querier interface {
 	UpdateUserActiveStatus(ctx context.Context, arg UpdateUserActiveStatusParams) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpdateUserVerification(ctx context.Context, arg UpdateUserVerificationParams) error
+	UpdateOrganizerVerification(ctx context.Context, arg UpdateOrganizerVerificationParams) error
 }
 
 var _ Querier = (*Queries)(nil)

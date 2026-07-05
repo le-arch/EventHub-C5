@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -22,6 +23,11 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 		return
 	}
 	
+	role, roleErr := utils.GetUserRole(c)
+	if roleErr != nil || role != "organizer" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only organizers can create events"})
+		return
+	}
 
 	startDate, err := utils.ParseDate(req.StartDate)
 	if err != nil {
@@ -32,6 +38,16 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 	req.OrganizerID, err = utils.ExtractOrganizerID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := h.querier.GetUserByID(c, req.OrganizerID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch user"})
+		return
+	}
+	if !user.IsOrganizerVerified {
+		c.JSON(http.StatusForbidden, gin.H{"error": "your account has not been verified by an admin yet"})
 		return
 	}
 
@@ -199,8 +215,10 @@ func (h *EventHubHandler) handleGetOrganisationEvent(c *gin.Context) {
     }
 
 	
+	stats, _ := h.querier.GetEventTicketStats(c, event.ID)
 	response := utils.EventResponse{
 	ID: event.ID,
+	OrganizerID: event.OrganizerID,
 	Title: event.Title,
 	Slug: event.Slug,
 	Description: event.Description,
@@ -215,7 +233,12 @@ func (h *EventHubHandler) handleGetOrganisationEvent(c *gin.Context) {
 	SalesStartDate: 	utils.FormatDatePtr(event.SalesStartDate),
 	SalesEndDate: 	utils.FormatDatePtr(event.SalesEndDate),
 	CapacityRange: utils.FromDBRange(event.CapacityRange),
-	TicketStats:   utils.TicketStatsResponse{},
+		TicketStats: utils.TicketStatsResponse{
+			TotalSold:       stats.TotalSold,
+			TotalRevenue:    stats.TotalRevenue,
+			TotalAttendees:  stats.TotalAttendees,
+			AvailableTickets: stats.AvailableTickets,
+		},
 	UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
 	
 }
@@ -224,11 +247,20 @@ func (h *EventHubHandler) handleGetOrganisationEvent(c *gin.Context) {
 }
 
 func (h *EventHubHandler) handleGetOrganisationEvents(c *gin.Context) {
+	role, roleErr := utils.GetUserRole(c)
+	if roleErr != nil || role != "organizer" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only organizers can view events"})
+		return
+	}
+
     OrganizerID, err := utils.ExtractOrganizerID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
+
+	statusFilter := c.Query("status")
+	searchQuery := c.Query("search")
 
     events, err := h.querier.ListOrganizerEvents(c,OrganizerID)
 	if err != nil {
@@ -236,11 +268,29 @@ func (h *EventHubHandler) handleGetOrganisationEvents(c *gin.Context) {
         return
     }
 
-	response := make([]utils.EventResponse, 0, len(events))
-	
+	var filtered []repo.Event
 	for _, event := range events {
+		if statusFilter != "" && string(event.Status) != statusFilter {
+			continue
+		}
+		if searchQuery != "" {
+			q := strings.ToLower(searchQuery)
+			if !strings.Contains(strings.ToLower(event.Title), q) &&
+				!strings.Contains(strings.ToLower(event.Venue), q) &&
+				!strings.Contains(strings.ToLower(event.City), q) {
+				continue
+			}
+		}
+		filtered = append(filtered, event)
+	}
+
+	response := make([]utils.EventResponse, 0, len(filtered))
+	
+	for _, event := range filtered {
+		stats, _ := h.querier.GetEventTicketStats(c, event.ID)
 	response = append(response, utils.EventResponse{
 	ID: event.ID,
+	OrganizerID: event.OrganizerID,
 	Title: event.Title,
 	Slug: event.Slug,
 	Description: event.Description,
@@ -255,12 +305,17 @@ func (h *EventHubHandler) handleGetOrganisationEvents(c *gin.Context) {
 	SalesStartDate: 	utils.FormatDatePtr(event.SalesStartDate),
 	SalesEndDate: 	utils.FormatDatePtr(event.SalesEndDate),
 		CapacityRange: utils.FromDBRange(event.CapacityRange),
-		TicketStats:   utils.TicketStatsResponse{},
+		TicketStats: utils.TicketStatsResponse{
+			TotalSold:       stats.TotalSold,
+			TotalRevenue:    stats.TotalRevenue,
+			TotalAttendees:  stats.TotalAttendees,
+			AvailableTickets: stats.AvailableTickets,
+		},
 		UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
 	})
 }
 
-    c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, response)
 }
 
 func (h *EventHubHandler) handleEventDetails(c *gin.Context) {
@@ -285,6 +340,7 @@ func (h *EventHubHandler) handleEventDetails(c *gin.Context) {
         return
     }
 
+    stats, _ := h.querier.GetEventTicketStats(c, eventID)
     response := utils.EventDetailsResponse{
         ID:             event.ID,
         OrganizerID:    event.OrganizerID,
@@ -302,7 +358,12 @@ func (h *EventHubHandler) handleEventDetails(c *gin.Context) {
         SalesStartDate: 	utils.FormatDatePtr(event.SalesStartDate),
 	    SalesEndDate: 	utils.FormatDatePtr(event.SalesEndDate),
         CapacityRange:  utils.FromDBRange(event.CapacityRange),
-        TicketStats:    utils.TicketStatsResponse{},
+        TicketStats: utils.TicketStatsResponse{
+            TotalSold:       stats.TotalSold,
+            TotalRevenue:    stats.TotalRevenue,
+            TotalAttendees:  stats.TotalAttendees,
+            AvailableTickets: stats.AvailableTickets,
+        },
         CreatedAt:      utils.FormatDateTime(event.CreatedAt),
         UpdatedAt:      utils.FormatDateTime(event.UpdatedAt),
     }
@@ -323,6 +384,7 @@ func (h *EventHubHandler) handleGetPublicEvent(c *gin.Context) {
         return
     }
 
+    stats, _ := h.querier.GetEventTicketStats(c, id)
     response := utils.EventResponse{
 	ID: event.ID,
 	Title: event.Title,
@@ -339,7 +401,12 @@ func (h *EventHubHandler) handleGetPublicEvent(c *gin.Context) {
 	SalesStartDate: 	utils.FormatDatePtr(event.SalesStartDate),
 	SalesEndDate: 	utils.FormatDatePtr(event.SalesEndDate),
 	CapacityRange: utils.FromDBRange(event.CapacityRange),
-	TicketStats:   utils.TicketStatsResponse{},
+		TicketStats: utils.TicketStatsResponse{
+			TotalSold:       stats.TotalSold,
+			TotalRevenue:    stats.TotalRevenue,
+			TotalAttendees:  stats.TotalAttendees,
+			AvailableTickets: stats.AvailableTickets,
+		},
 	UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
 	} 
 
@@ -826,11 +893,41 @@ func (h *EventHubHandler) handleGetEventAnalytics(c *gin.Context) {
 	if err == nil {
 		for _, h := range history {
 			recentCheckins = append(recentCheckins, gin.H{
-				"attendeeName": h.AttendeeName,
-				"ticketType":   "",
-				"checkedInAt":  utils.FormatDateTime(h.UsedAt),
+				"name":        h.AttendeeName,
+				"ticketType":  h.TicketTypeName,
+				"checkedInAt": utils.FormatDateTime(h.UsedAt),
 			})
 		}
+	}
+
+	dailySales, _ := h.querier.GetEventDailySales(c, eventID)
+	dailySalesRes := make([]gin.H, 0, len(dailySales))
+	for _, d := range dailySales {
+		dailySalesRes = append(dailySalesRes, gin.H{
+			"date":    d.Date,
+			"tickets": d.Sales,
+			"revenue": d.Revenue,
+		})
+	}
+
+	ticketBreakdown, _ := h.querier.GetEventTicketBreakdown(c, eventID)
+	totalSoldAll := 0
+	for _, t := range ticketBreakdown {
+		totalSoldAll += int(t.Sold)
+	}
+	ticketBreakdownRes := make([]gin.H, 0, len(ticketBreakdown))
+	for _, t := range ticketBreakdown {
+		percentage := 0.0
+		if totalSoldAll > 0 {
+			percentage = float64(t.Sold) / float64(totalSoldAll) * 100
+		}
+		ticketBreakdownRes = append(ticketBreakdownRes, gin.H{
+			"name":       t.Name,
+			"sold":       t.Sold,
+			"revenue":    t.Revenue,
+			"available":  t.Available,
+			"percentage": percentage,
+		})
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -838,8 +935,8 @@ func (h *EventHubHandler) handleGetEventAnalytics(c *gin.Context) {
 		"totalRevenue":       stats.NetRevenue,
 		"checkinCount":       checkinCount,
 		"checkinPercentage":  checkinPercentage,
-		"dailySales":         []gin.H{},
-		"ticketBreakdown":    []gin.H{},
+		"dailySales":         dailySalesRes,
+		"ticketBreakdown":    ticketBreakdownRes,
 		"recentCheckins":     recentCheckins,
 	})
 }

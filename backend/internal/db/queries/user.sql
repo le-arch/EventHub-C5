@@ -1,6 +1,6 @@
 -- name: CreateUser :one
-INSERT INTO "users" (email, phone, password_hash, full_name, role, is_email_verified)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO "users" (email, phone, password_hash, full_name, role, is_email_verified, is_organizer_verified)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
 
 -- name: GetUserByEmail :one
@@ -21,9 +21,20 @@ SELECT * FROM users
 WHERE role = $1
 ORDER BY created_at DESC;
 
+-- name: GetAllUsersForAdmin :many
+SELECT u.id, u.email, u.phone, u.full_name, u.role, u.is_email_verified, u.is_active, u.is_organizer_verified, u.created_at,
+       COALESCE((SELECT COUNT(*) FROM events e WHERE e.organizer_id = u.id), 0)::int AS events_count
+FROM users u
+ORDER BY u.created_at DESC;
+
 -- name: UpdateUserVerification :exec
 UPDATE users 
 SET is_email_verified = $2 
+WHERE id = $1;
+
+-- name: UpdateOrganizerVerification :exec
+UPDATE users
+SET is_organizer_verified = $2
 WHERE id = $1;
 
 -- name: UpdateUserActiveStatus :exec

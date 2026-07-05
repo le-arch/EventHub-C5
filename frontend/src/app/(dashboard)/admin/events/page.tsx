@@ -16,7 +16,7 @@
 
 'use client'
 
-import { useState, useEffect, useDeferredValue } from 'react'
+import { useState, useEffect, useDeferredValue, useCallback } from 'react'
 import Link from 'next/link'
 import {
   Search,
@@ -27,6 +27,7 @@ import {
   Users,
   Eye,
   XCircle,
+  Ban,
   AlertCircle,
   Ticket,
   CalendarDays,
@@ -72,83 +73,89 @@ import { ConfirmationDialog } from '@/components/common/ConfirmationDialog'
 import { Pagination } from '@/components/common/Pagination'
 
 // Stores & Utilities
-import { useEventStore, type Event } from '@/store/eventStore'
-import { useAuthStore, type User } from '@/store/authStore'
+import { useAuthStore } from '@/store/authStore'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 import { formatDate, formatCurrency } from '@/lib/utils'
 
-// Extended Event type for admin view
-interface AdminEvent extends Event {
+interface AdminEvent {
+  id: string
+  title: string
+  description: string | null
+  venue: string
+  city: string
+  startDate: string
+  endDate: string | null
+  startTime: string
+  endTime: string | null
+  coverImageUrl: string | null
+  status: string
+  capacityRange?: { lower: number; upper: number }
+  ticketsSold: number
+  totalRevenue: number
+  createdAt: string
+  updatedAt: string
   organizerId: string
   organizerName: string
   organizerEmail: string
-  ticketsSold: number
-  totalRevenue: number
 }
 
 export default function AdminEventsPage() {
-  // Store actions and state
-  const { 
-    events, 
-    isLoading, 
-    fetchEvents, 
-    totalCount,
-    page,
-    pageSize,
-    setPage,
-    setPageSize,
-    searchTerm,
-    statusFilter,
-    setSearchTerm,
-    setStatusFilter,
-  } = useEventStore()
-  
-  // Auth store for user info (admin)
   const { user: adminUser } = useAuthStore()
   
-  const [localEvents, setLocalEvents] = useState<AdminEvent[]>([])
-  const [eventToCancel, setEventToCancel] = useState<Event | null>(null)
+  const [events, setEvents] = useState<AdminEvent[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [totalCount, setTotalCount] = useState(0)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [eventToCancel, setEventToCancel] = useState<AdminEvent | null>(null)
+  const [eventToSuspend, setEventToSuspend] = useState<AdminEvent | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
-  const [totalPages, setTotalPages] = useState(1)
   
-  // Use deferred value for search optimization
   const deferredSearchTerm = useDeferredValue(searchTerm)
 
-  // Fetch events when page, pageSize, search, or status filter changes
-  useEffect(() => {
-    fetchEvents()
-  }, [page, pageSize, deferredSearchTerm, statusFilter, fetchEvents])
+  const fetchAdminEvents = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const params: Record<string, string | number> = {
+        page,
+        limit: pageSize,
+        search: deferredSearchTerm || '',
+        status: statusFilter !== 'all' ? statusFilter : '',
+      }
+      const response = await api.get('/admin/events', { params })
+      const data = response.data
+      const mapped = ((data.events || []) as Record<string, unknown>[]).map((e) => ({
+        ...e as unknown as AdminEvent,
+        ticketsSold: ((e.ticketStats as Record<string, number>)?.totalSold) || 0,
+        totalRevenue: ((e.ticketStats as Record<string, number>)?.totalRevenue) || 0,
+      }))
+      setEvents(mapped)
+      setTotalCount(data.total || 0)
+    } catch {
+      setEvents([])
+      setTotalCount(0)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [page, pageSize, deferredSearchTerm, statusFilter])
 
-  // Calculate total pages when totalCount changes
   useEffect(() => {
-    setTotalPages(Math.ceil(totalCount / pageSize) || 1)
-  }, [totalCount, pageSize])
+    fetchAdminEvents()
+  }, [fetchAdminEvents])
 
-  useEffect(() => {
-    const mappedEvents: AdminEvent[] = events.map((event) => ({
-      ...event,
-      organizerId: (event as any).organizerId || '',
-      organizerName: (event as any).organizerName || 'Unknown Organizer',
-      organizerEmail: (event as any).organizerEmail || 'No email provided',
-      ticketsSold: event.ticketStats?.totalSold || 0,
-      totalRevenue: event.ticketStats?.totalRevenue || 0,
-    }))
-    setLocalEvents(mappedEvents)
-  }, [events])
+  const totalPages = Math.ceil(totalCount / pageSize) || 1
 
-  /**
-   * Cancel an event via admin API
-   */
   const handleCancelEvent = async () => {
     if (!eventToCancel) return
-    
     setIsProcessing(true)
     try {
       await api.put(`/admin/events/${eventToCancel.id}/cancel`)
       toast.success(`✅ "${eventToCancel.title}" cancelled successfully`)
-      await fetchEvents()
-    } catch (error) {
+      fetchAdminEvents()
+    } catch {
       toast.error('❌ Failed to cancel event')
     } finally {
       setIsProcessing(false)
@@ -156,9 +163,21 @@ export default function AdminEventsPage() {
     }
   }
 
-  /**
-   * Reset search and filters
-   */
+  const handleSuspendEvent = async () => {
+    if (!eventToSuspend) return
+    setIsProcessing(true)
+    try {
+      await api.put(`/admin/events/${eventToSuspend.id}/suspend`)
+      toast.success(`⛔ "${eventToSuspend.title}" suspended successfully`)
+      fetchAdminEvents()
+    } catch {
+      toast.error('❌ Failed to suspend event')
+    } finally {
+      setIsProcessing(false)
+      setEventToSuspend(null)
+    }
+  }
+
   const handleResetFilters = () => {
     setSearchTerm('')
     setStatusFilter('all')
@@ -206,7 +225,7 @@ export default function AdminEventsPage() {
   // Loading skeleton
   if (isLoading && events.length === 0) {
     return (
-      <div className="space-y-6 max-w-7xl mx-auto p-4 bg-[#fcfaff] min-h-screen">
+      <div className="space-y-6 max-w-7xl mx-auto bg-background min-h-screen">
         <Skeleton className="h-6 w-64 bg-purple-200/50" />
         <div>
           <Skeleton className="h-8 w-48 mb-2 bg-purple-200/50" />
@@ -226,15 +245,15 @@ export default function AdminEventsPage() {
   // Check if admin is authenticated
   if (!adminUser || adminUser.role !== 'admin') {
     return (
-      <div className="p-4 bg-[#fcfaff] min-h-screen flex items-center justify-center">
+      <div className="bg-background min-h-screen flex items-center justify-center">
         <Card className="text-center py-12 border-2 border-red-200 bg-white shadow-xl max-w-md w-full">
           <CardContent>
             <div className="flex flex-col items-center gap-4">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center border border-red-300">
                 <AlertCircle className="h-8 w-8 text-red-600" />
               </div>
-              <h3 className="font-black text-xl text-gray-900 tracking-tight">Access Denied</h3>
-              <p className="text-gray-700 max-w-sm text-sm font-medium leading-relaxed">
+              <h3 className="font-black text-xl text-foreground tracking-tight">Access Denied</h3>
+              <p className="text-muted-foreground max-w-sm text-sm font-medium leading-relaxed">
                 You need administrative credentials and structural privileges to view this management platform module.
               </p>
             </div>
@@ -245,7 +264,7 @@ export default function AdminEventsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 bg-[#fcfaff] min-h-screen text-gray-900">
+    <div className="space-y-6 max-w-7xl mx-auto bg-background min-h-screen text-foreground">
       {/* Breadcrumb Section */}
       <Breadcrumb 
         items={[
@@ -262,7 +281,7 @@ export default function AdminEventsPage() {
             <CalendarDays className="h-8 w-8 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight">Event Management <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" > 📅</span> </h1>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight">Event Management <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600">📅</span></h1>
             <p className="text-purple-100 text-sm font-medium mt-0.5">
               Supervise, review performance metrics, and moderate production events platform-wide.
             </p>
@@ -302,10 +321,10 @@ export default function AdminEventsPage() {
                 </SelectTrigger>
                 <SelectContent className="border-2 border-purple-100 bg-white font-semibold">
                   <SelectItem value="all" className="text-gray-900">All Status Categories</SelectItem>
-                  <SelectItem value="published" className="text-emerald-950"> Published Events</SelectItem>
-                  <SelectItem value="draft" className="text-amber-950"> Draft Backlogs</SelectItem>
-                  <SelectItem value="cancelled" className="text-red-950"> Cancelled Buffers</SelectItem>
-                  <SelectItem value="completed" className="text-blue-950"> Completed Operations</SelectItem>
+                  <SelectItem value="published" className="text-emerald-950">Published Events</SelectItem>
+                  <SelectItem value="draft" className="text-amber-950">Draft Backlogs</SelectItem>
+                  <SelectItem value="cancelled" className="text-red-950">Cancelled Buffers</SelectItem>
+                  <SelectItem value="completed" className="text-blue-950">Completed Operations</SelectItem>
                 </SelectContent>
               </Select>
               
@@ -326,7 +345,7 @@ export default function AdminEventsPage() {
       {/* Dynamic Count Tracker Info Layer */}
       <div className="text-sm text-gray-700 flex items-center gap-2 px-1 font-semibold">
         <CalendarDays className="h-4 w-4 text-purple-600" />
-        Showing <span className="text-purple-700 font-black">{localEvents.length}</span> out of <span className="text-gray-900 font-black">{totalCount}</span> functional system queries
+        Showing <span className="text-purple-700 font-black">{events.length}</span> out of <span className="text-gray-900 font-black">{totalCount}</span> functional system queries
       </div>
 
       {/* Main Core Architecture Spreadsheet Table */}
@@ -336,25 +355,25 @@ export default function AdminEventsPage() {
             <Table>
               <TableHeader className="bg-purple-100/60 border-b border-purple-200">
                 <TableRow>
-                  <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >📋 </span> Event Details</TableHead>
+                  <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600">📋</span> Event Details</TableHead>
                   <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >👤</span> Organizer Signature</TableHead>
                   <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >📍</span> Venue / Hub</TableHead>
                   <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >📅</span> Timestamp</TableHead>
                   <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >🎟️</span> Tickets</TableHead>
                   <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >💰</span> Gross Revenue</TableHead>
                   <TableHead className="text-purple-950 font-black text-sm py-4"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >📊</span> Deployment</TableHead>
-                  <TableHead className="text-purple-950 font-black text-sm py-4 w-16 text-center"> <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >📌</span> Actions</TableHead>
+                  <TableHead className="text-purple-950 font-black text-sm py-4 w-16 text-center"><span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600">📌</span> Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {localEvents.length === 0 ? (
+                {events.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-16 bg-white">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center border-2 border-purple-100">
                           <AlertCircle className="h-8 w-8 text-purple-600" />
                         </div>
-                        <p className="text-gray-900 font-black text-lg">No matching records found <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" > 📭</span> </p>
+                        <p className="text-gray-900 font-black text-lg">No matching records found <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600">📭</span></p>
                         <p className="text-sm text-gray-600 font-medium max-w-sm leading-relaxed">
                           {searchTerm || statusFilter !== 'all' 
                             ? 'The filters applied yield zero query records. Adjust parameters to check alternate rows.' 
@@ -373,7 +392,7 @@ export default function AdminEventsPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  localEvents.map((event) => (
+                  events.map((event) => (
                     <TableRow 
                       key={event.id} 
                       className="hover:bg-purple-50/50 border-b border-purple-100/60 transition-colors"
@@ -448,7 +467,16 @@ export default function AdminEventsPage() {
                                  View Live Link
                               </Link>
                             </DropdownMenuItem>
-                            {event.status !== 'cancelled' && event.status !== 'completed' && (
+                            {event.status !== 'suspended' && event.status !== 'archived' && (
+                              <DropdownMenuItem
+                                onClick={() => setEventToSuspend(event)}
+                                className="text-amber-700 cursor-pointer focus:bg-amber-50 focus:text-amber-800 flex items-center gap-2 p-2 rounded-lg mt-1"
+                              >
+                                <Ban className="h-4 w-4 text-amber-600" />
+                                 Suspend Event
+                              </DropdownMenuItem>
+                            )}
+                            {event.status !== 'cancelled' && event.status !== 'archived' && event.status !== 'suspended' && (
                               <DropdownMenuItem
                                 onClick={() => setEventToCancel(event)}
                                 className="text-red-700 cursor-pointer focus:bg-red-50 focus:text-red-800 flex items-center gap-2 p-2 rounded-lg mt-1"
@@ -491,7 +519,7 @@ export default function AdminEventsPage() {
           <CardContent className="pt-5 pb-5">
             <div className="text-center">
               <CalendarDays className="h-7 w-7 text-purple-700 mx-auto mb-2" />
-              <p className="text-3xl font-black text-gray-900 tracking-tight">{localEvents.length}</p>
+              <p className="text-3xl font-black text-gray-900 tracking-tight">{events.length}</p>
               <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Total Query Rows</p>
             </div>
           </CardContent>
@@ -501,9 +529,9 @@ export default function AdminEventsPage() {
             <div className="text-center">
               <CheckCircle className="h-7 w-7 text-emerald-700 mx-auto mb-2" />
               <p className="text-3xl font-black text-emerald-700 tracking-tight">
-                {localEvents.filter(e => e.status === 'published').length}
+                {events.filter(e => e.status === 'published').length}
               </p>
-              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Live Broadcasts </p>
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Live Broadcasts</p>
             </div>
           </CardContent>
         </Card>
@@ -512,9 +540,9 @@ export default function AdminEventsPage() {
             <div className="text-center">
               <Ticket className="h-7 w-7 text-blue-700 mx-auto mb-2" />
               <p className="text-3xl font-black text-blue-900 tracking-tight">
-                {localEvents.reduce((sum, e) => sum + e.ticketsSold, 0).toLocaleString()}
+                {events.reduce((sum, e) => sum + e.ticketsSold, 0).toLocaleString()}
               </p>
-              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Receipt Indexes </p>
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Receipt Indexes</p>
             </div>
           </CardContent>
         </Card>
@@ -523,9 +551,9 @@ export default function AdminEventsPage() {
             <div className="text-center">
               <DollarSign className="h-7 w-7 text-amber-700 mx-auto mb-2" />
               <p className="text-3xl font-black text-amber-900 tracking-tight">
-                {formatCurrency(localEvents.reduce((sum, e) => sum + e.totalRevenue, 0))}
+                {formatCurrency(events.reduce((sum, e) => sum + e.totalRevenue, 0))}
               </p>
-              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Combined Ledger </p>
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Combined Ledger</p>
             </div>
           </CardContent>
         </Card>
@@ -551,6 +579,29 @@ export default function AdminEventsPage() {
           <p className="text-xs text-red-950 font-bold leading-relaxed">
             Cancelling this pipeline transaction halts payment gateways (MTN MoMo & Orange Money) directly. 
             Archived logs will remain saved, but public entry gates will be hidden immediately.
+          </p>
+        </div>
+      </ConfirmationDialog>
+
+      <ConfirmationDialog
+        open={!!eventToSuspend}
+        onOpenChange={() => setEventToSuspend(null)}
+        onConfirm={handleSuspendEvent}
+        title=" Suspend Platform Event Record"
+        description={`Are you sure you want to suspend "${eventToSuspend?.title}"? Suspended events are hidden from public view but can be restored later.`}
+        confirmText="Confirm Suspension"
+        cancelText="Dismiss Action"
+        variant="danger"
+        isLoading={isProcessing}
+      >
+        <div className="mt-4 p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200 shadow-sm">
+          <div className="flex items-center gap-2 text-amber-900 mb-2">
+            <AlertCircle className="h-5 w-5 flex-shrink-0 text-amber-700" />
+            <span className="font-black text-sm">⚠️ Moderate Severity Notice</span>
+          </div>
+          <p className="text-xs text-amber-950 font-bold leading-relaxed">
+            Suspending this event will hide it from public listings and prevent new ticket purchases.
+            The event and its data will be preserved and can be restored at any time.
           </p>
         </div>
       </ConfirmationDialog>

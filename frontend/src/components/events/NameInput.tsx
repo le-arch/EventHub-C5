@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { User, ArrowRight } from 'lucide-react'
+import { User, ArrowRight, AlertCircle } from 'lucide-react'
 
 // Name validation schema
 const nameSchema = z.object({
@@ -66,7 +66,7 @@ export function NameInput({ eventTitle, onSubmit, isLoading = false }: NameInput
       
       <CardContent>
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="fullName">
               Full Name <span className="text-red-500">*</span>
             </Label>
@@ -81,7 +81,7 @@ export function NameInput({ eventTitle, onSubmit, isLoading = false }: NameInput
             />
             {errors.fullName && (
               <p className="text-sm text-red-500 mt-2 flex items-center gap-1">
-                <span className="text-xs bg-blue-200">⚠️</span>
+                <AlertCircle className="h-3 w-3" />
                 {errors.fullName.message}
               </p>
             )}

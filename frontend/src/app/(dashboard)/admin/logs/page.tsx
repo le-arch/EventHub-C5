@@ -175,7 +175,7 @@ export default function AdminLogsPage() {
   // Loading skeleton configuration
   if (loading && logs.length === 0) {
     return (
-      <div className="space-y-6 max-w-7xl mx-auto p-4 bg-[#fcfaff] min-h-screen">
+      <div className="space-y-6 max-w-7xl mx-auto bg-background min-h-screen">
         <Skeleton className="h-6 w-64 bg-purple-200/50" />
         <div className="flex justify-between items-center">
           <div>
@@ -199,7 +199,7 @@ export default function AdminLogsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 bg-[#fcfaff] min-h-screen text-gray-900">
+    <div className="space-y-6 max-w-7xl mx-auto bg-background min-h-screen text-foreground">
       {/* BreadCrumb Shell */}
       <Breadcrumb 
         items={[
@@ -216,7 +216,7 @@ export default function AdminLogsPage() {
             <FileText className="h-7 w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight">System Activity Logs <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" > 📋</span> </h1>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight">System Activity Logs <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600">📋</span></h1>
             <p className="text-purple-200/90 text-sm font-medium mt-0.5">
               Comprehensive trace logs detailing cryptographic actions, account adjustments, and system mutations.
             </p>
@@ -271,14 +271,14 @@ export default function AdminLogsPage() {
                 </SelectTrigger>
                 <SelectContent className="border-2 border-purple-100 bg-white font-semibold">
                   <SelectItem value="all" className="text-gray-900">All Operations</SelectItem>
-                  <SelectItem value="verify" className="text-emerald-950"> Verify actions</SelectItem>
-                  <SelectItem value="suspend" className="text-red-950"> Suspend actions</SelectItem>
-                  <SelectItem value="delete" className="text-rose-950"> Delete actions</SelectItem>
-                  <SelectItem value="refund" className="text-amber-950"> Refund actions</SelectItem>
-                  <SelectItem value="cancel" className="text-orange-950"> Cancel actions</SelectItem>
-                  <SelectItem value="publish" className="text-blue-950"> Publish actions</SelectItem>
-                  <SelectItem value="login" className="text-slate-900"> Logins</SelectItem>
-                  <SelectItem value="logout" className="text-zinc-900"> Logouts</SelectItem>
+                  <SelectItem value="verify" className="text-emerald-950">Verify actions</SelectItem>
+                  <SelectItem value="suspend" className="text-red-950">Suspend actions</SelectItem>
+                  <SelectItem value="delete" className="text-rose-950">Delete actions</SelectItem>
+                  <SelectItem value="refund" className="text-amber-950">Refund actions</SelectItem>
+                  <SelectItem value="cancel" className="text-orange-950">Cancel actions</SelectItem>
+                  <SelectItem value="publish" className="text-blue-950">Publish actions</SelectItem>
+                  <SelectItem value="login" className="text-slate-900">Logins</SelectItem>
+                  <SelectItem value="logout" className="text-zinc-900">Logouts</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -294,9 +294,9 @@ export default function AdminLogsPage() {
                 </SelectTrigger>
                 <SelectContent className="border-2 border-purple-100 bg-white font-semibold">
                   <SelectItem value="all" className="text-gray-900">All Data Classes</SelectItem>
-                  <SelectItem value="user" className="text-blue-950"> User Targets</SelectItem>
-                  <SelectItem value="event" className="text-purple-950"> Event Targets</SelectItem>
-                  <SelectItem value="order" className="text-cyan-950"> Order Targets</SelectItem>
+                  <SelectItem value="user" className="text-blue-950">User Targets</SelectItem>
+                  <SelectItem value="event" className="text-purple-950">Event Targets</SelectItem>
+                  <SelectItem value="order" className="text-cyan-950">Order Targets</SelectItem>
                 </SelectContent>
               </Select>
               
@@ -440,7 +440,7 @@ export default function AdminLogsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-3xl font-black text-gray-900 tracking-tight">{totalCount.toLocaleString()}</p>
-                <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Total Entries </p>
+                <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Total Entries</p>
               </div>
               <Activity className="h-8 w-8 text-purple-700 shrink-0" />
             </div>
@@ -453,7 +453,7 @@ export default function AdminLogsPage() {
                 <p className="text-3xl font-black text-indigo-9ived tracking-tight">
                   {new Set(logs.map(l => l.adminEmail)).size}
                 </p>
-                <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Active Clusters </p>
+                <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Active Clusters</p>
               </div>
               <Shield className="h-8 w-8 text-indigo-700 shrink-0" />
             </div>
@@ -466,7 +466,7 @@ export default function AdminLogsPage() {
                 <p className="text-3xl font-black text-emerald-800 tracking-tight">
                   {logs.filter(l => l.action.toLowerCase().includes('verify')).length}
                 </p>
-                <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Verifications </p>
+                <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Verifications</p>
               </div>
               <CheckCircle className="h-8 w-8 text-emerald-600 shrink-0" />
             </div>
@@ -479,7 +479,7 @@ export default function AdminLogsPage() {
                 <p className="text-3xl font-black text-amber-900 tracking-tight">
                   {logs.filter(l => l.createdAt > new Date(Date.now() - 7 * 86400000).toISOString()).length}
                 </p>
-                <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Rolling 7-Day Cycle </p>
+                <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Rolling 7-Day Cycle</p>
               </div>
               <Calendar className="h-8 w-8 text-amber-700 shrink-0" />
             </div>

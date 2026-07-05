@@ -86,9 +86,12 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="shadow-lg border-l-4 ">
-      <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
+    <Card className="shadow-lg border-border relative overflow-hidden">
+      {/* Gradient accent bar */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 to-blue-500" />
+      
+      <CardHeader className="space-y-1 text-center pt-6">
+        <CardTitle className="text-2xl font-bold text-foreground">Welcome Back</CardTitle>
         <CardDescription>
           Log in to manage your events and track ticket sales
         </CardDescription>
@@ -109,7 +112,7 @@ export default function LoginPage() {
               {...register('identifier')}
               aria-invalid={!!errors.identifier}
               disabled={isLoading}
-              className={errors.identifier ? 'border-red-500' : ''}
+              className={errors.identifier ? 'border-red-500 focus-visible:ring-red-500/20 focus-visible:border-red-500' : 'focus-visible:ring-primary/20 focus-visible:border-primary'}
             />
             {errors.identifier && (
               <p className="text-sm text-red-500 mt-1">
@@ -137,12 +140,13 @@ export default function LoginPage() {
                 {...register('password')}
                 aria-invalid={!!errors.password}
                 disabled={isLoading}
-                className={errors.password ? 'border-red-500' : ''}
+                className={errors.password ? 'border-red-500 focus-visible:ring-red-500/20 focus-visible:border-red-500' : 'focus-visible:ring-primary/20 focus-visible:border-primary'}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? (<EyeOff className="h-4 w-4" aria-hidden="true" />) : (<Eye className="h-4 w-4" aria-hidden="true" />) }
               </button>
@@ -171,7 +175,7 @@ export default function LoginPage() {
           </Button>
 
           {/* Link to Registration Page */}
-          <p className="text-center text-sm text-gray-600 mt-4">
+          <p className="text-center text-sm text-muted-foreground mt-4">
             Don&apos;t have an account?{' '}
             <Link href="/register" className="text-primary hover:underline font-medium">
               Sign up

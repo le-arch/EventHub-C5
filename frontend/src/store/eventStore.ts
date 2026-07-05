@@ -39,7 +39,7 @@ export interface Event {
   startTime: string
   endTime: string | null
   coverImageUrl: string | null
-  status: 'draft' | 'published' | 'cancelled' | 'completed'
+  status: 'draft' | 'published' | 'cancelled' | 'suspended' | 'archived'
   capacityRange?: CapacityRange
   ticketStats: {
     totalSold: number
@@ -263,7 +263,17 @@ export const useEventStore = create<EventState>()(
         
         try {
           await api.patch(`/events/${eventId}/publish`)
-          set({ isLoading: false })
+          const { currentEvent, events } = get()
+          const updatedEvents = events.map(e =>
+            e.id === eventId ? { ...e, status: 'published' as const } : e
+          )
+          set({
+            isLoading: false,
+            events: updatedEvents,
+            currentEvent: currentEvent?.id === eventId
+              ? { ...currentEvent, status: 'published' as const }
+              : currentEvent,
+          })
           toast.success('Event published successfully!')
           return true
         } catch (error: any) {
@@ -279,7 +289,17 @@ export const useEventStore = create<EventState>()(
         
         try {
           await api.patch(`/events/${eventId}/unpublish`)
-          set({ isLoading: false })
+          const { currentEvent, events } = get()
+          const updatedEvents = events.map(e =>
+            e.id === eventId ? { ...e, status: 'draft' as const } : e
+          )
+          set({
+            isLoading: false,
+            events: updatedEvents,
+            currentEvent: currentEvent?.id === eventId
+              ? { ...currentEvent, status: 'draft' as const }
+              : currentEvent,
+          })
           toast.success('Event unpublished')
           return true
         } catch (error) {

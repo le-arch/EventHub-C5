@@ -13,7 +13,7 @@ import (
 )
 
 func (h *EventHubHandler) handleViewAllEvents(c *gin.Context) {
-    UserRole, err := utils.GetUserRole(c)
+	UserRole, err := utils.GetUserRole(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
@@ -24,43 +24,56 @@ func (h *EventHubHandler) handleViewAllEvents(c *gin.Context) {
 		return
 	}
 
-    events, err := h.querier.ListEvents(c)
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	search := c.Query("search")
+	statusFilter := c.DefaultQuery("status", "")
+	offset := (page - 1) * limit
+
+	totalCount, err := h.querier.CountEventsAdmin(c, statusFilter, search)
 	if err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "failed to fetch events"})
-        return
-    }
-
-	response := make([]utils.EventResponse, 0, len(events))
-	
-	for _, event := range events {
-	response = append(response, utils.EventResponse{
-	ID: event.ID,
-	OrganizerName: event.OrganizerName,
-	Title: event.Title,
-	Slug: event.Slug,
-	Description: event.Description,
-	Venue: event.Venue,
-	City: event.City,
-	StartDate: utils.FormatDate(event.StartDate),
-	EndDate: 	utils.FormatDatePtr(event.EndDate),
-	StartTime: utils.FormatTime(event.StartTime),
-	EndTime: utils.FormatTime(event.EndTime),
-	CoverImageUrl: event.CoverImageUrl,
-	Status: event.Status,
-	SalesStartDate: 	utils.FormatDatePtr(event.SalesStartDate),
-	SalesEndDate: 	utils.FormatDatePtr(event.SalesEndDate),
-	CapacityRange: utils.FromDBRange(event.CapacityRange),
-	TicketStats:   utils.TicketStatsResponse{},
-	UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
-	})
-}
-
-	if response == nil{
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "reponse is empty"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to count events"})
 		return
 	}
 
-    c.JSON(http.StatusOK, response)
+	events, err := h.querier.ListEventsAdmin(c, statusFilter, search, int32(limit), int32(offset))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "failed to fetch events"})
+		return
+	}
+
+	response := make([]utils.EventResponse, 0, len(events))
+	for _, event := range events {
+		response = append(response, utils.EventResponse{
+			ID:             event.ID,
+			OrganizerID:    event.OrganizerID,
+			OrganizerName:  event.OrganizerName,
+			OrganizerEmail: event.OrganizerEmail,
+			Title:          event.Title,
+			Slug:           event.Slug,
+			Description:    event.Description,
+			Venue:          event.Venue,
+			City:           event.City,
+			StartDate:      utils.FormatDate(event.StartDate),
+			EndDate:        utils.FormatDatePtr(event.EndDate),
+			StartTime:      utils.FormatTime(event.StartTime),
+			EndTime:        utils.FormatTime(event.EndTime),
+			CoverImageUrl:  event.CoverImageUrl,
+			Status:         event.Status,
+			SalesStartDate: utils.FormatDatePtr(event.SalesStartDate),
+			SalesEndDate:   utils.FormatDatePtr(event.SalesEndDate),
+			CapacityRange:  utils.FromDBRange(event.CapacityRange),
+			TicketStats:    utils.TicketStatsResponse{},
+			UpdatedAt:      utils.FormatDateTime(event.UpdatedAt),
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"events": response,
+		"total":  totalCount,
+		"page":   page,
+		"limit":  limit,
+	})
 }
 
 func (h *EventHubHandler) handleListAllUsers(c *gin.Context) {
@@ -74,7 +87,7 @@ func (h *EventHubHandler) handleListAllUsers(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "your not authorized to perform this action"})
 		return
 	}
-    users, err := h.querier.GetAllUsers(c, repo.UserRole(UserRole))
+    users, err := h.querier.GetAllUsersForAdmin(c)
 	if err != nil {
         c.JSON(http.StatusNotFound, gin.H{"error": "no event created"})
         return
@@ -89,8 +102,10 @@ func (h *EventHubHandler) handleListAllUsers(c *gin.Context) {
 		Email:           user.Email,
 		Phone:           user.Phone,
 		Role:            user.Role,
-		IsEmailVerified: user.IsEmailVerified,
-		IsActive:        user.IsActive,
+		IsEmailVerified:     user.IsEmailVerified,
+		IsOrganizerVerified: user.IsOrganizerVerified,
+		IsActive:            user.IsActive,
+		EventsCount:         user.EventsCount,
 		CreatedAt:       utils.FormatDateTime(user.CreatedAt),
 	})
 }
@@ -182,7 +197,7 @@ func (h *EventHubHandler) handleAdminRestoreEvent(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{"message": "event restored to published", "status": updated.Status})
 }
 
-// handleVerifyOrganizer – Admin marks a user's email as verified
+// handleVerifyOrganizer – Admin approves an organizer account
 func (h *EventHubHandler) handleVerifyOrganizer(c *gin.Context) {
 	userIDStr := c.Param("id")
 	userID, err := uuid.Parse(userIDStr)
@@ -191,22 +206,22 @@ func (h *EventHubHandler) handleVerifyOrganizer(c *gin.Context) {
 		return
 	}
 
-	// (Optional) Check that the user exists before update
+	// Check that the user exists before update
 	_, err = h.querier.GetUserByIDForAdmin(c, userID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
 	}
 
-	err = h.querier.UpdateUserVerification(c, repo.UpdateUserVerificationParams{
-		ID:               userID,
-		IsEmailVerified:  true,
+	err = h.querier.UpdateOrganizerVerification(c, repo.UpdateOrganizerVerificationParams{
+		ID:                  userID,
+		IsOrganizerVerified: true,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "user verified successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "organizer verified successfully"})
 }
 
 // handleSuspendUser – Admin suspends a user (set is_active = false)
@@ -283,6 +298,80 @@ func (h *EventHubHandler) handleDeleteUser(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "user deleted"})
+}
+
+// handleBatchVerifyOrganizer – Admin verifies multiple organizers at once
+func (h *EventHubHandler) handleBatchVerifyOrganizer(c *gin.Context) {
+	var req struct {
+		UserIDs []string `json:"userIds"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	for _, idStr := range req.UserIDs {
+		userID, err := uuid.Parse(idStr)
+		if err != nil {
+			continue
+		}
+		_ = h.querier.UpdateOrganizerVerification(c, repo.UpdateOrganizerVerificationParams{
+			ID:                  userID,
+			IsOrganizerVerified: true,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "organizers verified successfully"})
+}
+
+// handleBatchSuspendUser – Admin suspends multiple users at once
+func (h *EventHubHandler) handleBatchSuspendUser(c *gin.Context) {
+	var req struct {
+		UserIDs []string `json:"userIds"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	for _, idStr := range req.UserIDs {
+		userID, err := uuid.Parse(idStr)
+		if err != nil {
+			continue
+		}
+		_ = h.querier.UpdateUserActiveStatus(c, repo.UpdateUserActiveStatusParams{
+			ID:       userID,
+			IsActive: false,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "users suspended successfully"})
+}
+
+// handleAdminCancelEvent – Admin cancels an event
+func (h *EventHubHandler) handleAdminCancelEvent(c *gin.Context) {
+	userRole, err := utils.GetUserRole(c)
+	if err != nil || userRole != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "admin only"})
+		return
+	}
+
+	eventID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+		return
+	}
+
+	updated, err := h.querier.UpdateEventStatus(c, repo.UpdateEventStatusParams{
+		ID:     eventID,
+		Status: models.EventStatusCancelled,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "event cancelled successfully", "status": updated.Status})
 }
 
 func (h *EventHubHandler) handleViewAllTransactions(c *gin.Context) {

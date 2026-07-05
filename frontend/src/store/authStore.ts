@@ -21,6 +21,7 @@ export interface User {
   fullName: string
   role: 'organizer' | 'admin'
   isEmailVerified: boolean
+  isOrganizerVerified: boolean
   createdAt?: string
 }
 
@@ -50,6 +51,8 @@ interface AuthState {
   setUser: (user: User | null) => void
   setLoading: (loading: boolean) => void
   clearError: () => void
+  
+  refreshCurrentUser: () => Promise<void>
   
   // Admin User Management Actions
   getUsers: (page?: number, limit?: number, search?: string, status?: string) => Promise<User[]>
@@ -236,6 +239,20 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      /**
+       * Refresh current user data from the backend
+       */
+      refreshCurrentUser: async () => {
+        try {
+          const userData = await authService.getCurrentUser()
+          const user = transformUserData(userData)
+          set({ user })
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user))
+        } catch {
+          // Silently fail - user will see stale data until next login
+        }
+      },
+
       // ==================== Admin User Management ====================
 
       /**
@@ -312,7 +329,7 @@ export const useAuthStore = create<AuthState>()(
           const { users } = get()
           if (users) {
             const updatedUsers = users.map(u => 
-              u.id === userId ? { ...u, isEmailVerified: true } : u
+              u.id === userId ? { ...u, isOrganizerVerified: true } : u
             )
             set({ users: updatedUsers })
           }
@@ -329,6 +346,16 @@ export const useAuthStore = create<AuthState>()(
       suspendUser: async (userId: string) => {
         try {
           await authService.suspendUser(userId)
+          
+          // Update users list
+          const { users } = get()
+          if (users) {
+            const updatedUsers = users.map(u => 
+              u.id === userId ? { ...u, isActive: false } : u
+            )
+            set({ users: updatedUsers })
+          }
+          
           return true
         } catch (error) {
           return false
@@ -341,6 +368,16 @@ export const useAuthStore = create<AuthState>()(
       unsuspendUser: async (userId: string) => {
         try {
           await authService.unsuspendUser(userId)
+          
+          // Update users list
+          const { users } = get()
+          if (users) {
+            const updatedUsers = users.map(u => 
+              u.id === userId ? { ...u, isActive: true } : u
+            )
+            set({ users: updatedUsers })
+          }
+          
           return true
         } catch (error) {
           return false
@@ -378,7 +415,7 @@ export const useAuthStore = create<AuthState>()(
           const { users } = get()
           if (users) {
             const updatedUsers = users.map(u => 
-              userIds.includes(u.id) ? { ...u, isEmailVerified: true } : u
+              userIds.includes(u.id) ? { ...u, isOrganizerVerified: true } : u
             )
             set({ users: updatedUsers })
           }
