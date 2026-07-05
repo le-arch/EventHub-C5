@@ -3,10 +3,12 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/le-arch/EventHub-C5/internal/auth"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
 	"github.com/le-arch/EventHub-C5/internal/email"
@@ -44,15 +46,11 @@ func (h *EventHubHandler) handleRegister(c *gin.Context) {
 		return
 	}
 
-	if req.Role == "" {
-		req.Role = "organizer" // default role if not provided
-	}
-
 	PendingData := map[string]interface{}{
 		"full_name":         req.FullName,
 		"email":             req.Email,
 		"phone":             req.Phone,
-		"role":              req.Role,
+		"role":              repo.UserRoleOrganizer,
 		"password_hash":     hashedPassword,
 		"is_email_verified": false,
 	}
@@ -99,14 +97,17 @@ func (h *EventHubHandler) handleVerifyEmail(c *gin.Context) {
 
 	verified := true
 
+	organizerVerified := roleVal != repo.UserRoleOrganizer
+
 	//create the user in the database
 	user, err := h.querier.CreateUser(c, repo.CreateUserParams{
-		Email:           pendingMap["email"].(string),
-		Phone:           pendingMap["phone"].(string),
-		Role:            roleVal,
-		PasswordHash:    pendingMap["password_hash"].(string),
-		FullName:        pendingMap["full_name"].(string),
-		IsEmailVerified: verified,
+		Email:               pendingMap["email"].(string),
+		Phone:               pendingMap["phone"].(string),
+		Role:                roleVal,
+		PasswordHash:        pendingMap["password_hash"].(string),
+		FullName:            pendingMap["full_name"].(string),
+		IsEmailVerified:     verified,
+		IsOrganizerVerified: organizerVerified,
 	})
 	//handle any errors that occur during user creation
 	if err != nil {
@@ -132,14 +133,15 @@ func (h *EventHubHandler) handleVerifyEmail(c *gin.Context) {
 
 	//prepare the response without exposing sensitive information like password hash
 	response := utils.RegisterResponse{
-		ID:              user.ID,
-		FullName:        user.FullName,
-		Email:           user.Email,
-		Phone:           user.Phone,
-		Role:            user.Role,
-		IsEmailVerified: user.IsEmailVerified,
-		IsActive:        user.IsActive,
-		CreatedAt:       utils.FormatDateTime(user.CreatedAt),
+		ID:                  user.ID,
+		FullName:            user.FullName,
+		Email:               user.Email,
+		Phone:               user.Phone,
+		Role:                user.Role,
+		IsEmailVerified:     user.IsEmailVerified,
+		IsOrganizerVerified: user.IsOrganizerVerified,
+		IsActive:            user.IsActive,
+		CreatedAt:           utils.FormatDateTime(user.CreatedAt),
 	}
 
 	refreshToken, err := auth.CreateRefreshToken(
@@ -170,7 +172,11 @@ func (h *EventHubHandler) handleLogin(c *gin.Context) {
 	//retrieve the user from the database using the provided email address
 	user, err := h.querier.GetUserByEmail(c, req.Email)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "No account found with this email address"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user"})
 		return
 	}
 
@@ -213,14 +219,15 @@ func (h *EventHubHandler) handleLogin(c *gin.Context) {
 		Token:        token,
 		RefreshToken: refreshToken,
 		User: utils.RegisterResponse{
-			ID:              user.ID,
-			FullName:        user.FullName,
-			Email:           user.Email,
-			Phone:           user.Phone,
-			Role:            user.Role,
-			IsEmailVerified: user.IsEmailVerified,
-			IsActive:        user.IsActive,
-			CreatedAt:       utils.FormatDateTime(user.CreatedAt),
+			ID:                  user.ID,
+			FullName:            user.FullName,
+			Email:               user.Email,
+			Phone:               user.Phone,
+			Role:                user.Role,
+			IsEmailVerified:     user.IsEmailVerified,
+			IsOrganizerVerified: user.IsOrganizerVerified,
+			IsActive:            user.IsActive,
+			CreatedAt:           utils.FormatDateTime(user.CreatedAt),
 		},
 	}
 
@@ -377,7 +384,29 @@ func (h *EventHubHandler) handleGetCurrentUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"user": claims})
+	authClaims, ok := claims.(*auth.Claims)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+		return
+	}
+
+	user, err := h.querier.GetUserByID(c, authClaims.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.RegisterResponse{
+		ID:                  user.ID,
+		FullName:            user.FullName,
+		Email:               user.Email,
+		Phone:               user.Phone,
+		Role:                user.Role,
+		IsEmailVerified:     user.IsEmailVerified,
+		IsOrganizerVerified: user.IsOrganizerVerified,
+		IsActive:            user.IsActive,
+		CreatedAt:           utils.FormatDateTime(user.CreatedAt),
+	})
 }
 
 func (h *EventHubHandler) handleResendOTP(c *gin.Context) {

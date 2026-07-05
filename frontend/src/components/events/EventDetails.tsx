@@ -9,8 +9,9 @@
 
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
-import { Calendar, MapPin, Clock, Users, Ticket, Share2 } from 'lucide-react'
+import { Calendar, MapPin, Clock, Users, Ticket, Share2, ImageIcon } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -30,7 +31,7 @@ interface EventDetailsProps {
     startTime: string
     endTime: string | null
     coverImageUrl: string | null
-    status: 'draft' | 'published' | 'cancelled' | 'completed'
+    status: 'draft' | 'published' | 'cancelled' | 'suspended' | 'archived'
     ticketStats?: {
       totalSold: number
       totalRevenue: number
@@ -48,19 +49,28 @@ export function EventDetails({
   onShare,
   isPublicView = false 
 }: EventDetailsProps) {
+  const [imgError, setImgError] = useState(false)
+
   return (
     <div className="space-y-6">
       {/* Cover Image */}
-      {event.coverImageUrl && (
+      {event.coverImageUrl && !imgError ? (
         <div className="relative aspect-video rounded-xl overflow-hidden">
           <Image
             src={event.coverImageUrl}
             alt={event.title}
             fill
+            sizes="(max-width: 768px) 100vw, 768px"
             className="object-cover"
+            unoptimized
+            onError={() => setImgError(true)}
           />
         </div>
-      )}
+      ) : event.coverImageUrl ? (
+        <div className="relative aspect-video rounded-xl overflow-hidden bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center">
+          <ImageIcon className="h-12 w-12 text-purple-300" />
+        </div>
+      ) : null}
 
       {/* Title and Status */}
       <div className="space-y-2">

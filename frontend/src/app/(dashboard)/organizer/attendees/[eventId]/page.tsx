@@ -28,6 +28,7 @@ import {
   MapPin,
   Ticket,
   AlertCircle,
+  X,
 } from 'lucide-react'
 
 // shadcn/ui components
@@ -157,7 +158,7 @@ export default function AttendeeListPage() {
       setTotalPages(Math.ceil(attendeesData.length / pageSize) || 1)
       setSummary(summaryRes.data)
     } catch (error) {
-      toast.error('❌ Failed to load attendees')
+      toast.error('Failed to load attendees')
       console.error(error)
     } finally {
       setLoading(false)
@@ -184,9 +185,9 @@ export default function AttendeeListPage() {
         })
       }
       
-      toast.success(`✅ ${response.data.attendeeName || response.data.attendee_name} checked in successfully!`)
+      toast.success(`${response.data.attendeeName || response.data.attendee_name} checked in successfully!`)
     } catch (error: any) {
-      toast.error(`❌ ${error.response?.data?.error || 'Failed to check in attendee'}`)
+      toast.error(error.response?.data?.error || 'Failed to check in attendee')
     }
   }, [summary])
 
@@ -213,7 +214,7 @@ export default function AttendeeListPage() {
       link.remove()
       window.URL.revokeObjectURL(url)
       
-      toast.success(`📥 Exported attendees successfully`)
+      toast.success('Attendees exported successfully')
     } catch (error) {
       toast.error('❌ Failed to export attendees')
     } finally {
@@ -425,7 +426,7 @@ export default function AttendeeListPage() {
           <AttendeeSearch
             value={searchTerm}
             onChange={handleSearchChange}
-            placeholder="🔍 Search by name or phone number..."
+            placeholder="Search by name or phone number..."
           />
         </div>
         
@@ -438,7 +439,8 @@ export default function AttendeeListPage() {
         
         {activeFilterCount > 0 && (
           <Button variant="ghost" onClick={handleResetFilters} className="sm:w-auto">
-            Reset Filters ✕
+            <X className="h-4 w-4 mr-1" />
+            Reset Filters
           </Button>
         )}
       </div>
@@ -446,7 +448,7 @@ export default function AttendeeListPage() {
       {/* Result Status Strings */}
       <div className="text-sm text-gray-500 flex items-center justify-between flex-wrap gap-2">
         <span>
-          Showing page data of {totalCount} total query results
+          Showing {totalCount} result{totalCount !== 1 ? 's' : ''}
         </span>
       </div>
 
@@ -456,7 +458,7 @@ export default function AttendeeListPage() {
           <CardContent className="py-12 text-center">
             <div className="flex flex-col items-center gap-3">
               <AlertCircle className="h-12 w-12 text-gray-300" />
-              <p className="text-gray-500">No attendees match your target criteria 🔍</p>
+              <p className="text-gray-500">No attendees match your search or filters</p>
               {(searchTerm || activeFilterCount > 0) && (
                 <Button variant="link" onClick={handleResetFilters} className="mt-2">
                   Clear all filters

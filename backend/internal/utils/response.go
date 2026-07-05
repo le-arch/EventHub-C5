@@ -9,15 +9,16 @@ import (
 
 // RegisterResponse defines the structure of the response sent back to the client after a successful registration
 type RegisterResponse struct {
-	ID uuid.UUID `json:"id"`
-	FullName string `json:"fullName"`
-	Email string `json:"email"`
-	Phone string `json:"phone"`
-	Role repo.UserRole `json:"role"`
-	IsEmailVerified bool  `json:"isEmailVerified"`
-	IsActive bool `json:"isActive"`
-	EventsCount int32 `json:"eventsCount"`
-	CreatedAt  string `json:"createdAt"`
+	ID                  uuid.UUID    `json:"id"`
+	FullName            string       `json:"fullName"`
+	Email               string       `json:"email"`
+	Phone               string       `json:"phone"`
+	Role                repo.UserRole `json:"role"`
+	IsEmailVerified     bool         `json:"isEmailVerified"`
+	IsOrganizerVerified bool         `json:"isOrganizerVerified"`
+	IsActive            bool         `json:"isActive"`
+	EventsCount         int32        `json:"eventsCount"`
+	CreatedAt           string       `json:"createdAt"`
 }
 
 type LoginResponse struct {
@@ -61,6 +62,7 @@ type EventResponse struct{
 	ID				uuid.UUID 	`json:"id"`
 	OrganizerID		uuid.UUID	`json:"organizerId,omitempty"`
 	OrganizerName 	string		`json:"organizerName,omitempty"`
+	OrganizerEmail 	string		`json:"organizerEmail,omitempty"`
 
 	Title          string           `json:"title"`
 	Slug           string           `json:"slug"`

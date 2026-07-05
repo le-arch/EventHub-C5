@@ -98,7 +98,7 @@ LIMIT $3 OFFSET $4;
 -- name: GetEventTicketStats :one
 SELECT
     COUNT(DISTINCT o.id)::int AS total_sold,
-    COALESCE(SUM(o.total_amount), 0)::int AS total_revenue,
+    COALESCE(SUM(o.total_amount - o.platform_fee), 0)::int AS total_revenue,
     COUNT(DISTINCT o.attendee_name)::int AS total_attendees,
     COALESCE((SELECT SUM(tt.quantity_available - COALESCE(tt.quantity_sold, 0)) FROM ticket_types tt WHERE tt.event_id = $1), 0)::int AS available_tickets
 FROM orders o
@@ -108,7 +108,7 @@ WHERE o.event_id = $1 AND o.payment_status = 'paid';
 SELECT
     DATE(o.created_at)::text AS date,
     COUNT(*)::int AS sales,
-    SUM(o.total_amount)::int AS revenue
+    SUM(o.total_amount - o.platform_fee)::int AS revenue
 FROM orders o
 WHERE o.event_id = $1 AND o.payment_status = 'paid'
 GROUP BY DATE(o.created_at)

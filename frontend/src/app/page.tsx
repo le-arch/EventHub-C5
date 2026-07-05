@@ -140,7 +140,7 @@ function StatCounter({ target, label, suffix = '' }: { target: number; label: st
   }, [target, label])
 
   return (
-    <div id={`stat-${label.replace(/\s/g, '')}`} className="text-center p-6 bg-white/70 backdrop-blur-md rounded-2xl border border-purple-200/60 shadow-md shadow-purple-500/5">
+    <div id={`stat-${label.replace(/\s/g, '')}`} className="text-center p-6 bg-white/90 backdrop-blur-md rounded-2xl border border-purple-200/60 shadow-md shadow-purple-500/5">
       <p className="text-4xl font-extrabold gradient-text tracking-tight">
         {count}
         {suffix}
@@ -155,10 +155,10 @@ export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-[#fcfaff] text-gray-900 transition-colors duration-300">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       
       {/* Navigation - Transparent Vivid Glass Sticky Layer */}
-      <nav className="sticky top-0 z-50 bg-white/60 backdrop-blur-xl border-b border-purple-100/80 shadow-md shadow-purple-100/20">
+      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-purple-100/80 shadow-md shadow-purple-100/20">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2 group">
             <div className="relative">
@@ -302,7 +302,7 @@ export default function HomePage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 border-y border-purple-100 relative bg-white/40">
+      <section className="py-12 border-y border-purple-100 relative bg-white/85">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
             <StatCounter target={5000} label="Events Hosted" />
@@ -325,7 +325,7 @@ export default function HomePage() {
           {features.map((feature, index) => {
             const Icon = feature.icon
             return (
-              <Card key={index} className="bg-white/60 backdrop-blur-md border-l-4 border-l-4-purple-200/60 card-hover shadow-md shadow-purple-500/5 p-4 rounded-2xl flex flex-col justify-between">
+              <Card key={index} className="bg-white/95 backdrop-blur-md border-l-4 border-purple-200/60 card-hover shadow-md shadow-purple-500/5 p-4 rounded-2xl flex flex-col justify-between">
                 <CardHeader className="pb-2">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 ${feature.color}`}>
                     <Icon className={`h-6 w-6 ${feature.animateClass}`} />
@@ -342,7 +342,7 @@ export default function HomePage() {
       </section>
 
       {/* How it works Section */}
-      <section id="how-it-works" className="py-24 md:py-32 border-t border-purple-100 relative bg-white/40">
+      <section id="how-it-works" className="py-24 md:py-32 border-t border-purple-100 relative bg-white/85">
         <div className="container mx-auto px-4">
           <div className="text-center mb-20">
             <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4 tracking-tight">Simple Pipeline Mechanics</h2>
@@ -358,7 +358,7 @@ export default function HomePage() {
             </h3>
             <div className="grid md:grid-cols-4 gap-6">
               {organizerSteps.map((step, index) => (
-                <Card key={index} className="bg-white/70 backdrop-blur-md relative p-2 rounded-2xl border border-purple-200/50 shadow-md">
+                <Card key={index} className="bg-white/95 backdrop-blur-md relative p-2 rounded-2xl border border-purple-200/50 shadow-md">
                   <CardHeader>
                     <div className="text-5xl font-black text-purple-600/60 mb-2 tracking-tighter">
                       {step.number}
@@ -385,7 +385,7 @@ export default function HomePage() {
             </h3>
             <div className="grid md:grid-cols-4 gap-6">
               {attendeeSteps.map((step, index) => (
-                <Card key={index} className="bg-white/70 backdrop-blur-md relative p-2 rounded-2xl border border-blue-200/50 shadow-sm">
+                <Card key={index} className="bg-white/95 backdrop-blur-md relative p-2 rounded-2xl border border-blue-200/50 shadow-sm">
                   <CardHeader>
                     <div className="text-5xl font-black text-blue-600/60 mb-2 tracking-tighter">
                       {step.number}
@@ -418,7 +418,7 @@ export default function HomePage() {
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch">
           
           {/* Free Plan */}
-          <Card className="bg-white/60 backdrop-blur-md border border-purple-200/80 card-hover p-4 rounded-3xl flex flex-col justify-between shadow-sm">
+          <Card className="bg-white/95 backdrop-blur-md border border-purple-200/80 card-hover p-4 rounded-3xl flex flex-col justify-between shadow-sm">
             <CardHeader>
               <CardTitle className="text-xl font-bold text-gray-900">Free</CardTitle>
               <div className="mt-4 flex items-baseline gap-1">
@@ -465,7 +465,7 @@ export default function HomePage() {
           </Card>
 
           {/* Enterprise Plan */}
-          <Card className="bg-white/60 backdrop-blur-md border border-purple-200/80 card-hover p-4 rounded-3xl flex flex-col justify-between shadow-sm">
+          <Card className="bg-white/95 backdrop-blur-md border border-purple-200/80 card-hover p-4 rounded-3xl flex flex-col justify-between shadow-sm">
             <CardHeader>
               <CardTitle className="text-xl font-bold text-gray-900">Enterprise</CardTitle>
               <div className="mt-4">

@@ -88,7 +88,7 @@ export function ShareEventButton({
           Share Event
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-56 bg-white">
         <DropdownMenuItem onClick={() => window.open(whatsappUrl, '_blank')}>
           <MessageCircle className="h-4 w-4 mr-2 text-green-600" />
           Share via WhatsApp

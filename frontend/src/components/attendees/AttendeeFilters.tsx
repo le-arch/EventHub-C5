@@ -125,7 +125,7 @@ export function AttendeeFilters({
               <SelectTrigger>
                 <SelectValue placeholder="All ticket types" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 <SelectItem value="all">All ticket types</SelectItem>
                 {ticketTypes.map((type) => (
                   <SelectItem key={type} value={type}>
@@ -153,7 +153,7 @@ export function AttendeeFilters({
               <SelectTrigger>
                 <SelectValue placeholder="All attendees" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 <SelectItem value="all">All attendees</SelectItem>
                 <SelectItem value="checked_in">
                   <div className="flex items-center gap-2">

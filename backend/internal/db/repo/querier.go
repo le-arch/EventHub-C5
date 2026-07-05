@@ -43,6 +43,8 @@ type Querier interface {
 	ListAttendeesByEvent(ctx context.Context, eventID uuid.UUID) ([]ListAttendeesByEventRow, error)
 	ListCheckinHistoryByEvent(ctx context.Context, arg ListCheckinHistoryByEventParams) ([]ListCheckinHistoryByEventRow, error)
 	ListEvents(ctx context.Context) ([]ListEventsRow, error)
+	ListEventsAdmin(ctx context.Context, status string, search string, limit int32, offset int32) ([]ListEventsAdminRow, error)
+	CountEventsAdmin(ctx context.Context, status string, search string) (int64, error)
 	ListEventsByCity(ctx context.Context, city string) ([]Event, error)
 	ListEventsByStatus(ctx context.Context, status EventStatus) ([]Event, error)
 	ListOrderByEvent(ctx context.Context, eventID uuid.UUID) ([]Order, error)
@@ -60,6 +62,7 @@ type Querier interface {
 	UpdateUserActiveStatus(ctx context.Context, arg UpdateUserActiveStatusParams) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpdateUserVerification(ctx context.Context, arg UpdateUserVerificationParams) error
+	UpdateOrganizerVerification(ctx context.Context, arg UpdateOrganizerVerificationParams) error
 }
 
 var _ Querier = (*Queries)(nil)

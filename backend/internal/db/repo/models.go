@@ -228,16 +228,17 @@ type TicketType struct {
 }
 
 type User struct {
-	ID              uuid.UUID        `json:"id"`
-	Email           string           `json:"email"`
-	Phone           string           `json:"phone"`
-	PasswordHash    string           `json:"password_hash"`
-	FullName        string           `json:"full_name"`
-	Role            UserRole         `json:"role"`
-	IsEmailVerified bool             `json:"is_email_verified"`
-	IsActive        bool             `json:"is_active"`
-	CreatedAt       pgtype.Timestamp `json:"created_at"`
-	UpdatedAt       pgtype.Timestamp `json:"updated_at"`
+	ID                  uuid.UUID        `json:"id"`
+	Email               string           `json:"email"`
+	Phone               string           `json:"phone"`
+	PasswordHash        string           `json:"password_hash"`
+	FullName            string           `json:"full_name"`
+	Role                UserRole         `json:"role"`
+	IsEmailVerified     bool             `json:"is_email_verified"`
+	IsActive            bool             `json:"is_active"`
+	IsOrganizerVerified bool             `json:"is_organizer_verified"`
+	CreatedAt           pgtype.Timestamp `json:"created_at"`
+	UpdatedAt           pgtype.Timestamp `json:"updated_at"`
 }
 
 type WebhookLog struct {

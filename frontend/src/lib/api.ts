@@ -153,11 +153,17 @@ export const apiClient = {
   delete: <T>(url: string) => 
     api.delete<T>(url),
   
-  upload: <T>(url: string, file: File, fieldName: string = 'file') => {
+  upload: <T>(url: string, file: File, fieldName: string = 'file', onProgress?: (percent: number) => void) => {
     const formData = new FormData()
     formData.append(fieldName, file)
     return api.post<T>(url, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          onProgress(percent)
+        }
+      },
     })
   },
 }

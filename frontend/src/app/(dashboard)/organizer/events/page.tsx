@@ -48,6 +48,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -70,7 +77,7 @@ interface Event {
   startDate: string
   startTime: string
   coverImageUrl: string | null
-  status: 'draft' | 'published' | 'cancelled' | 'completed'
+  status: 'draft' | 'published' | 'cancelled' | 'suspended' | 'archived'
   capacityRange?: {
     lower: number;
     upper: number;
@@ -90,6 +97,7 @@ export default function EventsDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string>('published')
   
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(9)
@@ -113,7 +121,7 @@ export default function EventsDashboardPage() {
 
   useEffect(() => {
     fetchEvents()
-  }, [page, pageSize, debouncedSearch])
+  }, [page, pageSize, debouncedSearch, statusFilter])
 
   const fetchEvents = async () => {
     setLoading(true)
@@ -123,6 +131,7 @@ export default function EventsDashboardPage() {
           page,
           limit: pageSize,
           search: debouncedSearch || undefined,
+          status: statusFilter !== 'all' ? statusFilter : undefined,
         },
       })
       setEvents(response.data)
@@ -174,13 +183,6 @@ export default function EventsDashboardPage() {
           <Badge className="bg-rose-50 text-rose-700 border-rose-200/60 font-medium px-2.5 py-0.5 rounded-full hover:bg-rose-50">
             <XCircle className="h-3 w-3 mr-1 text-rose-600" />
             Cancelled
-          </Badge>
-        )
-      case 'completed':
-        return (
-          <Badge className="bg-blue-50 text-blue-700 border-blue-200/60 font-medium px-2.5 py-0.5 rounded-full hover:bg-blue-50">
-            <CheckCircle className="h-3 w-3 mr-1 text-blue-600" />
-            Completed
           </Badge>
         )
       default:
@@ -243,7 +245,7 @@ export default function EventsDashboardPage() {
             My Events
           </h1>
           <p className="text-slate-500 mt-1.5 text-sm md:text-base">
-            Manage your lineup, view precise ticketing velocity, and manage attendance checks.
+            Manage your events, view ticket sales, and check in attendees.
           </p>
         </div>
         <Link href="/organizer/create" className="w-full md:w-auto">
@@ -256,28 +258,49 @@ export default function EventsDashboardPage() {
 
       {/* Search and Filters Context */}
       <div className="space-y-4">
-        <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-          <Input
-            placeholder="Search events by title, venue, or city..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-12 pr-24 py-6 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 transition-all text-base placeholder:text-slate-400"
-          />
-          {searchInput && (
-            <button
-              onClick={clearSearch}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm font-medium transition-colors bg-white px-2 py-1 rounded-md shadow-sm border border-slate-100"
-            >
-              Clear
-            </button>
-          )}
+        <div className="flex gap-3">
+          <div className="relative group flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+            <Input
+              placeholder="Search events by title, venue, or city..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="pl-12 pr-24 py-6 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 transition-all text-base placeholder:text-slate-400"
+            />
+            {searchInput && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm font-medium transition-colors bg-white px-2 py-1 rounded-md shadow-sm border border-slate-100"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val); setPage(1) }}>
+            <SelectTrigger className="w-40 bg-slate-50/50 border-slate-200 rounded-xl py-6">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="published">Published</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {events.length > 0 && (
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 px-1">
+          <div className="text-xs font-semibold text-slate-500 flex items-center gap-3 px-1">
             <Ticket className="h-3.5 w-3.5 text-slate-400" />
-            Showing {events.length} of {totalCount} total event{totalCount !== 1 ? 's' : ''}
+            Showing {events.length} of {totalCount} event{totalCount !== 1 ? 's' : ''}
+            {(debouncedSearch || statusFilter !== 'all') && (
+              <button
+                onClick={() => { setSearchInput(''); setStatusFilter('all'); setPage(1) }}
+                className="text-indigo-600 hover:text-indigo-700 underline underline-offset-2"
+              >
+                Clear filters
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -294,13 +317,13 @@ export default function EventsDashboardPage() {
                 No events found
               </h3>
               <p className="text-slate-500 text-sm leading-relaxed">
-                {debouncedSearch
-                  ? `We couldn't find matches for "${debouncedSearch}". Refine your keywords or browse the catalog.`
-                  : "Get started by publishing your very first public or private event sequence."}
+                {(debouncedSearch || statusFilter !== 'all')
+                   ? `No events matching your filters.`
+                  : "Create your first event to get started."}
               </p>
-              {!debouncedSearch && (
+              {!debouncedSearch && statusFilter === 'all' && (
                 <Link href="/organizer/create">
-                  <Button className="mt-2 bg-slate-900 hover:bg-slate-800 rounded-xl px-5">
+                  <Button className="mt-2 bg-slate-900 hover:bg-slate-800 !text-white hover:!text-white rounded-xl px-5">
                     <Plus className="h-4 w-4 mr-2" />
                     Create Your First Event
                   </Button>
@@ -315,7 +338,7 @@ export default function EventsDashboardPage() {
             {events.map((event) => (
               <Card key={event.id} className="group overflow-hidden border border-slate-100 bg-white hover:border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-2xl flex flex-col">
                 
-                {/* Media Anchor Block */}
+                {/* Cover image */}
                 <div className="relative h-44 bg-slate-100 overflow-hidden">
                   {event.coverImageUrl && !imageErrors.has(event.id) ? (
                     <img
@@ -342,15 +365,16 @@ export default function EventsDashboardPage() {
                           variant="ghost"
                           size="icon"
                           className="bg-white/90 backdrop-blur-md hover:bg-white text-slate-700 h-8 w-8 rounded-lg shadow-sm border border-slate-200/20 active:scale-95 transition-transform"
+                          aria-label="Event actions"
                         >
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-48 rounded-xl p-1.5 shadow-xl border-slate-100">
+                      <DropdownMenuContent align="start" className="w-48 rounded-xl p-1.5 shadow-xl border-slate-100 bg-white">
                         <DropdownMenuItem asChild className="rounded-lg">
                           <Link href={`/organizer/events/${event.id}`} className="cursor-pointer gap-2 py-2 text-slate-700">
                             <Edit className="h-4 w-4 text-slate-400" />
-                            Edit Details
+                            Edit
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild className="rounded-lg">
@@ -362,13 +386,13 @@ export default function EventsDashboardPage() {
                         <DropdownMenuItem asChild className="rounded-lg">
                           <Link href={`/organizer/checkin/${event.id}`} className="cursor-pointer gap-2 py-2 text-slate-700">
                             <QrCode className="h-4 w-4 text-slate-400" />
-                            Check-in Gateway
+                            Check-in
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild className="rounded-lg">
                           <Link href={`/organizer/analytics/${event.id}`} className="cursor-pointer gap-2 py-2 text-slate-700">
                             <Eye className="h-4 w-4 text-slate-400" />
-                            Performance Data
+                            Analytics
                           </Link>
                         </DropdownMenuItem>
                         <div className="h-px bg-slate-100 my-1" />
@@ -384,8 +408,8 @@ export default function EventsDashboardPage() {
                   </div>
                 </div>
 
-                {/* Primary Card Core Content */}
-                <CardContent className="p-5 flex-1 flex flex-col justify-between">
+                {/* Event info */}
+                <CardContent className="p-5 flex-1 flex flex-col justify-between gap-4">
                   <div className="space-y-3">
                     <h3 className="font-bold text-xl tracking-tight text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-1">
                       {event.title}
@@ -403,8 +427,8 @@ export default function EventsDashboardPage() {
                     </div>
                   </div>
 
-                  {/* Operational Performance Data */}
-                  <div className="grid grid-cols-2 gap-3 pt-4 mt-5 border-t border-slate-100/80 bg-slate-50/40 rounded-xl p-3">
+                  {/* Sales overview */}
+                  <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100/80 bg-slate-50/40 rounded-xl p-3">
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                         <Ticket className="h-3 w-3 text-slate-400" />
@@ -424,7 +448,7 @@ export default function EventsDashboardPage() {
                   </div>
                 </CardContent>
 
-                {/* Card Structural Footer Button Groups */}
+                {/* Action buttons */}
                 <CardFooter className="p-5 pt-0 flex gap-2.5">
                   <Link href={`/organizer/checkin/${event.id}`} className="flex-1">
                     <Button variant="outline" size="sm" className="w-full border-slate-200 hover:bg-slate-50 hover:text-slate-800 rounded-xl py-5 font-medium transition-colors flex items-center justify-center gap-1.5">
@@ -433,7 +457,7 @@ export default function EventsDashboardPage() {
                     </Button>
                   </Link>
                   <Link href={`/organizer/events/${event.id}`} className="flex-1">
-                    <Button size="sm" className="w-full bg-slate-900 hover:bg-slate-800 rounded-xl py-5 font-medium transition-colors group/btn">
+                    <Button size="sm" className="w-full bg-slate-900 hover:bg-slate-800 !text-white hover:!text-white rounded-xl py-5 font-medium transition-colors group/btn">
                       Manage
                       <ArrowRight className="h-4 w-4 ml-1 opacity-60 group-hover/btn:translate-x-0.5 transition-transform" />
                     </Button>
@@ -466,20 +490,20 @@ export default function EventsDashboardPage() {
         open={!!eventToDelete}
         onOpenChange={(open) => !open && setEventToDelete(null)}
         onConfirm={handleDeleteEvent}
-        title="Delete Event Archive"
-        description={`Are you completely sure you want to purge "${eventToDelete?.title || 'this selected item'}"?`}
-        confirmText="Confirm Permanent Deletion"
-        cancelText="Dismiss"
+        title="Delete Event"
+        description={`Are you sure you want to delete "${eventToDelete?.title || 'this event'}"?`}
+        confirmText="Delete Event"
+        cancelText="Cancel"
         variant="danger"
         isLoading={isDeleting}
       >
         <div className="p-3.5 bg-rose-50/70 border border-rose-100 rounded-xl text-left">
           <div className="flex items-center gap-2 text-rose-700 mb-1.5">
             <AlertCircle className="h-4 w-4 text-rose-600" />
-            <span className="font-semibold text-sm">Irrevocable Modification Warning</span>
+            <span className="font-semibold text-sm">Warning</span>
           </div>
           <p className="text-xs text-rose-600/90 leading-relaxed">
-            Executing this step completely deletes your event parameters, customer transactional linkages, sales accounting records, and operational access keys.
+            This will permanently delete the event, all ticket types, attendee data, and sales records. This action cannot be undone.
           </p>
         </div>
       </ConfirmationDialog>

@@ -30,10 +30,6 @@ import { Textarea } from '@/components/ui/textarea'
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card'
 import {
   Select,
@@ -49,6 +45,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 // Custom components
 import { Breadcrumb } from '@/components/common/Breadcrumb'
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog'
+import { ShareEventButton } from '@/components/events/ShareEventButton'
 
 // Stores & Utilities
 import { useEventStore, type Event, type TicketType } from '@/store/eventStore'
@@ -71,7 +68,7 @@ const eventSchema = z.object({
   city: z.string().min(2, 'City is required'),
   startDate: z.string().min(1, 'Start date is required'),
   startTime: z.string().min(1, 'Start time is required'),
-  status: z.enum(['draft', 'published', 'cancelled', 'completed']),
+  status: z.enum(['draft', 'published', 'cancelled', 'suspended', 'archived']),
   capacityMin: z.number().min(0).optional(),
   capacityMax: z.number().min(0).optional(),
 })
@@ -139,6 +136,17 @@ export default function EditEventPage() {
     name: 'ticketTypes',
   })
 
+  const hasChanges = form.formState.isDirty || ticketForm.formState.isDirty
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (hasChanges) {
+        e.preventDefault()
+      }
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [hasChanges])
+
   // Fetch event details on mount using store
   useEffect(() => {
     fetchEventDetails()
@@ -154,7 +162,7 @@ export default function EditEventPage() {
       ])
       
       if (!eventData) {
-        toast.error('❌ Event not found')
+        toast.error('Event not found')
         router.push('/organizer/events')
         return
       }
@@ -187,7 +195,7 @@ export default function EditEventPage() {
         })) || [],
       })
     } catch (error) {
-      toast.error('❌ Failed to load event details')
+      toast.error('Failed to load event details')
       router.push('/organizer/events')
     } finally {
       setLoading(false)
@@ -195,11 +203,20 @@ export default function EditEventPage() {
   }
 
   /**
-   * Save event details using store
+   * Save event details using store.
+   * If the event is published, auto-unpublish first so changes aren't live.
    */
   const handleSaveEvent = async (data: z.infer<typeof eventSchema>) => {
     setIsSaving(true)
     try {
+      const wasPublished = event?.status === 'published'
+
+      if (wasPublished) {
+        toast.info('Unpublishing event before saving changes...')
+        await unpublishEvent(params.id as string)
+        setEvent(prev => prev ? { ...prev, status: 'draft' } : prev)
+      }
+
       const updateData: any = {
         title: data.title,
         description: data.description,
@@ -207,7 +224,7 @@ export default function EditEventPage() {
         city: data.city,
         startDate: data.startDate,
         startTime: data.startTime,
-        status: data.status,
+        status: 'draft',
       }
       
       // Add capacity range if both values are provided
@@ -221,10 +238,14 @@ export default function EditEventPage() {
       const updatedEvent = await updateEvent(params.id as string, updateData)
       if (updatedEvent) {
         setEvent(updatedEvent)
-        toast.success('✅ Event updated successfully')
+        if (wasPublished) {
+          toast.success('Changes saved. Review and republish when ready.', { duration: 5000 })
+        } else {
+          toast.success('Event updated successfully')
+        }
       }
     } catch (error) {
-      toast.error('❌ Failed to update event')
+      toast.error('Failed to update event')
     } finally {
       setIsSaving(false)
     }
@@ -259,10 +280,10 @@ export default function EditEventPage() {
         }
       }
       
-      toast.success('✅ Ticket types updated successfully')
+      toast.success('Ticket types updated successfully')
       await fetchEventDetails()
     } catch (error) {
-      toast.error('❌ Failed to update ticket types')
+      toast.error('Failed to update ticket types')
     } finally {
       setIsSaving(false)
     }
@@ -278,9 +299,18 @@ export default function EditEventPage() {
       if (success) {
         setShowPublishDialog(false)
         await fetchEventDetails()
+        const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL}/e/${params.id}`
+        toast.success('Event published!', {
+          description: `Share link: ${shareUrl}`,
+          action: {
+            label: 'Copy',
+            onClick: () => navigator.clipboard.writeText(shareUrl),
+          },
+          duration: 8000,
+        })
       }
     } catch (error) {
-      toast.error('❌ Failed to publish event')
+      toast.error('Failed to publish event')
     } finally {
       setIsSaving(false)
     }
@@ -298,7 +328,7 @@ export default function EditEventPage() {
         await fetchEventDetails()
       }
     } catch (error) {
-      toast.error('❌ Failed to unpublish event')
+      toast.error('Failed to unpublish event')
     } finally {
       setIsSaving(false)
     }
@@ -343,35 +373,54 @@ export default function EditEventPage() {
             <Calendar className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Edit Event ✏️</h1>
-            <p className="text-gray-500 mt-1">
-              Update your event details and manage ticket types
+            <h1 className="text-2xl font-bold">Edit Event</h1>
+            <p className="text-muted-foreground mt-1">
+              {isPublished
+                ? 'Saving changes will unpublish this event for review before republishing.'
+                : 'Update your event details and manage ticket types'}
             </p>
           </div>
         </div>
         <div className="flex gap-2">
           {isPublished ? (
-            <Button 
-              variant="outline" 
-              onClick={() => setShowUnpublishDialog(true)} 
-              disabled={isSaving}
-              className="border-amber-500 text-amber-600 hover:bg-amber-50"
-            >
-              <EyeOff className="h-4 w-4 mr-2 text-purple-400" />
-              Unpublish 
-            </Button>
+            <>
+              <ShareEventButton
+                eventId={event.id}
+                eventTitle={event.title}
+                eventDate={event.startDate}
+                venue={`${event.venue}, ${event.city}`}
+                variant="outline"
+              />
+              <Button 
+                variant="outline" 
+                onClick={() => setShowUnpublishDialog(true)} 
+                disabled={isSaving}
+                className="border-amber-500 text-amber-600 hover:bg-amber-50"
+              >
+                  <EyeOff className="h-4 w-4 mr-2" />
+                 Unpublish 
+              </Button>
+            </>
           ) : (
             <Button 
               onClick={() => setShowPublishDialog(true)} 
               disabled={isSaving}
               className="bg-green-600 hover:bg-green-700"
             >
-              <Eye className="h-4 w-4 mr-2 text-purple-400" />
-              Publish Event 
+                <Eye className="h-4 w-4 mr-2" />
+               Publish Event 
             </Button>
           )}
         </div>
       </div>
+
+      {/* Published event notice */}
+      {isPublished && (
+        <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>This event is <strong>published</strong>. Saving changes will automatically unpublish it — you can republish after reviewing.</span>
+        </div>
+      )}
 
       {/* Stats Card */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -383,7 +432,7 @@ export default function EditEventPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{formatDate(event.startDate)}</p>
-                <p className="text-xs text-gray-500">at {formatTime(event.startTime)}</p>
+                <p className="text-xs text-muted-foreground">at {formatTime(event.startTime)}</p>
               </div>
             </div>
           </CardContent>
@@ -396,7 +445,7 @@ export default function EditEventPage() {
               </div>
               <div>
                 <p className="font-semibold">{event.venue}</p>
-                <p className="text-xs text-gray-500">{event.city}</p>
+                <p className="text-xs text-muted-foreground">{event.city}</p>
               </div>
             </div>
           </CardContent>
@@ -411,7 +460,7 @@ export default function EditEventPage() {
                 <p className="text-2xl font-bold">
                   {localTicketTypes.reduce((sum, t) => sum + (t.quantitySold || 0), 0)}
                 </p>
-                <p className="text-xs text-gray-500">tickets sold </p>
+                <p className="text-xs text-muted-foreground">tickets sold </p>
               </div>
             </div>
           </CardContent>
@@ -428,234 +477,225 @@ export default function EditEventPage() {
                     ? `${event.capacityRange.lower} – ${event.capacityRange.upper}` 
                     : '∞'}
                 </p>
-                <p className="text-xs text-gray-500">capacity range</p>
+                <p className="text-xs text-muted-foreground">capacity range</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="details" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-purple-400" />
-            Event Details 
+      {/* Vertical Tabs Layout */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col md:flex-row gap-6 md:gap-8">
+        <TabsList className="flex flex-row md:flex-col bg-card border border-border rounded-2xl p-2 shadow-sm h-fit w-full md:w-48 shrink-0 gap-1">
+          <TabsTrigger value="details" className="flex items-center gap-3 justify-start w-full px-4 py-3 text-sm font-medium rounded-xl data-active:bg-indigo-50 dark:data-active:bg-indigo-900/30 data-active:text-indigo-700 dark:data-active:text-indigo-300 data-active:border-l-indigo-500 dark:data-active:border-l-indigo-400 data-active:shadow-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-all">
+            <Calendar className="h-4 w-4 shrink-0" />
+            Event Details
           </TabsTrigger>
-          <TabsTrigger value="tickets" className="flex items-center gap-2">
-            <Ticket className="h-4 w-4 text-blue-400" />
-            Ticket Types 
+          <TabsTrigger value="tickets" className="flex items-center gap-3 justify-start w-full px-4 py-3 text-sm font-medium rounded-xl data-active:bg-indigo-50 dark:data-active:bg-indigo-900/30 data-active:text-indigo-700 dark:data-active:text-indigo-300 data-active:border-l-indigo-500 dark:data-active:border-l-indigo-400 data-active:shadow-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-all">
+            <Ticket className="h-4 w-4 shrink-0" />
+            Ticket Types
           </TabsTrigger>
         </TabsList>
+        <div className="flex-1 min-w-0">
 
         {/* Event Details Tab */}
-        <TabsContent value="details">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-primary" />
-                Event Information
-              </CardTitle>
-              <CardDescription>
-                Update your event details below
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <form id="event-form" onSubmit={form.handleSubmit(handleSaveEvent)} className="space-y-4">
-                <div>
-                  <Label htmlFor="title">Event Title *</Label>
-                  <Input id="title" placeholder="e.g., Douala Music Fest 2025" {...form.register('title')} />
-                  {form.formState.errors.title && (
-                    <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" /> {form.formState.errors.title.message}
-                    </p>
-                  )}
-                </div>
+        <TabsContent value="details" className="space-y-6 mt-6">
+          <div>
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              Event Information
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">Update your event details below</p>
+          </div>
+          <form id="event-form" onSubmit={form.handleSubmit(handleSaveEvent)} className="space-y-4 p-6 bg-card rounded-xl border border-border shadow-sm">
+            <div className="space-y-2">
+              <Label htmlFor="title">Event Title *</Label>
+              <Input id="title" placeholder="e.g., Douala Music Fest 2025" {...form.register('title')} />
+              {form.formState.errors.title && (
+                <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" /> {form.formState.errors.title.message}
+                </p>
+              )}
+            </div>
 
-                <div>
-                  <Label htmlFor="description">Description </Label>
-                  <Textarea id="description" rows={5} placeholder="Describe your event..." {...form.register('description')} />
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea id="description" rows={5} placeholder="Describe your event..." {...form.register('description')} />
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="venue">Venue Name and Address *</Label>
-                    <Input id="venue" placeholder="e.g., Palais des Congrès" {...form.register('venue')} />
-                    {form.formState.errors.venue && (
-                      <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" /> {form.formState.errors.venue.message}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="city">City *</Label>
-                    <Select
-                      onValueChange={(value) => form.setValue('city', value)}
-                      value={form.watch('city')}
-                    >
-                      <SelectTrigger className="bg-white" >
-                        <SelectValue placeholder=" Select a city" />
-                      </SelectTrigger>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="venue">Venue Name and Address *</Label>
+                <Input id="venue" placeholder="e.g., Palais des Congrès" {...form.register('venue')} />
+                {form.formState.errors.venue && (
+                  <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" /> {form.formState.errors.venue.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="city">City *</Label>
+                <Select
+                  onValueChange={(value) => form.setValue('city', value)}
+                  value={form.watch('city')}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder=" Select a city" />
+                  </SelectTrigger>
                       <SelectContent>
-                        {CAMEROON_CITIES.map((city) => (
-                          <SelectItem key={city} value={city}>{city}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {form.formState.errors.city && (
-                      <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" /> {form.formState.errors.city.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                    {CAMEROON_CITIES.map((city) => (
+                      <SelectItem key={city} value={city}>{city}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.city && (
+                  <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" /> {form.formState.errors.city.message}
+                  </p>
+                )}
+              </div>
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="startDate">Event Date *</Label>
-                    <Input id="startDate" type="date" {...form.register('startDate')} />
-                    {form.formState.errors.startDate && (
-                      <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" /> {form.formState.errors.startDate.message}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="startTime">Event Time *</Label>
-                    <Input id="startTime" type="time" {...form.register('startTime')} />
-                    {form.formState.errors.startTime && (
-                      <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" /> {form.formState.errors.startTime.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="startDate">Event Date *</Label>
+                <Input id="startDate" type="date" {...form.register('startDate')} />
+                {form.formState.errors.startDate && (
+                  <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" /> {form.formState.errors.startDate.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="startTime">Event Time *</Label>
+                <Input id="startTime" type="time" {...form.register('startTime')} />
+                {form.formState.errors.startTime && (
+                  <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" /> {form.formState.errors.startTime.message}
+                  </p>
+                )}
+              </div>
+            </div>
 
-                {/* Capacity Range */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="capacityMin">Minimum Capacity</Label>
-                    <Input
-                      id="capacityMin"
-                      type="number"
-                      placeholder="e.g., 10"
-                      {...form.register('capacityMin', { valueAsNumber: true })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="capacityMax">Maximum Capacity</Label>
-                    <Input
-                      id="capacityMax"
-                      type="number"
-                      placeholder="e.g., 100"
-                      {...form.register('capacityMax', { valueAsNumber: true })}
-                    />
-                  </div>
-                </div>
-              </form>
-            </CardContent>
-            <CardFooter>
-              <Button form="event-form" type="submit" disabled={isSaving}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="capacityMin">Minimum Capacity</Label>
+                <Input
+                  id="capacityMin"
+                  type="number"
+                  placeholder="e.g., 10"
+                  {...form.register('capacityMin', { valueAsNumber: true })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="capacityMax">Maximum Capacity</Label>
+                <Input
+                  id="capacityMax"
+                  type="number"
+                  placeholder="e.g., 100"
+                  {...form.register('capacityMax', { valueAsNumber: true })}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4 border-t border-border">
+              <Button type="submit" disabled={isSaving}>
                 <Save className="h-4 w-4 mr-2" />
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </Button>
-            </CardFooter>
-          </Card>
+            </div>
+          </form>
         </TabsContent>
 
         {/* Ticket Types Tab */}
-        <TabsContent value="tickets">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Ticket className="h-5 w-5 text-primary" />
-                Ticket Types
-              </CardTitle>
-              <CardDescription>
-                Manage ticket categories and pricing
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form id="ticket-form" onSubmit={ticketForm.handleSubmit(handleSaveTickets)} className="space-y-4">
-                <div className="space-y-3">
-                  {fields.map((field, index) => {
-                    const originalTicket = localTicketTypes.find(t => t.id === field.id)
-                    const soldCount = originalTicket?.quantitySold || 0
+        <TabsContent value="tickets" className="space-y-6 mt-6">
+          <div>
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Ticket className="h-5 w-5 text-primary" />
+              Ticket Types
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">Manage ticket categories and pricing</p>
+          </div>
+          <form id="ticket-form" onSubmit={ticketForm.handleSubmit(handleSaveTickets)} className="space-y-4 p-6 bg-card rounded-xl border border-border shadow-sm">
+            <div className="space-y-4">
+              {fields.map((field, index) => {
+                const originalTicket = localTicketTypes.find(t => t.id === field.id)
+                const soldCount = originalTicket?.quantitySold || 0
+                
+                return (
+                  <div key={field.id} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <Badge variant="outline" className="flex items-center gap-1">
+                        <Ticket className="h-3 w-3" />
+                        Ticket {index + 1}
+                      </Badge>
+                      {fields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => remove(index)}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                     
-                    return (
-                      <div key={field.id} className="border rounded-lg p-4 space-y-3">
-                        <div className="flex justify-between items-center">
-                          <Badge variant="outline" className="flex items-center gap-1">
-                            <Ticket className="h-3 w-3" />
-                            Ticket {index + 1}
-                          </Badge>
-                          {fields.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => remove(index)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <Label>Ticket Name</Label>
-                            <Input
-                              placeholder="e.g., VIP"
-                              {...ticketForm.register(`ticketTypes.${index}.name`)}
-                            />
-                          </div>
-                          <div>
-                            <Label>Price (XAF)</Label>
-                            <Input
-                              type="number"
-                              {...ticketForm.register(`ticketTypes.${index}.price`, { valueAsNumber: true })}
-                            />
-                          </div>
-                          <div>
-                            <Label>Quantity Available</Label>
-                            <Input
-                              type="number"
-                              {...ticketForm.register(`ticketTypes.${index}.quantityAvailable`, { valueAsNumber: true })}
-                            />
-                          </div>
-                        </div>
-                        
-                        {soldCount > 0 && (
-                          <p className="text-sm text-amber-600 flex items-center gap-1">
-                            <AlertCircle className="h-3 w-3" />
-                            {soldCount} tickets already sold for this type.
-                          </p>
-                        )}
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label>Ticket Name</Label>
+                        <Input
+                          placeholder="e.g., VIP"
+                          {...ticketForm.register(`ticketTypes.${index}.name`)}
+                        />
                       </div>
-                    )
-                  })}
-                </div>
+                      <div className="space-y-2">
+                        <Label>Price (XAF)</Label>
+                        <Input
+                          type="number"
+                          {...ticketForm.register(`ticketTypes.${index}.price`, { valueAsNumber: true })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Quantity Available</Label>
+                        <Input
+                          type="number"
+                          {...ticketForm.register(`ticketTypes.${index}.quantityAvailable`, { valueAsNumber: true })}
+                        />
+                      </div>
+                    </div>
+                    
+                    {soldCount > 0 && (
+                      <p className="text-sm text-amber-600 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {soldCount} tickets already sold for this type.
+                      </p>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => append({ name: '', price: 0, quantityAvailable: 0, quantitySold: 0 })}
-                  className="w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Another Ticket Type ➕
-                </Button>
-              </form>
-            </CardContent>
-            <CardFooter>
-              <Button form="ticket-form" type="submit" disabled={isSaving}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => append({ name: '', price: 0, quantityAvailable: 0, quantitySold: 0 })}
+              className="w-full"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Another Ticket Type
+            </Button>
+
+            <div className="flex justify-end pt-4 border-t border-border">
+              <Button type="submit" disabled={isSaving}>
                 <Save className="h-4 w-4 mr-2" />
                 Save Ticket Types
               </Button>
-            </CardFooter>
-          </Card>
+            </div>
+          </form>
         </TabsContent>
+      </div>
       </Tabs>
 
       {/* Publish Confirmation Dialog */}
@@ -663,9 +703,9 @@ export default function EditEventPage() {
         open={showPublishDialog}
         onOpenChange={setShowPublishDialog}
         onConfirm={handlePublish}
-        title="🚀 Publish Event"
+        title="Publish Event"
         description={`Are you ready to publish "${event.title}"?`}
-        confirmText="Yes, Publish Event"
+        confirmText="Publish Event"
         cancelText="Cancel"
         variant="info"
         isLoading={isSaving}
@@ -688,9 +728,9 @@ export default function EditEventPage() {
         open={showUnpublishDialog}
         onOpenChange={setShowUnpublishDialog}
         onConfirm={handleUnpublish}
-        title="📝 Unpublish Event"
+        title="Unpublish Event"
         description={`Are you sure you want to unpublish "${event.title}"?`}
-        confirmText="Yes, Unpublish"
+        confirmText="Unpublish Event"
         cancelText="Cancel"
         variant="warning"
         isLoading={isSaving}
@@ -701,9 +741,9 @@ export default function EditEventPage() {
             <span className="font-medium">Warning!</span>
           </div>
           <ul className="space-y-1 text-sm text-amber-600">
-            <li>⚠️ The event will be hidden from the public</li>
-            <li>⚠️ No new ticket sales will be possible</li>
-            <li>⚠️ Existing tickets remain valid</li>
+            <li>The event will be hidden from the public</li>
+            <li>No new ticket sales will be possible</li>
+            <li>Existing tickets remain valid</li>
           </ul>
         </div>
       </ConfirmationDialog>

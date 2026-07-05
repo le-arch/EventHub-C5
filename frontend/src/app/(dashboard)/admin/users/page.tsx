@@ -72,6 +72,7 @@ interface User {
   role: 'organizer' | 'admin'
   isEmailVerified: boolean
   isActive: boolean
+  isOrganizerVerified: boolean
   eventsCount: number
   createdAt: string
 }
@@ -136,7 +137,7 @@ export default function AdminUsersPage() {
         setTotalPages(1)
         setStats({
           total: response.data.length,
-          verified: response.data.filter((u: any) => u.isEmailVerified).length,
+          verified: response.data.filter((u: any) => u.isOrganizerVerified).length,
           suspended: response.data.filter((u: any) => !u.isActive).length,
         })
       }
@@ -273,7 +274,7 @@ export default function AdminUsersPage() {
         </Badge>
       )
     }
-    if (user.isEmailVerified) {
+    if (user.isOrganizerVerified) {
       return (
         <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm hover:bg-emerald-50 flex items-center gap-1.5 font-bold tracking-wide rounded-md px-2.5 py-0.5">
           <CheckCircle className="h-3 w-3 text-emerald-600 shrink-0" />
@@ -291,7 +292,7 @@ export default function AdminUsersPage() {
 
   if (loading && users.length === 0) {
     return (
-      <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6">
+      <div className="space-y-6 max-w-7xl mx-auto">
         <Skeleton className="h-5 w-48 bg-slate-200 rounded-md" />
         <div className="flex justify-between items-center flex-wrap gap-4">
           <div className="space-y-2">
@@ -311,7 +312,7 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 text-slate-900">
+    <div className="space-y-6 max-w-7xl mx-auto text-slate-900">
       <Breadcrumb 
         items={[
           { label: 'Admin', href: '/admin/users' },
@@ -383,9 +384,9 @@ export default function AdminUsersPage() {
                 </SelectTrigger>
                 <SelectContent className="rounded-xl bg-white">
                   <SelectItem value="all" className="font-medium text-slate-800">All System Accounts</SelectItem>
-                  <SelectItem value="verified" className="font-medium text-slate-800"> Verified Profiles Only</SelectItem>
-                  <SelectItem value="pending" className="font-medium text-slate-800"> Pending Validations</SelectItem>
-                  <SelectItem value="suspended" className="font-medium text-slate-800"> Suspended Segments</SelectItem>
+                  <SelectItem value="verified" className="font-medium text-slate-800">Verified Profiles Only</SelectItem>
+                  <SelectItem value="pending" className="font-medium text-slate-800">Pending Validations</SelectItem>
+                  <SelectItem value="suspended" className="font-medium text-slate-800">Suspended Segments</SelectItem>
                 </SelectContent>
               </Select>
               
@@ -520,8 +521,8 @@ export default function AdminUsersPage() {
                                   <MoreVertical className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="rounded-xl min-w-[160px] p-1 shadow-md border border-slate-100">
-                                {!user.isEmailVerified && (
+                               <DropdownMenuContent align="end" className="rounded-xl min-w-[160px] p-1 shadow-md border border-slate-100 bg-white">
+                                {!user.isOrganizerVerified && (
                                   <DropdownMenuItem 
                                     onClick={() => setUserToVerify(user)}
                                     className="rounded-lg text-xs font-bold text-slate-700 focus:bg-slate-50 flex items-center gap-2 cursor-pointer"

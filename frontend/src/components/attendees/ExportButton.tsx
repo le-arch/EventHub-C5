@@ -201,7 +201,7 @@ export function ExportButton({
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="bg-white">
         <DropdownMenuItem onClick={handleExportCSV} disabled={isExporting}>
           <FileSpreadsheet className="h-4 w-4 mr-2" />
           Export as CSV

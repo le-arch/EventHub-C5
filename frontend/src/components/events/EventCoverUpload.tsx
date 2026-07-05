@@ -14,13 +14,14 @@ import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Upload, X, Image as ImageIcon, Loader2, Crop } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 interface EventCoverUploadProps {
   value?: string
   onChange?: (file: File | null, previewUrl?: string) => void
-  onUpload?: (file: File) => Promise<string>
+  onUpload?: (file: File, onProgress?: (percent: number) => void) => Promise<string>
   disabled?: boolean
   className?: string
   label?: string
@@ -45,6 +46,7 @@ export function EventCoverUpload({
 }: EventCoverUploadProps) {
   const [preview, setPreview] = useState<string | null>(value || null)
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
 
   const validateAspectRatio = (file: File): Promise<boolean> => {
@@ -89,8 +91,9 @@ export function EventCoverUpload({
     // Upload if upload handler provided
     if (onUpload) {
       setIsUploading(true)
+      setUploadProgress(0)
       try {
-        const uploadedUrl = await onUpload(file)
+        const uploadedUrl = await onUpload(file, (percent) => setUploadProgress(percent))
         setPreview(uploadedUrl)
         onChange?.(file, uploadedUrl)
         toast.success('Cover image uploaded successfully')
@@ -100,6 +103,7 @@ export function EventCoverUpload({
         onChange?.(null)
       } finally {
         setIsUploading(false)
+        setUploadProgress(0)
       }
     } else {
       onChange?.(file, previewUrl)
@@ -176,7 +180,11 @@ export function EventCoverUpload({
           <input id="cover-upload-input" {...getInputProps()} />
           
           {isUploading ? (
-            <Loader2 className="h-10 w-10 text-gray-400 animate-spin" />
+            <div className="text-center w-full max-w-xs mx-auto px-4">
+              <Loader2 className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-3" />
+              <Progress value={uploadProgress} className="h-2 bg-gray-200" />
+              <p className="text-xs text-gray-500 mt-2">{uploadProgress}% uploaded</p>
+            </div>
           ) : (
             <>
               <div className="p-3 bg-gray-100 rounded-full mb-3">

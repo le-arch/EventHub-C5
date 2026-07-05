@@ -98,3 +98,19 @@ UPDATE events
 SET status = $2, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING *;
+
+-- name: ListEventsAdmin :many
+SELECT e.id, e.organizer_id, e.title, e.slug, e.description, e.venue, e.city, e.start_date, e.end_date, e.start_time, e.end_time, e.cover_image_url, e.status, e.sales_start_date, e.sales_end_date, e.capacity_range, e.created_at, e.updated_at, u.full_name as organizer_name, u.email as organizer_email
+FROM events e
+INNER JOIN users u ON e.organizer_id = u.id
+WHERE ($1 = '' OR e.status::text = $1)
+AND ($2 = '' OR e.title ILIKE '%' || $2 || '%' OR u.full_name ILIKE '%' || $2 || '%')
+ORDER BY e.created_at DESC
+LIMIT $3 OFFSET $4;
+
+-- name: CountEventsAdmin :one
+SELECT COUNT(*)
+FROM events e
+INNER JOIN users u ON e.organizer_id = u.id
+WHERE ($1 = '' OR e.status::text = $1)
+AND ($2 = '' OR e.title ILIKE '%' || $2 || '%' OR u.full_name ILIKE '%' || $2 || '%');

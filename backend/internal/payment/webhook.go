@@ -2,9 +2,9 @@
 package payment
 
 import (
-	// "crypto/hmac"
-	// "crypto/sha256"
-	// "encoding/hex"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 
@@ -23,22 +23,28 @@ func NewWebhookHandler(querier repo.Querier, secret string) *WebhookHandler {
 	return &WebhookHandler{querier: querier, secret: secret}
 }
 
-// func (wh *WebhookHandler) verifySignature(body []byte, signatureHeader string) bool {
-// 	mac := hmac.New(sha256.New, []byte(wh.secret))
-// 	mac.Write(body)
-// 	expected := hex.EncodeToString(mac.Sum(nil))
-// 	return hmac.Equal([]byte(expected), []byte(signatureHeader))
-// }
+func (wh *WebhookHandler) verifySignature(body []byte, signatureHeader string) bool {
+	if wh.secret == "" {
+		return true // dev mode: skip verification if no secret configured
+	}
+	mac := hmac.New(sha256.New, []byte(wh.secret))
+	mac.Write(body)
+	expected := hex.EncodeToString(mac.Sum(nil))
+	return hmac.Equal([]byte(expected), []byte(signatureHeader))
+}
 
 
 func (wh *WebhookHandler) HandleMomoWebhook(c *gin.Context) {
 	c.Header("ngrok-skip-browser-warning", "1")
-	// sig := c.GetHeader("X-Signature")
-	body, _ := c.GetRawData() // you need to read body once
-	// if sig == "" || !wh.verifySignature(body, sig) {
-	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid signature"})
-	// 	return
-	// }
+	sig := c.GetHeader("X-Signature")
+	body, _ := c.GetRawData()
+	if sig == "" || !wh.verifySignature(body, sig) {
+		// In dev mode, allow configurable skip via empty secret
+		if wh.secret != "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid signature"})
+			return
+		}
+	}
 
 	var payload models.MomoWebhookPayload
 	if err := json.Unmarshal(body, &payload); err != nil {
@@ -47,13 +53,14 @@ func (wh *WebhookHandler) HandleMomoWebhook(c *gin.Context) {
 	}
 
 	// Log webhook (you already have InsertWebhookLog)
+	sigValid := wh.secret == "" || wh.verifySignature(body, sig)
 	headers, _ := json.Marshal(c.Request.Header)
 	payloadBytes, _ := json.Marshal(payload)
 	_, _ = wh.querier.InsertWebhookLog(c, repo.InsertWebhookLogParams{
 		Gateway:        "mtn_momo",
 		Payload:        payloadBytes,
 		Headers:        headers,
-		SignatureValid: nil,
+		SignatureValid: &sigValid,
 		Processed:      nil,
 		ErrorMessage:   "",
 	})

@@ -4,6 +4,27 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
+<!-- BEGIN:current-session-summary -->
+## Current Session — Dark Mode & Payment Flow Fixes
+
+### Completed
+- **PaymentModal rewrite**: Full payment simulation flow — explicit method selection (no default), USSD dial code screen, PIN entry (4-digit MTN / 6-digit Orange), animated processing with progress messages, QR code on success. All hardcoded colors replaced with CSS variable classes. QR code rendered via `qrcode.react`.
+- **Dark mode form fields**: EventForm native `<select>` now has `dark:bg-input/30 dark:border-input`. All `text-gray-500` → `text-muted-foreground` across EventForm, EventCard, EditEventPage, PublicEventPage. `bg-white` → `bg-card`, `border-slate-100` → `border-border`.
+- **EventCard dark mode**: `text-gray-500` → `text-muted-foreground` (dates, venue, stats), `bg-white` → `bg-popover` on dropdown.
+- **Edit event page dark mode**: TabsList uses `bg-card border-border`, triggers use `data-active:` with CSS variable colors. SelectTrigger/Content `bg-white` removed (defaults to component theme). Form containers use `bg-card border-border`.
+- **Analytics tab fix**: Changed `data-[state=active]` to `data-active` to match Radix v4 attribute format.
+- **Dashboard dropdown**: Added `sideOffset={8}` to fix positioning glitch during sidebar animation.
+- **Public event page dark mode**: Replaced all hardcoded `bg-slate-50`, `text-slate-900`, `bg-white`, `border-purple-100` with theme-aware `bg-background`, `text-foreground`, `bg-card`, `border-border`.
+- **Ticket sold count**: After payment success, refetch `/events/public/:id/ticket-types` to update remaining counts.
+- **Auto-unpublish on edit save**: Published events auto-unpublish before saving changes (from prior session).
+
+### Key Patterns
+- Use `text-muted-foreground`, `bg-card`, `bg-popover`, `border-border`, `bg-background` — never hardcoded gray/white/slate/purple colors
+- Radix v4 uses `data-active` not `data-[state=active]`
+- Always use `bg-destructive/10 text-destructive` for error states (not `bg-red-50 text-red-900`)
+- Payment flow: form → USSD → PIN → processing → success+QR
+<!-- END:current-session-summary -->
+
 <!-- BEGIN:backend-api-rules -->
 # Backend API (Gin) rules
 

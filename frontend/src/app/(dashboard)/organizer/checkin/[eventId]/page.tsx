@@ -28,7 +28,8 @@ import {
   MapPin,
   Clock,
   QrCode,
-  Smartphone
+  Smartphone,
+  Ticket,
 } from 'lucide-react'
 
 // shadcn/ui components
@@ -151,7 +152,7 @@ export default function CheckinPage() {
           }
         })
         
-        toast.success(`✅ ${payload.attendeeName || payload.attendee_name} checked in successfully!`)
+        toast.success(`${payload.attendeeName || payload.attendee_name} checked in successfully!`)
         
         if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current)
         feedbackTimeoutRef.current = setTimeout(() => {
@@ -159,7 +160,7 @@ export default function CheckinPage() {
         }, 3000)
 
       } catch (error: any) {
-        const errorMessage = error.response?.data?.error || '❌ Invalid or already used ticket'
+        const errorMessage = error.response?.data?.error || 'Invalid or already used ticket'
         
         const fallbackResult: CheckinResult = {
           id: executionId,
@@ -234,7 +235,7 @@ export default function CheckinPage() {
 
   const handleManualCheckin = async () => {
     if (!manualTicketId.trim()) {
-      toast.error('❌ Please enter a valid ticket ID')
+      toast.error('Please enter a valid ticket ID')
       return
     }
     
@@ -244,14 +245,14 @@ export default function CheckinPage() {
         qr_hash: manualTicketId.trim() 
       })
       
-      toast.success(`✅ ${response.data.attendeeName || response.data.attendee_name} checked in manually!`)
+      toast.success(`${response.data.attendeeName || response.data.attendee_name} checked in manually!`)
       setShowManualEntry(false)
       setManualTicketId('')
       
       // Update UI records directly after validation
       await fetchEventAndStats()
     } catch (error: any) {
-      toast.error(`❌ ${error.response?.data?.error || 'Invalid ticket ID'}`)
+      toast.error(error.response?.data?.error || 'Invalid ticket ID')
     } finally {
       setIsProcessing(false)
     }
@@ -305,7 +306,7 @@ export default function CheckinPage() {
             <QrCode className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Check-in Scanner 📷</h1>
+            <h1 className="text-2xl font-bold">Check-in Scanner</h1>
             <p className="text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
               <Calendar className="h-3 w-3" />
               {formatDate(event.startDate)} at {formatTime(event.startTime)}
@@ -370,7 +371,7 @@ export default function CheckinPage() {
                 Scan QR Code
               </CardTitle>
               <CardDescription>
-                Position the attendee&apos;s QR code within the frame 📱
+                Position the attendee&apos;s QR code within the frame
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -390,7 +391,7 @@ export default function CheckinPage() {
               ) : hasCamera === false ? (
                 <div className="text-center py-12">
                   <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">Camera not available 📷</p>
+                  <p className="text-gray-500">Camera not available</p>
                   <p className="text-sm text-gray-400 mt-2">
                     Please allow camera access to scan QR codes.
                   </p>
@@ -499,7 +500,7 @@ export default function CheckinPage() {
                       <div className="flex-1">
                         <p className="font-medium text-sm">{checkin.attendeeName}</p>
                         <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                          <span>🎟️</span> {checkin.ticketType}
+                          <Ticket className="h-3 w-3 inline" /> {checkin.ticketType}
                         </p>
                       </div>
                       <div className="text-right">
@@ -530,7 +531,7 @@ export default function CheckinPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="ticketId">Ticket ID / QR Code</Label>
               <Input
                 id="ticketId"

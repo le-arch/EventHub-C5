@@ -2,7 +2,7 @@
  * EventStatusBadge Component
  * 
  * Displays the status of an event with appropriate colors and icons.
- * Supports draft, published, cancelled, and completed statuses.
+ * Supports draft, published, cancelled, suspended, and archived statuses.
  * 
  * @module EventStatusBadge
  */
@@ -11,10 +11,10 @@
 
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils';
-import { Eye, FileText, XCircle, CheckCircle, Clock } from 'lucide-react'
+import { Eye, FileText, XCircle, Clock, Archive } from 'lucide-react'
 
 interface EventStatusBadgeProps {
-  status: 'draft' | 'published' | 'cancelled' | 'completed'
+  status: 'draft' | 'published' | 'cancelled' | 'suspended' | 'archived'
   size?: 'sm' | 'default'
   showIcon?: boolean
 }
@@ -35,10 +35,15 @@ const statusConfig = {
     icon: XCircle,
     className: 'bg-red-100 text-red-700 border-red-200',
   },
-  completed: {
-    label: 'Completed',
-    icon: CheckCircle,
-    className: 'bg-blue-100 text-blue-700 border-blue-200',
+  suspended: {
+    label: 'Suspended',
+    icon: Clock,
+    className: 'bg-amber-100 text-amber-700 border-amber-200',
+  },
+  archived: {
+    label: 'Archived',
+    icon: Archive,
+    className: 'bg-slate-100 text-slate-700 border-slate-200',
   },
 }
 

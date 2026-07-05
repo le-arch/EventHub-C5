@@ -40,7 +40,15 @@ func NewClient(cfg Config) *Client {
 }
 
 func (c *Client) IsConfigured() bool {
-	return c.cfg.APIURL != "" && c.cfg.SubscriptionKey != ""
+	if c.cfg.APIURL == "" || c.cfg.SubscriptionKey == "" {
+		return false
+	}
+	// Reject placeholder/default values — treat as not configured
+	if c.cfg.SubscriptionKey == "change-me" || c.cfg.APIKey == "change-me" {
+		log.Println("[momo] skipping MoMo: placeholder credentials detected (change-me)")
+		return false
+	}
+	return true
 }
 
 

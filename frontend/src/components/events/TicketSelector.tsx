@@ -10,7 +10,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Minus, Plus, Ticket } from 'lucide-react'
+import { Ticket } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -34,30 +34,16 @@ interface TicketSelectorProps {
 
 export function TicketSelector({ tickets, onSelect, isLoading = false }: TicketSelectorProps) {
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null)
-  const [quantity, setQuantity] = useState(1)
 
   const selectedTicket = tickets.find(t => t.id === selectedTicketId)
 
-  const incrementQuantity = () => {
-    if (selectedTicket && quantity < selectedTicket.quantityAvailable) {
-      setQuantity(prev => prev + 1)
-    }
-  }
-
-  const decrementQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(prev => prev - 1)
-    }
-  }
-
   const handleSelect = (ticket: TicketType) => {
     setSelectedTicketId(ticket.id)
-    setQuantity(1)
   }
 
   const handleProceed = () => {
     if (selectedTicket) {
-      onSelect(selectedTicket, quantity)
+      onSelect(selectedTicket, 1)
     }
   }
 
@@ -67,8 +53,8 @@ export function TicketSelector({ tickets, onSelect, isLoading = false }: TicketS
         {[1, 2, 3].map((i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-4">
-              <div className="h-6 w-32 bg-gray-200 rounded mb-2" />
-              <div className="h-8 w-24 bg-gray-200 rounded" />
+              <div className="h-6 w-32 bg-muted rounded mb-2" />
+              <div className="h-8 w-24 bg-muted rounded" />
             </CardContent>
           </Card>
         ))}
@@ -80,9 +66,9 @@ export function TicketSelector({ tickets, onSelect, isLoading = false }: TicketS
     return (
       <Card className="text-center py-8">
         <CardContent>
-          <Ticket className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">No tickets available</p>
-          <p className="text-sm text-gray-400">Check back later for ticket sales</p>
+          <Ticket className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
+          <p className="text-muted-foreground">No tickets available</p>
+          <p className="text-sm text-muted-foreground/60">Check back later for ticket sales</p>
         </CardContent>
       </Card>
     )
@@ -116,7 +102,7 @@ export function TicketSelector({ tickets, onSelect, isLoading = false }: TicketS
                       </Badge>
                     )}
                     {ticket.quantityAvailable > 0 && ticket.quantityAvailable < 10 && (
-                      <Badge variant="outline" className="text-xs text-amber-600 border-amber-200">
+                      <Badge variant="outline" className="text-xs text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800">
                         Only {ticket.quantityAvailable} left
                       </Badge>
                     )}
@@ -124,8 +110,8 @@ export function TicketSelector({ tickets, onSelect, isLoading = false }: TicketS
                   <p className="text-2xl font-bold text-primary mt-2">
                     {formatCurrency(ticket.price)}
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {ticket.quantityAvailable} tickets available
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {ticket.quantityAvailable} ticket{ticket.quantityAvailable !== 1 ? 's' : ''} available
                   </p>
                 </div>
                 
@@ -140,43 +126,18 @@ export function TicketSelector({ tickets, onSelect, isLoading = false }: TicketS
         )
       })}
 
-      {/* Quantity Selector and Proceed Button */}
+      {/* Proceed Button */}
       {selectedTicket && selectedTicket.quantityAvailable > 0 && (
-        <Card className="bg-gray-50 border-primary/20">
+        <Card className="bg-muted border-primary/20">
           <CardContent className="p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-700 font-medium">Quantity:</span>
-              <div className="flex items-center gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 rounded-full"
-                  onClick={decrementQuantity}
-                  disabled={quantity <= 1}
-                >
-                  <Minus className="h-3 w-3" />
-                </Button>
-                <span className="text-xl font-semibold w-8 text-center">
-                  {quantity}
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 rounded-full"
-                  onClick={incrementQuantity}
-                  disabled={quantity >= selectedTicket.quantityAvailable}
-                >
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Ticket</span>
+              <span className="font-medium text-foreground">{selectedTicket.name}</span>
             </div>
-
-            <div className="flex justify-between items-center pt-3 border-t">
-              <span className="font-semibold text-gray-700">Total:</span>
+            <div className="flex justify-between items-center pt-3 border-t border-border">
+              <span className="font-semibold text-foreground">Total:</span>
               <span className="text-2xl font-bold text-primary">
-                {formatCurrency(selectedTicket.price * quantity)}
+                {formatCurrency(selectedTicket.price)}
               </span>
             </div>
 

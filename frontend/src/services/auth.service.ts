@@ -16,7 +16,6 @@ export interface RegisterPayload {
   email: string
   phone: string
   password_hash: string  
-  role?: 'organizer' | 'admin'
 }
 
 export interface VerifyEmailPayload {
@@ -46,6 +45,7 @@ export interface UserData {
   phone: string
   role: 'organizer' | 'admin'
   isEmailVerified: boolean
+  isOrganizerVerified: boolean
   createdAt?: string
 }
 
@@ -87,15 +87,13 @@ export const authService = {
     fullName: string,
     email: string,
     phone: string,
-    password: string,
-    role: 'organizer' | 'admin' = 'organizer'
+    password: string
   ): Promise<void> => {
     const payload: RegisterPayload = {
       full_name: fullName,
       email,
       phone,
       password_hash: password,
-      role,
     }
 
     await api.post('/auth/register', payload)
@@ -194,6 +192,14 @@ export const authService = {
     }
 
     await api.post('/auth/reset-password', payload)
+  },
+
+  /**
+   * Get current logged-in user
+   */
+  getCurrentUser: async (): Promise<UserData> => {
+    const response = await api.get<UserData>('/auth/me')
+    return response.data
   },
 
   //  Admin User Management 

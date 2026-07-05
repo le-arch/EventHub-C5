@@ -11,7 +11,8 @@ export const EVENT_STATUS = {
   DRAFT: 'draft',
   PUBLISHED: 'published',
   CANCELLED: 'cancelled',
-  COMPLETED: 'completed',
+  SUSPENDED: 'suspended',
+  ARCHIVED: 'archived',
 } as const
 
 export type EventStatus = typeof EVENT_STATUS[keyof typeof EVENT_STATUS]
@@ -53,13 +54,22 @@ export const EVENT_STATUS_CONFIG: Record<EventStatus, {
     description: 'Event has been cancelled. No further ticket sales allowed.',
     allowedActions: ['delete', 'view'],
   },
-  [EVENT_STATUS.COMPLETED]: {
-    label: 'Completed',
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-100',
-    borderColor: 'border-blue-200',
-    icon: '🏁',
-    description: 'Event has passed. Check-in is closed.',
+  [EVENT_STATUS.SUSPENDED]: {
+    label: 'Suspended',
+    color: 'text-amber-700',
+    bgColor: 'bg-amber-100',
+    borderColor: 'border-amber-200',
+    icon: '⏸️',
+    description: 'Event has been suspended. Temporarily unavailable.',
+    allowedActions: ['view'],
+  },
+  [EVENT_STATUS.ARCHIVED]: {
+    label: 'Archived',
+    color: 'text-slate-700',
+    bgColor: 'bg-slate-100',
+    borderColor: 'border-slate-200',
+    icon: '📦',
+    description: 'Event has been archived. No longer active.',
     allowedActions: ['view', 'analytics'],
   },
 }
@@ -67,9 +77,10 @@ export const EVENT_STATUS_CONFIG: Record<EventStatus, {
 // Status transition rules
 export const STATUS_TRANSITIONS: Record<EventStatus, EventStatus[]> = {
   [EVENT_STATUS.DRAFT]: [EVENT_STATUS.PUBLISHED, EVENT_STATUS.CANCELLED],
-  [EVENT_STATUS.PUBLISHED]: [EVENT_STATUS.CANCELLED, EVENT_STATUS.COMPLETED],
+  [EVENT_STATUS.PUBLISHED]: [EVENT_STATUS.CANCELLED, EVENT_STATUS.DRAFT],
   [EVENT_STATUS.CANCELLED]: [EVENT_STATUS.DRAFT],
-  [EVENT_STATUS.COMPLETED]: [],
+  [EVENT_STATUS.SUSPENDED]: [EVENT_STATUS.DRAFT],
+  [EVENT_STATUS.ARCHIVED]: [],
 }
 
 // Check if status transition is allowed

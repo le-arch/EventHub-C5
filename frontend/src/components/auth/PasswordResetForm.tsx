@@ -147,9 +147,9 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
         </CardHeader>
         <CardContent>
           <form onSubmit={requestForm.handleSubmit(handleRequestReset)} className="space-y-4">
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="reset-email">Email Address</Label>
-              <div className="relative mt-1">
+              <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="reset-email"
@@ -208,9 +208,9 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
             isDisabled={isLoading}
           />
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="new-password">New Password</Label>
-            <div className="relative mt-1">
+            <div className="relative">
               <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 id="new-password"
@@ -228,9 +228,9 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
             )}
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="confirm-password">Confirm Password</Label>
-            <div className="relative mt-1">
+            <div className="relative">
               <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 id="confirm-password"
