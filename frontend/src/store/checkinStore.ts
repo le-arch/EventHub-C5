@@ -114,9 +114,8 @@ export const useCheckinStore = create<CheckinState>()(
         set({ isProcessing: true, lastResult: null })
         
         try {
-          const response = await api.post('/checkin/manual', {
-            event_id: eventId,
-            ticket_id: ticketId,
+          const response = await api.post('/checkin', {
+            order_id: ticketId,
           })
           
           const result: CheckinResult = {
@@ -154,12 +153,12 @@ export const useCheckinStore = create<CheckinState>()(
 
       fetchCheckinStats: async (eventId: string) => {
         try {
-          const response = await api.get(`/events/${eventId}/checkin-stats`)
+          const response = await api.get(`/events/${eventId}/analytics`)
           set({
             stats: {
-              checkedIn: response.data.checked_in,
-              total: response.data.total,
-              percentage: response.data.percentage,
+              checkedIn: response.data.checkinCount ?? 0,
+              total: response.data.totalTickets ?? 0,
+              percentage: response.data.checkinPercentage ?? 0,
             },
           })
         } catch (error) {
@@ -169,8 +168,8 @@ export const useCheckinStore = create<CheckinState>()(
 
       fetchRecentCheckins: async (eventId: string) => {
         try {
-          const response = await api.get(`/events/${eventId}/recent-checkins`)
-          set({ recentCheckins: response.data.checkins })
+          const response = await api.get(`/checkin/event/${eventId}/history`)
+          set({ recentCheckins: response.data })
         } catch (error) {
           console.error('Failed to fetch recent check-ins:', error)
         }

@@ -1,7 +1,7 @@
 /**
  * Registration Page Component
  * 
- * Allows new organizers to create an account.
+ * Allows new organizers and admins to create an account.
  * After successful registration, user is redirected to OTP verification page.
  * All fields are validated before submission.
  * 
@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Shield, User } from 'lucide-react'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
@@ -63,6 +63,7 @@ export default function RegisterPage() {
   const { register: registerUser, isLoading } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [role, setRole] = useState<'organizer' | 'admin'>('organizer')
 
   // Initialize react-hook-form with zod validation
   const {
@@ -94,6 +95,7 @@ export default function RegisterPage() {
         email: data.email,
         phone: data.phone,
         password: data.password,
+        role,
       })
       
       // Store email for OTP verification page
@@ -112,13 +114,44 @@ export default function RegisterPage() {
       <CardHeader className="space-y-1 text-center">
         <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
         <CardDescription>
-          Join EventHub to start managing your events
+          Join EventHub to start managing your events as an organizer or admin
         </CardDescription>
       </CardHeader>
       
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           
+          {/* Role Selector */}
+          <div className="space-y-2">
+            <Label>Account Type</Label>
+            <div className="flex rounded-lg border p-1 bg-muted/50">
+              <button
+                type="button"
+                onClick={() => setRole('organizer')}
+                className={`flex items-center justify-center gap-2 flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                  role === 'organizer'
+                    ? 'bg-white text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <User className="h-4 w-4" />
+                Organizer
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('admin')}
+                className={`flex items-center justify-center gap-2 flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                  role === 'admin'
+                    ? 'bg-white text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Shield className="h-4 w-4" />
+                Admin
+              </button>
+            </div>
+          </div>
+
           {/* Full Name Field */}
           <div className="space-y-2">
             <Label htmlFor="fullName">

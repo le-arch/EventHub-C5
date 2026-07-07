@@ -11,6 +11,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Dialog,
   DialogContent,
@@ -53,10 +54,10 @@ export function PaymentModal({
   onSuccess,
   onError,
 }: PaymentModalProps) {
+  const router = useRouter()
   const [phoneNumber, setPhoneNumber] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<'mtn' | 'orange'>('mtn')
   const [isProcessing, setIsProcessing] = useState(false)
-  const [step, setStep] = useState<'form' | 'processing'>('form')
 
   const totalAmount = ticketType.price * quantity
 
@@ -86,7 +87,6 @@ export function PaymentModal({
       return
     }
 
-    setStep('processing')
     setIsProcessing(true)
 
     try {
@@ -97,11 +97,13 @@ export function PaymentModal({
         attendee_phone: cleanPhone,
         quantity: quantity,
       })
-      
+
       onSuccess(response.data.id)
+      setStep('form')
+      setPhoneNumber('')
+      onClose()
     } catch (error: any) {
       onError?.(error.response?.data?.error || 'Payment failed. Please try again.')
-      setStep('form')
     } finally {
       setIsProcessing(false)
     }
@@ -109,7 +111,6 @@ export function PaymentModal({
 
   const handleClose = () => {
     if (!isProcessing) {
-      setStep('form')
       setPhoneNumber('')
       onClose()
     }
@@ -119,18 +120,12 @@ export function PaymentModal({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl">
-            {step === 'form' ? 'Complete Payment' : 'Processing Payment'}
-          </DialogTitle>
+          <DialogTitle className="text-xl">Complete Payment</DialogTitle>
           <DialogDescription>
-            {step === 'form' 
-              ? 'Select your payment method and enter your phone number'
-              : 'Please check your phone and approve the payment request'}
+            Select your payment method and enter your phone number
           </DialogDescription>
         </DialogHeader>
 
-        {step === 'form' ? (
-          <>
             {/* Order Summary */}
             <div className="bg-muted/50 rounded-lg p-4 space-y-2">
               <div className="flex justify-between text-sm">
@@ -211,38 +206,83 @@ export function PaymentModal({
               </p>
             </div>
 
-            <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={handleClose}>
-                Cancel
-              </Button>
-              <Button onClick={handlePayment}>
-                Pay {formatCurrency(totalAmount)}
-              </Button>
-            </DialogFooter>
-          </>
-        ) : (
-          <>
-            {/* Processing State */}
-            <div className="text-center py-8">
-              <div className="w-20 h-20 mx-auto mb-4">
-                <div className="w-full h-full rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+            <div className="space-y-2">
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={handleClose}>
+                  Cancel
+                </Button>
+                <Button onClick={handlePayment} disabled={isProcessing}>
+                  {isProcessing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                  Pay {formatCurrency(totalAmount)}
+                </Button>
+              </DialogFooter>
+              <div className="flex gap-2 justify-center border-t pt-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-green-600 hover:text-green-700 hover:bg-green-50 text-xs"
+                  disabled={isProcessing}
+                  onClick={async () => {
+                    const cleanPhone = phoneNumber.replace(/\D/g, '')
+                    if (!validatePhoneNumber(cleanPhone)) {
+                      onError?.('Please enter a valid phone number')
+                      return
+                    }
+                    setIsProcessing(true)
+                    try {
+                      const response = await api.post('/orders', {
+                        event_id: eventId,
+                        ticket_type_id: ticketType.id,
+                        attendee_name: attendeeName,
+                        attendee_phone: cleanPhone,
+                        quantity: quantity,
+                      })
+                      onSuccess(response.data.id)
+                      setPhoneNumber('')
+                      onClose()
+                    } catch (error: any) {
+                      onError?.(error.response?.data?.error || 'Order creation failed')
+                    } finally {
+                      setIsProcessing(false)
+                    }
+                  }}
+                >
+                  Simulate Success
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
+                  disabled={isProcessing}
+                  onClick={async () => {
+                    const cleanPhone = phoneNumber.replace(/\D/g, '')
+                    if (!validatePhoneNumber(cleanPhone)) {
+                      onError?.('Please enter a valid phone number')
+                      return
+                    }
+                    setIsProcessing(true)
+                    try {
+                      const response = await api.post('/orders', {
+                        event_id: eventId,
+                        ticket_type_id: ticketType.id,
+                        attendee_name: attendeeName,
+                        attendee_phone: cleanPhone,
+                        quantity: quantity,
+                      })
+                      setPhoneNumber('')
+                      onClose()
+                      router.push(`/payment/cancel?error=Payment+declined+by+provider&order_id=${response.data.id}`)
+                    } catch (error: any) {
+                      onError?.(error.response?.data?.error || 'Order creation failed')
+                    } finally {
+                      setIsProcessing(false)
+                    }
+                  }}
+                >
+                  Simulate Failure
+                </Button>
               </div>
-              <h3 className="font-semibold text-lg mb-2">Please check your phone</h3>
-              <p className="text-muted-foreground text-sm mb-2">
-                We&apos;ve sent a payment request to your {paymentMethod === 'mtn' ? 'MTN Momo' : 'Orange Money'}.
-              </p>
-              <p className="text-muted-foreground text-xs">
-                Enter your PIN to complete the payment. This may take a few seconds.
-              </p>
             </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={handleClose} className="w-full">
-                Cancel Payment
-              </Button>
-            </DialogFooter>
-          </>
-        )}
 
         {/* Security Note */}
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-2">

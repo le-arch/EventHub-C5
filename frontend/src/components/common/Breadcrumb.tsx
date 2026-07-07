@@ -94,7 +94,7 @@ export function Breadcrumb({
         )}
         
         {items.map((item, index) => (
-          <li key={item.href} className="flex items-center">
+          <li key={`${item.href}-${index}`} className="flex items-center">
             {item.isActive ? (
               <span className="text-foreground font-medium" aria-current="page">
                 {item.label}

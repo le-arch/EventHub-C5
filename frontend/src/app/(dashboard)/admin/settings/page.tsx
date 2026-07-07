@@ -1,3 +1,4 @@
+// page.tsx - Admin Settings
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -94,6 +95,10 @@ export default function AdminSettingsPage() {
     )
   }
 
+  // Get the accent color for the active tab
+  const activeTabInfo = tabs.find(t => t.key === activeTab)
+  const activeAccent = activeTabInfo?.accent || 'purple'
+
   return (
     <div className="space-y-6">
       <CustomBreadcrumb
@@ -137,7 +142,7 @@ export default function AdminSettingsPage() {
               </span>
             ) : (
               <span className="flex items-center gap-2">
-                <Save className="h-4 w-4 text-gray-500" />
+                <Save className="h-4 w-4" />
                 Save Settings
               </span>
             )}
@@ -145,43 +150,48 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      <div className="w-full bg-card rounded-xl shadow-sm border border-border/60 overflow-hidden">
-        <div className="flex w-full overflow-x-auto">
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.key
-            const activeClass = isActive ? accentColors[tab.accent] : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`
-                  flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200
-                  border-b-2 border-transparent whitespace-nowrap flex-1 justify-center
-                  ${activeClass}
-                  ${isActive ? `border-b-${tab.accent === 'purple' ? 'purple' : tab.accent}-600` : 'hover:border-border'}
-                `}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
+      {/* Tabs Container - Using Tabs component from shadcn/ui */}
       <div className="w-full">
-        {activeTab === 'general' && (
-          <GeneralSettingsTab settings={settings} onChange={handleChange} />
-        )}
-        {activeTab === 'security' && (
-          <AdminSecuritySettingsTab settings={settings} onChange={handleChange} />
-        )}
-        {activeTab === 'notifications' && (
-          <AdminNotificationSettingsTab settings={settings} onChange={handleChange} />
-        )}
-        {activeTab === 'system' && (
-          <SystemSettingsTab settings={settings} onChange={handleChange} />
-        )}
+        <div className="w-full bg-card rounded-xl shadow-sm border border-border/60 overflow-hidden">
+          {/* Tab Triggers */}
+          <div className="flex w-full overflow-x-auto">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.key
+              const activeClass = isActive ? accentColors[tab.accent] : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`
+                    flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200
+                    border-b-2 border-transparent whitespace-nowrap flex-1 justify-center
+                    ${activeClass}
+                    ${isActive ? `border-b-${tab.accent === 'purple' ? 'purple' : tab.accent}-600` : 'hover:border-border'}
+                  `}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Tab Content - Directly under the triggers */}
+        <div className="mt-6">
+          {activeTab === 'general' && (
+            <GeneralSettingsTab settings={settings} onChange={handleChange} />
+          )}
+          {activeTab === 'security' && (
+            <AdminSecuritySettingsTab settings={settings} onChange={handleChange} />
+          )}
+          {activeTab === 'notifications' && (
+            <AdminNotificationSettingsTab settings={settings} onChange={handleChange} />
+          )}
+          {activeTab === 'system' && (
+            <SystemSettingsTab settings={settings} onChange={handleChange} />
+          )}
+        </div>
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
@@ -196,7 +206,7 @@ export default function AdminSettingsPage() {
             </span>
           ) : (
             <span className="flex items-center gap-2">
-              <Save className="h-4 w-4 text-gray-500" />
+              <Save className="h-4 w-4" />
               Save Settings
             </span>
           )}

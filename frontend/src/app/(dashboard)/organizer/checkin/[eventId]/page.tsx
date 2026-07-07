@@ -199,33 +199,35 @@ export default function CheckinPage() {
     }
   }, [eventId])
 
-  // Mount/Unmount controller for underlying hardware webcam engine
+  // Cleanup scanner on unmount
   useEffect(() => {
-    if (hasCamera && !isScanning) {
-      startScanning()
-    }
     return () => {
       stopScanning()
     }
-  }, [hasCamera, isScanning, startScanning, stopScanning])
+  }, [stopScanning])
 
   const fetchEventAndStats = async () => {
     try {
-      const [eventRes, statsRes, historyRes] = await Promise.all([
-        api.get(`/events/${eventId}`),
-        api.get(`/events/${eventId}/analytics`),
-        api.get(`/events/${eventId}/recent-checkins`)
-      ])
-      
+      const eventRes = await api.get(`/events/${eventId}`)
       setEvent(eventRes.data)
-      const checkins = historyRes.data?.checkins ?? historyRes.data
-      setRecentCheckins(Array.isArray(checkins) ? checkins : [])
-      
-      setStats({
-        checkedIn: statsRes.data.checkinCount ?? 0,
-        total: statsRes.data.totalTickets ?? 0,
-        percentage: statsRes.data.checkinPercentage ?? 0,
-      })
+
+      const [statsRes, historyRes] = await Promise.allSettled([
+        api.get(`/events/${eventId}/analytics`),
+        api.get(`/checkin/event/${eventId}/history`),
+      ])
+
+      if (statsRes.status === 'fulfilled') {
+        setStats({
+          checkedIn: statsRes.value.data.checkinCount ?? 0,
+          total: statsRes.value.data.totalTickets ?? 0,
+          percentage: statsRes.value.data.checkinPercentage ?? 0,
+        })
+      }
+
+      if (historyRes.status === 'fulfilled') {
+        const checkins = historyRes.value.data?.checkins ?? historyRes.value.data
+        setRecentCheckins(Array.isArray(checkins) ? checkins : [])
+      }
     } catch (error) {
       console.error('Failed to update tracking statistics parameters:', error)
     } finally {
@@ -405,21 +407,50 @@ export default function CheckinPage() {
                   </Button>
                 </div>
               ) : (
-                <div className="relative">
-                  <div 
-                    id={scannerId} 
-                    className="aspect-square max-w-md mx-auto bg-black rounded-lg overflow-hidden"
-                  />
-                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                    <div className="w-64 h-64 border-2 border-primary rounded-lg shadow-lg">
-                      <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-lg" />
-                      <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-lg" />
-                      <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-lg" />
-                      <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-lg" />
-                    </div>
+                <div className="space-y-4">
+                  <div className="relative aspect-square max-w-md mx-auto bg-black rounded-lg overflow-hidden">
+                    <div id={scannerId} className="w-full h-full" />
+                    {!isScanning && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10">
+                        <Camera className="h-12 w-12 mb-4 opacity-50" />
+                        <p className="text-sm opacity-70 mb-4">Camera ready</p>
+                        <Button
+                          onClick={startScanning}
+                          disabled={scannerError !== null}
+                          variant="secondary"
+                        >
+                          <Camera className="h-4 w-4 mr-2" />
+                          Start Scanner
+                        </Button>
+                      </div>
+                    )}
+                    {isScanning && (
+                      <div className="absolute inset-0 pointer-events-none z-10">
+                        <div className="flex items-center justify-center w-full h-full">
+                          <div className="w-64 h-64 relative">
+                            <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-lg" />
+                            <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-lg" />
+                            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-lg" />
+                            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-lg" />
+                          </div>
+                        </div>
+                        <div className="absolute left-1/2 top-1/2 w-64 h-0.5 bg-primary animate-pulse -translate-x-1/2 -translate-y-1/2" />
+                      </div>
+                    )}
                   </div>
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 w-64 h-0.5 bg-primary animate-pulse" 
-                       style={{ transform: 'translate(-50%, -50%)' }} />
+
+                  {isScanning && (
+                    <div className="flex justify-center">
+                      <Button
+                        variant="destructive"
+                        onClick={stopScanning}
+                        className="px-6"
+                      >
+                        <Camera className="h-4 w-4 mr-2" />
+                        Stop Scanner
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -521,7 +552,7 @@ export default function CheckinPage() {
 
       {/* Manual Entry Dialog Box */}
       <Dialog open={showManualEntry} onOpenChange={setShowManualEntry}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="bg-white sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Smartphone className="h-5 w-5 text-primary" />

@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/le-arch/EventHub-C5/internal/models"
@@ -84,6 +85,14 @@ func (c *Client) getAccessToken(ctx context.Context) (string, error) {
 
 // RequestPayment initiates a payment request via MTN Momo.
 func (c *Client) RequestPayment(ctx context.Context, req models.PaymentRequest) (*utils.PaymentResponse, error) {
+    if c.cfg.APIURL == "" || strings.Contains(strings.ToLower(c.cfg.TargetEnvironment), "sandbox") {
+        log.Printf("Momo sandbox/dev mode — returning mock success for %s", req.ExternalID)
+        return &utils.PaymentResponse{
+            TransactionID: req.ExternalID,
+            Status:        "PENDING",
+        }, nil
+    }
+
     token, err := c.getAccessToken(ctx)
     if err != nil {
         return nil, err

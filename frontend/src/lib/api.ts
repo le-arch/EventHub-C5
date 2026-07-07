@@ -25,7 +25,6 @@ interface CustomRequestConfig extends InternalAxiosRequestConfig {
 const api: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8085/api/v1',
   headers: {
-    'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
   timeout: 30000, // 30 seconds
@@ -73,8 +72,8 @@ api.interceptors.response.use(
           throw new Error('No refresh token')
         }
         
-        const response = await axios.post<RefreshTokenResponse>(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh-token`,
+        const response = await axios.post<{ token: string }>(
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
           { refresh_token: refreshToken }
         )
         

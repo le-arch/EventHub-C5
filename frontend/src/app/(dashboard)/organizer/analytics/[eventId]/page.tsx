@@ -1,3 +1,4 @@
+// Analytics Page
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -21,7 +22,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 
 import { Breadcrumb } from '@/components/common/Breadcrumb'
@@ -75,6 +75,7 @@ export default function AnalyticsPage() {
   const [event, setEvent] = useState<Event | null>(null)
   const [analytics, setAnalytics] = useState<EventAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<'sales' | 'tickets' | 'checkins'>('sales')
 
   useEffect(() => {
     fetchAnalytics()
@@ -98,7 +99,7 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-    <div key={params.eventId} className="space-y-6">
+      <div key={params.eventId} className="space-y-6">
         <Skeleton className="h-6 w-64" />
         <Skeleton className="h-8 w-48" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -113,6 +114,13 @@ export default function AnalyticsPage() {
   }
 
   if (!event || !analytics) return null
+
+  // Get accent based on active tab
+  const tabAccents = {
+    sales: 'border-blue-600 text-blue-600 bg-blue-50/50',
+    tickets: 'border-emerald-600 text-emerald-600 bg-emerald-50/50',
+    checkins: 'border-purple-600 text-purple-600 bg-purple-50/50',
+  }
 
   return (
     <div key={params.eventId} className="space-y-6">
@@ -220,37 +228,69 @@ export default function AnalyticsPage() {
         </Card>
       </div>
 
-      {/* Colored accent tabs */}
-      <Tabs defaultValue="sales" className="space-y-6">
-        <div className="w-1/2 bg-card rounded-xl shadow-sm border border-border/60 overflow-hidden">
-          <TabsList className="grid w-full grid-cols-3 bg-transparent h-auto p-0 rounded-none">
-            <TabsTrigger value="sales" className="flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 data-[state=active]:shadow-none text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded-none">
+      {/* Custom Tabs */}
+      <div className="space-y-6">
+        {/* Tab Triggers */}
+        <div className="w-full bg-card rounded-xl shadow-sm border border-border/60 overflow-hidden">
+          <div className="flex w-full overflow-x-auto">
+            <button
+              onClick={() => setActiveTab('sales')}
+              className={`
+                flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200
+                border-b-2 flex-1 justify-center
+                ${activeTab === 'sales' 
+                  ? 'border-blue-600 text-blue-600 bg-blue-50/50' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                }
+              `}
+            >
               <TrendingUp className="h-4 w-4" />
               Sales
-            </TabsTrigger>
-            <TabsTrigger value="tickets" className="flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 border-b-2 border-transparent data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 data-[state=active]:bg-emerald-50/50 data-[state=active]:shadow-none text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded-none">
+            </button>
+            <button
+              onClick={() => setActiveTab('tickets')}
+              className={`
+                flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200
+                border-b-2 flex-1 justify-center
+                ${activeTab === 'tickets' 
+                  ? 'border-emerald-600 text-emerald-600 bg-emerald-50/50' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                }
+              `}
+            >
               <PieChart className="h-4 w-4" />
               Tickets
-            </TabsTrigger>
-            <TabsTrigger value="checkins" className="flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 border-b-2 border-transparent data-[state=active]:border-purple-600 data-[state=active]:text-purple-600 data-[state=active]:bg-purple-50/50 data-[state=active]:shadow-none text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded-none">
+            </button>
+            <button
+              onClick={() => setActiveTab('checkins')}
+              className={`
+                flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200
+                border-b-2 flex-1 justify-center
+                ${activeTab === 'checkins' 
+                  ? 'border-purple-600 text-purple-600 bg-purple-50/50' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                }
+              `}
+            >
               <CheckCircle className="h-4 w-4" />
               Check-ins
-            </TabsTrigger>
-          </TabsList>
+            </button>
+          </div>
         </div>
 
-        <TabsContent value="sales" className="space-y-6">
-          <SalesAnalyticsTab dailySales={analytics.dailySales} />
-        </TabsContent>
-
-        <TabsContent value="tickets" className="space-y-6">
-          <TicketAnalyticsTab ticketBreakdown={analytics.ticketBreakdown} />
-        </TabsContent>
-
-        <TabsContent value="checkins" className="space-y-6">
-          <CheckinAnalyticsTab recentCheckins={analytics.recentCheckins} />
-        </TabsContent>
-      </Tabs>
+        {/* Tab Content - Directly under the triggers */}
+        <div className="space-y-6">
+          {activeTab === 'sales' && (
+            <SalesAnalyticsTab dailySales={analytics.dailySales} />
+          )}
+          {activeTab === 'tickets' && (
+            <TicketAnalyticsTab ticketBreakdown={analytics.ticketBreakdown} />
+          )}
+          {activeTab === 'checkins' && (
+            <CheckinAnalyticsTab recentCheckins={analytics.recentCheckins} />
+          )}
+        </div>
+      </div>
     </div>
   )
 }

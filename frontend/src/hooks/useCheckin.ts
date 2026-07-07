@@ -86,9 +86,8 @@ export function useCheckin({ eventId, onSuccess, onError }: UseCheckinOptions) {
       setIsProcessing(true)
 
       try {
-        const response = await api.post('/checkin/manual', {
-          event_id: eventId,
-          ticket_id: ticketId,
+        const response = await api.post('/checkin', {
+          order_id: ticketId,
         })
 
         const result: CheckinResult = {
@@ -124,9 +123,9 @@ export function useCheckin({ eventId, onSuccess, onError }: UseCheckinOptions) {
   // Fetch check-in history
   const fetchCheckinHistory = useCallback(async () => {
     try {
-      const response = await api.get(`/events/${eventId}/checkins`)
-      setRecentCheckins(response.data.checkins)
-      return response.data.checkins
+      const response = await api.get(`/checkin/event/${eventId}/history`)
+      setRecentCheckins(response.data)
+      return response.data
     } catch (error) {
       toast.error('Failed to load check-in history')
       return []

@@ -140,8 +140,8 @@ export const authService = {
       refresh_token: refreshToken,
     }
 
-    const response = await api.post<AuthResponse>('/auth/refresh-token', payload)
-    return response.data
+    const response = await api.post<{ token: string }>('/auth/refresh', payload)
+    return { token: response.data.token } as AuthResponse
   },
 
   /**

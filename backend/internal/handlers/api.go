@@ -80,11 +80,11 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	Protection.POST("/checkin", h.handleCheckin)
 	
 	// Protection.POST("/checkin", h.handleScanQRCode)
-	Protection.POST("events/upload-image", h.handleUploadImage)
+	Protection.POST("/events/upload-image", h.handleUploadImage)
 
 	Protection.PATCH("/events/:id", h.handleUpdateEvent)
 	Protection.PATCH("/events/:id/ticket-types/:ticket_id",h.handleUpdateTicketType)
-	Protection.PATCH("events/:id/status", h.handleOrganizerUpdateEventStatus)
+	Protection.PATCH("/events/:id/status", h.handleOrganizerUpdateEventStatus)
 	Protection.PATCH("/events/:id/publish",h.handlePublishEvent)
 	Protection.PATCH("/events/:id/unpublish", h.handleUnpublishEvent)
 	Protection.PATCH("/admin/events/:id/status", h.handleAdminUpdateEventStatus)

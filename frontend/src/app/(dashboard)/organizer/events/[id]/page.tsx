@@ -41,7 +41,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 
 import { Breadcrumb } from '@/components/common/Breadcrumb'
@@ -100,7 +99,7 @@ export default function EditEventPage() {
   const [localTicketTypes, setLocalTicketTypes] = useState<TicketType[]>([])
   const [loading, setLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState('details')
+  const [activeTab, setActiveTab] = useState<'details' | 'tickets'>('details')
   const [showPublishDialog, setShowPublishDialog] = useState(false)
   const [showUnpublishDialog, setShowUnpublishDialog] = useState(false)
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null)
@@ -459,43 +458,70 @@ export default function EditEventPage() {
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="w-1/3 bg-card rounded-xl shadow-sm border border-border/60 overflow-hidden">
-          <TabsList className="grid w-full grid-cols-2 bg-transparent h-auto p-0 rounded-none">
-            <TabsTrigger value="details" className="flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 border-b-2 border-transparent data-[state=active]:border-purple-600 data-[state=active]:text-purple-600 data-[state=active]:bg-purple-50/50 data-[state=active]:shadow-none text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded-none">
+      {/* Custom Tabs Section - Replacing shadcn Tabs */}
+      <div className="space-y-6">
+        {/* Tab Triggers */}
+        <div className="w-full bg-card rounded-xl shadow-sm border border-border/60 overflow-hidden">
+          <div className="flex w-full overflow-x-auto">
+            <button
+              onClick={() => setActiveTab('details')}
+              className={`
+                flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200
+                flex-1 justify-center border-b-2 whitespace-nowrap
+                ${
+                  activeTab === 'details'
+                    ? 'border-purple-600 text-purple-600 bg-purple-50/50'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                }
+              `}
+            >
               <Calendar className="h-4 w-4" />
               Event Details
-            </TabsTrigger>
-            <TabsTrigger value="tickets" className="flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 data-[state=active]:shadow-none text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded-none">
+            </button>
+            <button
+              onClick={() => setActiveTab('tickets')}
+              className={`
+                flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200
+                flex-1 justify-center border-b-2 whitespace-nowrap
+                ${
+                  activeTab === 'tickets'
+                    ? 'border-blue-600 text-blue-600 bg-blue-50/50'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                }
+              `}
+            >
               <Ticket className="h-4 w-4" />
               Ticket Types
-            </TabsTrigger>
-          </TabsList>
+            </button>
+          </div>
         </div>
 
-        <TabsContent value="details">
-          <EventDetailsTab
-            form={form}
-            isSaving={isSaving}
-            coverImageUrl={coverImageUrl}
-            onCoverUpload={handleCoverUploadAction}
-            onCoverChange={setCoverImageUrl}
-            onSubmit={handleSaveEvent}
-          />
-        </TabsContent>
+        {/* Tab Content - Directly under the triggers */}
+        <div className="focus-visible:outline-none">
+          {activeTab === 'details' && (
+            <EventDetailsTab
+              form={form}
+              isSaving={isSaving}
+              coverImageUrl={coverImageUrl}
+              onCoverUpload={handleCoverUploadAction}
+              onCoverChange={setCoverImageUrl}
+              onSubmit={handleSaveEvent}
+            />
+          )}
 
-        <TabsContent value="tickets">
-          <TicketTypesTab
-            ticketForm={ticketForm}
-            fields={fields}
-            append={append}
-            remove={remove}
-            localTicketTypes={localTicketTypes}
-            isSaving={isSaving}
-            onSubmit={handleSaveTickets}
-          />
-        </TabsContent>
-      </Tabs>
+          {activeTab === 'tickets' && (
+            <TicketTypesTab
+              ticketForm={ticketForm}
+              fields={fields}
+              append={append}
+              remove={remove}
+              localTicketTypes={localTicketTypes}
+              isSaving={isSaving}
+              onSubmit={handleSaveTickets}
+            />
+          )}
+        </div>
+      </div>
 
       <ConfirmationDialog
         open={showPublishDialog}

@@ -1,8 +1,10 @@
 /**
  * Login Page Component
  * 
- * Allows organizers to log in using either email OR phone number with password.
- * On successful login, stores JWT tokens and redirects to the organizer dashboard.
+ * Allows organizers and admins to log in using email or phone number with password.
+ * Role selector toggles between Organizer and Admin login.
+ * Admin login pre-fills the default admin credentials.
+ * On successful login, redirects based on role.
  * 
  * @module LoginPage
  */
@@ -15,7 +17,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Shield, User } from 'lucide-react'
 
 // shadcn/ui components
 import { Button } from '@/components/ui/button'
@@ -28,13 +30,11 @@ import { useAuthStore } from '@/store/authStore'
 import { toast } from 'sonner'
 
 // Validation schema for login form
-// Supports both email format OR phone number format
 const loginSchema = z.object({
   identifier: z.string()
     .min(1, 'Email or phone number is required')
     .refine(
       (value) => {
-        // Check if input is email (contains @) or phone number (starts with 237 and has 12 digits)
         const isEmail = value.includes('@')
         const isPhone = /^[0-9]{9}$/.test(value)
         return isEmail || isPhone
@@ -46,18 +46,18 @@ const loginSchema = z.object({
     .min(6, 'Password must be at least 6 characters'),
 })
 
-// TypeScript type inferred from zod schema
 type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const router = useRouter()
   const { login, isLoading } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
+  const [role, setRole] = useState<'organizer' | 'admin'>('organizer')
 
-  // Initialize react-hook-form with zod validation
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -67,19 +67,20 @@ export default function LoginPage() {
     },
   })
 
-  /**
-   * Handles form submission
-   * Calls the login function from auth store
-   * On success: redirects to dashboard and shows welcome toast
-   * On error: displays error message
-   */
+  const handleRoleChange = (newRole: 'organizer' | 'admin') => {
+    setRole(newRole)
+    if (newRole === 'admin') {
+      setValue('identifier', 'admin@eventhub.com')
+    }
+  }
+
   const onSubmit = async (data: LoginFormValues) => {
     try {
       await login(data.identifier, data.password)
-      toast.success('Welcome back! Redirecting to dashboard...')
-      router.push('/organizer/events')
+      const user = useAuthStore.getState().user
+      toast.success('Welcome back! Redirecting...')
+      router.push(user?.role === 'admin' ? '/admin/users' : '/organizer/events')
     } catch (error: any) {
-      // Display specific error message from API or generic fallback
       const errorMessage = error.response?.data?.error || 'Invalid credentials. Please try again.'
       toast.error(errorMessage)
     }
@@ -97,6 +98,34 @@ export default function LoginPage() {
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           
+          {/* Role Selector */}
+          <div className="flex rounded-lg border p-1 bg-muted/50">
+            <button
+              type="button"
+              onClick={() => handleRoleChange('organizer')}
+              className={`flex items-center justify-center gap-2 flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                role === 'organizer'
+                  ? 'bg-white text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <User className="h-4 w-4" />
+              Organizer
+            </button>
+            <button
+              type="button"
+              onClick={() => handleRoleChange('admin')}
+              className={`flex items-center justify-center gap-2 flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                role === 'admin'
+                  ? 'bg-white text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Shield className="h-4 w-4" />
+              Admin
+            </button>
+          </div>
+          
           {/* Identifier Field (Email or Phone) */}
           <div className="space-y-2">
             <Label htmlFor="identifier">
@@ -111,6 +140,11 @@ export default function LoginPage() {
               disabled={isLoading}
               className={errors.identifier ? 'border-red-500' : ''}
             />
+            {role === 'admin' && (
+              <p className="text-xs text-muted-foreground">
+                Default admin: <span className="font-mono">admin@eventhub.com</span>
+              </p>
+            )}
             {errors.identifier && (
               <p className="text-sm text-red-500 mt-1">
                 {errors.identifier.message}
@@ -166,7 +200,7 @@ export default function LoginPage() {
                 Logging in...
               </span>
             ) : (
-              'Login'
+              role === 'admin' ? 'Login as Admin' : 'Login'
             )}
           </Button>
 

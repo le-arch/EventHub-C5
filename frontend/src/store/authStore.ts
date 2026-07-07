@@ -29,6 +29,7 @@ interface RegisterData {
   email: string
   phone: string
   password: string
+  role?: 'organizer' | 'admin'
 }
 
 interface AuthState {
@@ -149,7 +150,8 @@ export const useAuthStore = create<AuthState>()(
             data.fullName,
             data.email,
             data.phone,
-            data.password
+            data.password,
+            data.role
           )
           set({ isLoading: false })
         } catch (error: any) {

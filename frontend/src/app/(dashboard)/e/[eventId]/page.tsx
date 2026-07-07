@@ -173,12 +173,13 @@ export default function PublicEventPage() {
   if (step === 'name') {
     return (
       <div className="min-h-screen bg-muted/50 text-foreground pb-12">
-        {event.coverImageUrl && (
+          {event.coverImageUrl && (
           <div className="relative h-48 md:h-64 w-full overflow-hidden border-b-2 border-purple-100">
             <Image
               src={event.coverImageUrl}
               alt={event.title}
               fill
+              unoptimized
               className="object-cover"
               priority
             />
@@ -246,6 +247,7 @@ export default function PublicEventPage() {
               src={event.coverImageUrl}
               alt={event.title}
               fill
+              unoptimized
               className="object-cover opacity-80 filter blur-[1px]"
             />
             <div className="absolute inset-0 bg-slate-950/70" />

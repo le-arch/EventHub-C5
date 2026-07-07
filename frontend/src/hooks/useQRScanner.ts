@@ -90,16 +90,16 @@ export function useQRScanner({
 
     try {
       scannerRef.current = new Html5Qrcode(scannerId)
-      
+
       const config = {
         fps,
         qrbox: { width: qrbox, height: qrbox },
         aspectRatio,
         disableFlip,
       }
-      
+
       if (verbose) console.log('Starting QR scanner with config:', config)
-      
+
       await scannerRef.current.start(
         { facingMode: 'environment' }, // Use back camera
         config,
@@ -108,14 +108,14 @@ export function useQRScanner({
           onScanSuccess?.(decodedText)
         },
         (errorMessage) => {
-          // Ignore scanning errors (usually just no QR in frame)
-          if (!errorMessage.includes('No MultiFormat Readers') && !errorMessage.includes('NotFoundException')) {
-            if (verbose) console.warn('Scan error:', errorMessage)
-            onScanError?.(errorMessage)
-          }
+          // Ignore expected transient errors (no QR in frame, zero-dimension frames)
+          const ignored = ['No MultiFormat Readers', 'NotFoundException', 'IndexSizeError', 'source width is 0']
+          if (ignored.some(msg => errorMessage.includes(msg))) return
+          if (verbose) console.warn('Scan error:', errorMessage)
+          onScanError?.(errorMessage)
         }
       )
-      
+
       setIsScanning(true)
       setError(null)
       if (verbose) console.log('QR scanner started successfully')
@@ -129,17 +129,18 @@ export function useQRScanner({
 
   // Stop scanning
   const stopScanning = useCallback(async () => {
-    if (scannerRef.current && isScanning) {
-      try {
+    try {
+      if (scannerRef.current && (scannerRef.current.getState() === Html5QrcodeScannerState.SCANNING || scannerRef.current.getState() === Html5QrcodeScannerState.PAUSED)) {
         await scannerRef.current.stop()
         scannerRef.current.clear()
-        setIsScanning(false)
         if (verbose) console.log('QR scanner stopped')
-      } catch (err) {
-        console.error('Error stopping scanner:', err)
       }
+    } catch {
+      // Scanner was already stopped or never started — ignore
+    } finally {
+      setIsScanning(false)
     }
-  }, [isScanning, verbose])
+  }, [verbose])
 
   // Request camera permission
   const requestCameraPermission = useCallback(async () => {
@@ -183,12 +184,9 @@ export function useQRScanner({
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(console.error)
-        scannerRef.current.clear()
-      }
+      stopScanning()
     }
-  }, [])
+  }, [stopScanning])
 
   return {
     isScanning,
