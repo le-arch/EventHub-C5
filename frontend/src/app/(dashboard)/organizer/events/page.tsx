@@ -36,6 +36,7 @@ import {
   FileText,
   DollarSign,
   ArrowRight,
+  Share2,
 } from 'lucide-react'
 import Image from 'next/image'
 
@@ -121,13 +122,16 @@ export default function EventsDashboardPage() {
       const response = await api.get('/Organization/events', {
         params: {
           page,
-          limit: pageSize,
+          limit: pageSize + 1,
           search: debouncedSearch || undefined,
         },
       })
-      setEvents(response.data)
-      setTotalCount(response.data.length)
-      setTotalPages(Math.ceil(response.data.length / pageSize))
+      const data = Array.isArray(response.data) ? response.data : []
+      const hasMore = data.length > pageSize
+      const pageEvents = hasMore ? data.slice(0, pageSize) : data
+      setEvents(pageEvents)
+      setTotalCount(pageEvents.length)
+      setTotalPages(hasMore ? page + 1 : page)
     } catch (error) {
       toast.error('Failed to load events')
       console.error(error)
@@ -164,8 +168,8 @@ export default function EventsDashboardPage() {
         )
       case 'draft':
         return (
-          <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-slate-200 font-medium px-2.5 py-0.5 rounded-full hover:bg-slate-100">
-            <FileText className="h-3 w-3 mr-1 text-slate-500" />
+          <Badge variant="secondary" className="bg-muted/30 text-muted-foreground border-border font-medium px-2.5 py-0.5 rounded-full hover:bg-muted/30">
+            <FileText className="h-3 w-3 mr-1 text-muted-foreground" />
             Draft
           </Badge>
         )
@@ -223,7 +227,7 @@ export default function EventsDashboardPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 p-4 md:p-8 text-slate-900 antialiased">
+    <div className="max-w-7xl mx-auto space-y-8 p-4 md:p-8 text-foreground antialiased">
       {/* Breadcrumb Section */}
       <div className="opacity-90">
         <Breadcrumb 
@@ -242,7 +246,7 @@ export default function EventsDashboardPage() {
             <Calendar className="h-8 w-8 text-indigo-600" />
             My Events
           </h1>
-          <p className="text-slate-500 mt-1.5 text-sm md:text-base">
+          <p className="text-muted-foreground mt-1.5 text-sm md:text-base">
             Manage your lineup, view precise ticketing velocity, and manage attendance checks.
           </p>
         </div>
@@ -257,17 +261,17 @@ export default function EventsDashboardPage() {
       {/* Search and Filters Context */}
       <div className="space-y-4">
         <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-indigo-500 transition-colors" />
           <Input
             placeholder="Search events by title, venue, or city..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-12 pr-24 py-6 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 transition-all text-base placeholder:text-slate-400"
+            className="pl-12 pr-24 py-6 bg-muted/50/50 border-border rounded-xl focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 transition-all text-base placeholder:text-muted-foreground"
           />
           {searchInput && (
             <button
               onClick={clearSearch}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm font-medium transition-colors bg-white px-2 py-1 rounded-md shadow-sm border border-slate-100"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground text-sm font-medium transition-colors bg-card px-2 py-1 rounded-md shadow-sm border border-slate-100"
             >
               Clear
             </button>
@@ -275,8 +279,8 @@ export default function EventsDashboardPage() {
         </div>
 
         {events.length > 0 && (
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 px-1">
-            <Ticket className="h-3.5 w-3.5 text-slate-400" />
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 px-1">
+            <Ticket className="h-3.5 w-3.5 text-muted-foreground" />
             Showing {events.length} of {totalCount} total event{totalCount !== 1 ? 's' : ''}
           </div>
         )}
@@ -284,23 +288,23 @@ export default function EventsDashboardPage() {
 
       {/* Grid Content / Empty States */}
       {events.length === 0 ? (
-        <Card className="border-dashed border-2 border-slate-200 bg-slate-50/30 rounded-2xl p-12 text-center shadow-none">
+        <Card className="border-dashed border-2 border-border bg-muted/50/30 rounded-2xl p-12 text-center shadow-none">
           <CardContent className="p-0">
             <div className="flex flex-col items-center max-w-sm mx-auto space-y-4">
-              <div className="w-16 h-16 bg-white border border-slate-100 rounded-2xl shadow-sm flex items-center justify-center text-indigo-500">
+              <div className="w-16 h-16 bg-card border border-slate-100 rounded-2xl shadow-sm flex items-center justify-center text-indigo-500">
                 <Calendar className="h-8 w-8" />
               </div>
-              <h3 className="font-semibold text-xl text-slate-800">
+              <h3 className="font-semibold text-xl text-foreground">
                 No events found
               </h3>
-              <p className="text-slate-500 text-sm leading-relaxed">
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 {debouncedSearch
                   ? `We couldn't find matches for "${debouncedSearch}". Refine your keywords or browse the catalog.`
                   : "Get started by publishing your very first public or private event sequence."}
               </p>
               {!debouncedSearch && (
                 <Link href="/organizer/create">
-                  <Button className="mt-2 bg-slate-900 hover:bg-slate-800 rounded-xl px-5">
+                  <Button className="mt-2 bg-slate-600 hover:bg-slate-800 rounded-xl px-5">
                     <Plus className="h-4 w-4 mr-2" />
                     Create Your First Event
                   </Button>
@@ -313,10 +317,10 @@ export default function EventsDashboardPage() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {events.map((event) => (
-              <Card key={event.id} className="group overflow-hidden border border-slate-100 bg-white hover:border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-2xl flex flex-col">
+              <Card key={event.id} className="group overflow-hidden border border-slate-100 bg-card hover:border-border/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-2xl flex flex-col">
                 
                 {/* Media Anchor Block */}
-                <div className="relative h-44 bg-slate-100 overflow-hidden">
+                <div className="relative h-44 bg-muted/30 overflow-hidden">
                   {event.coverImageUrl ? (
                     <Image
                       src={event.coverImageUrl}
@@ -342,37 +346,50 @@ export default function EventsDashboardPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="bg-white/90 backdrop-blur-md hover:bg-white text-slate-700 h-8 w-8 rounded-lg shadow-sm border border-slate-200/20 active:scale-95 transition-transform"
+                          className="bg-white/90 backdrop-blur-md hover:bg-card text-foreground h-8 w-8 rounded-lg shadow-sm border border-border/20 active:scale-95 transition-transform"
                         >
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-48 rounded-xl p-1.5 shadow-xl border-slate-100">
+                      <DropdownMenuContent align="start" className="w-48 rounded-xl p-1.5 shadow-xl border-slate-100 bg-white">
                         <DropdownMenuItem asChild className="rounded-lg">
-                          <Link href={`/organizer/events/${event.id}`} className="cursor-pointer gap-2 py-2 text-slate-700">
-                            <Edit className="h-4 w-4 text-slate-400" />
+                          <Link href={`/organizer/events/${event.id}`} className="cursor-pointer gap-2 py-2 text-foreground">
+                            <Edit className="h-4 w-4 text-muted-foreground" />
                             Edit Details
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild className="rounded-lg">
-                          <Link href={`/organizer/attendees/${event.id}`} className="cursor-pointer gap-2 py-2 text-slate-700">
-                            <Users className="h-4 w-4 text-slate-400" />
+                          <Link href={`/organizer/attendees/${event.id}`} className="cursor-pointer gap-2 py-2 text-foreground">
+                            <Users className="h-4 w-4 text-muted-foreground" />
                             Attendees
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild className="rounded-lg">
-                          <Link href={`/organizer/checkin/${event.id}`} className="cursor-pointer gap-2 py-2 text-slate-700">
-                            <QrCode className="h-4 w-4 text-slate-400" />
+                          <Link href={`/organizer/checkin/${event.id}`} className="cursor-pointer gap-2 py-2 text-foreground">
+                            <QrCode className="h-4 w-4 text-muted-foreground" />
                             Check-in Gateway
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild className="rounded-lg">
-                          <Link href={`/organizer/analytics/${event.id}`} className="cursor-pointer gap-2 py-2 text-slate-700">
-                            <Eye className="h-4 w-4 text-slate-400" />
+                          <Link href={`/organizer/analytics/${event.id}`} className="cursor-pointer gap-2 py-2 text-foreground">
+                            <Eye className="h-4 w-4 text-muted-foreground" />
                             Performance Data
                           </Link>
                         </DropdownMenuItem>
-                        <div className="h-px bg-slate-100 my-1" />
+                        {event.status === 'published' && (
+                          <DropdownMenuItem asChild className="rounded-lg bd-white">
+                            <a
+                              href={`https://wa.me/?text=${encodeURIComponent(`Join my event: ${event.title}\n\n${typeof window !== 'undefined' ? window.location.origin : ''}/e/${event.id}`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="cursor-pointer gap-2 py-2 text-foreground"
+                            >
+                              <Share2 className="h-4 w-4 text-muted-foreground" />
+                              Share on WhatsApp
+                            </a>
+                          </DropdownMenuItem>
+                        )}
+                        <div className="h-px bg-muted/30 my-1" />
                         <DropdownMenuItem
                           onClick={() => setEventToDelete(event)}
                           className="text-rose-600 focus:text-rose-700 focus:bg-rose-50 rounded-lg cursor-pointer gap-2 py-2 font-medium"
@@ -388,34 +405,34 @@ export default function EventsDashboardPage() {
                 {/* Primary Card Core Content */}
                 <CardContent className="p-5 flex-1 flex flex-col justify-between">
                   <div className="space-y-3">
-                    <h3 className="font-bold text-xl tracking-tight text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                    <h3 className="font-bold text-xl tracking-tight text-foreground group-hover:text-indigo-600 transition-colors line-clamp-1">
                       {event.title}
                     </h3>
                     
-                    <div className="space-y-1.5 text-sm font-medium text-slate-500">
+                    <div className="space-y-1.5 text-sm font-medium text-muted-foreground">
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-slate-400 shrink-0" />
+                        <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
                         <span>{formatDate(event.startDate)}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-slate-400 shrink-0" />
+                        <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
                         <span className="line-clamp-1">{event.venue}, {event.city}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Operational Performance Data */}
-                  <div className="grid grid-cols-2 gap-3 pt-4 mt-5 border-t border-slate-100/80 bg-slate-50/40 rounded-xl p-3">
+                  <div className="grid grid-cols-2 gap-3 pt-4 mt-5 border-t border-slate-100/80 bg-muted/50/40 rounded-xl p-3">
                     <div className="space-y-0.5">
-                      <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                        <Ticket className="h-3 w-3 text-slate-400" />
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                        <Ticket className="h-3 w-3 text-muted-foreground" />
                         <span>Tickets</span>
                       </div>
-                      <p className="font-bold text-lg text-slate-700">{event.ticketStats.totalSold}</p>
+                      <p className="font-bold text-lg text-foreground">{event.ticketStats.totalSold}</p>
                     </div>
-                    <div className="space-y-0.5 border-l border-slate-200/60 pl-3">
-                      <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                        <TrendingUp className="h-3 w-3 text-slate-400" />
+                    <div className="space-y-0.5 border-l border-border/60 pl-3">
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                        <TrendingUp className="h-3 w-3 text-muted-foreground" />
                         <span>Revenue</span>
                       </div>
                       <p className="font-bold text-lg text-indigo-600">
@@ -428,13 +445,13 @@ export default function EventsDashboardPage() {
                 {/* Card Structural Footer Button Groups */}
                 <CardFooter className="p-5 pt-0 flex gap-2.5">
                   <Link href={`/organizer/checkin/${event.id}`} className="flex-1">
-                    <Button variant="outline" size="sm" className="w-full border-slate-200 hover:bg-slate-50 hover:text-slate-800 rounded-xl py-5 font-medium transition-colors flex items-center justify-center gap-1.5">
-                      <QrCode className="h-4 w-4 text-slate-500" />
+                    <Button variant="outline" size="sm" className="w-full border-border hover:bg-muted/50 hover:text-foreground rounded-xl py-5 font-medium transition-colors flex items-center justify-center gap-1.5">
+                      <QrCode className="h-4 w-4 text-muted-foreground" />
                       Check-In
                     </Button>
                   </Link>
                   <Link href={`/organizer/events/${event.id}`} className="flex-1">
-                    <Button size="sm" className="w-full bg-slate-900 hover:bg-slate-800 rounded-xl py-5 font-medium transition-colors group/btn">
+                    <Button size="sm" className="w-full bg-slate-600 hover:bg-slate-800 rounded-xl py-5 font-medium transition-colors group/btn">
                       Manage
                       <ArrowRight className="h-4 w-4 ml-1 opacity-60 group-hover/btn:translate-x-0.5 transition-transform" />
                     </Button>

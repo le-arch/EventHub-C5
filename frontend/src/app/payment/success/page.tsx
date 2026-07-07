@@ -75,7 +75,7 @@ function PaymentSuccessContent() {
         <CardContent className="space-y-4">
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-600">Order ID:</span>
+              <span className="text-sm text-muted-foreground">Order ID:</span>
               <code className="text-sm font-mono">{orderId?.slice(0, 8)}...</code>
             </div>
             <div className="flex items-center justify-between">
@@ -86,12 +86,12 @@ function PaymentSuccessContent() {
                 height={32}
                 className="w-8 h-8"
                />
-              <span className="text-sm text-gray-600">Status:</span>
+              <span className="text-sm text-muted-foreground">Status:</span>
               <Badge className="bg-green-100 text-green-800">Completed</Badge>
             </div>
           </div>
 
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Your payment has been processed successfully. You can now download your ticket.
           </p>
 
@@ -101,7 +101,7 @@ function PaymentSuccessContent() {
           </div>
 
           {countdown > 0 && (
-            <p className="text-sm text-gray-500 animate-pulse">
+            <p className="text-sm text-muted-foreground animate-pulse">
               Redirecting to ticket in {countdown} seconds...
             </p>
           )}

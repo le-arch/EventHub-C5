@@ -214,11 +214,12 @@ export default function CheckinPage() {
       const [eventRes, statsRes, historyRes] = await Promise.all([
         api.get(`/events/${eventId}`),
         api.get(`/events/${eventId}/analytics`),
-        api.get(`/checkin/event/${eventId}/history?limit=10`)
+        api.get(`/events/${eventId}/recent-checkins`)
       ])
       
       setEvent(eventRes.data)
-      setRecentCheckins(Array.isArray(historyRes.data) ? historyRes.data : [])
+      const checkins = historyRes.data?.checkins ?? historyRes.data
+      setRecentCheckins(Array.isArray(checkins) ? checkins : [])
       
       setStats({
         checkedIn: statsRes.data.checkinCount ?? 0,
@@ -241,7 +242,8 @@ export default function CheckinPage() {
     setIsProcessing(true)
     try {
       const response = await api.post('/checkin', { 
-        qr_hash: manualTicketId.trim() 
+        qr_hash: manualTicketId.trim(),
+        event_id: eventId,
       })
       
       toast.success(`✅ ${response.data.attendeeName || response.data.attendee_name} checked in manually!`)
@@ -306,7 +308,7 @@ export default function CheckinPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">Check-in Scanner 📷</h1>
-            <p className="text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
+            <p className="text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
               <Calendar className="h-3 w-3" />
               {formatDate(event.startDate)} at {formatTime(event.startTime)}
               <span className="mx-1">•</span>
@@ -323,14 +325,14 @@ export default function CheckinPage() {
           <CardContent className="pt-4 text-center">
             <CheckCircle className="h-6 w-6 text-green-600 mx-auto mb-2" />
             <p className="text-2xl font-bold text-green-600">{stats.checkedIn}</p>
-            <p className="text-xs text-gray-500">Checked In </p>
+            <p className="text-xs text-muted-foreground">Checked In </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 text-center">
-            <Users className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+            <Users className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
             <p className="text-2xl font-bold">{stats.total}</p>
-            <p className="text-xs text-gray-500">Total Tickets </p>
+            <p className="text-xs text-muted-foreground">Total Tickets </p>
           </CardContent>
         </Card>
         <Card>
@@ -340,7 +342,7 @@ export default function CheckinPage() {
                 <span className="text-primary font-bold">{stats.percentage}%</span>
               </div>
             </div>
-            <p className="text-xs text-gray-500">Check-in Rate </p>
+            <p className="text-xs text-muted-foreground">Check-in Rate </p>
           </CardContent>
         </Card>
       </div>
@@ -348,10 +350,10 @@ export default function CheckinPage() {
       {/* Progress Bar */}
       <div className="space-y-1">
         <div className="flex justify-between text-sm">
-          <span className="text-gray-500">Check-in Progress</span>
+          <span className="text-muted-foreground">Check-in Progress</span>
           <span className="font-medium">{stats.percentage}% complete</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-3">
+        <div className="w-full bg-muted rounded-full h-3">
           <div
             className="bg-green-600 h-3 rounded-full transition-all duration-500"
             style={{ width: `${stats.percentage}%` }}
@@ -376,8 +378,8 @@ export default function CheckinPage() {
             <CardContent>
               {scannerError ? (
                 <div className="text-center py-12">
-                  <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">Camera Error 📷</p>
+                  <Camera className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">Camera Error 📷</p>
                   <p className="text-sm text-red-500 mt-2">{scannerError}</p>
                   <Button
                     variant="outline"
@@ -389,9 +391,9 @@ export default function CheckinPage() {
                 </div>
               ) : hasCamera === false ? (
                 <div className="text-center py-12">
-                  <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">Camera not available 📷</p>
-                  <p className="text-sm text-gray-400 mt-2">
+                  <Camera className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">Camera not available 📷</p>
+                  <p className="text-sm text-muted-foreground mt-2">
                     Please allow camera access to scan QR codes.
                   </p>
                   <Button
@@ -460,7 +462,7 @@ export default function CheckinPage() {
                   onClick={() => setShowManualEntry(true)}
                   className="mt-2"
                 >
-                  <Smartphone className="h-4 w-4 mr-2 text-slate-600" />
+                  <Smartphone className="h-4 w-4 mr-2 text-muted-foreground" />
                   Manual Ticket Entry 
                 </Button>
               </div>
@@ -482,10 +484,10 @@ export default function CheckinPage() {
             </CardHeader>
             <CardContent>
               {recentCheckins.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Users className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                   <p className="text-sm">No check-ins yet </p>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Scan QR codes to see them here
                   </p>
                 </div>
@@ -494,11 +496,11 @@ export default function CheckinPage() {
                   {recentCheckins.map((checkin, index) => (
                     <div 
                       key={index} 
-                      className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex justify-between items-center p-3 bg-muted/50 rounded-lg hover:bg-muted/30 transition-colors"
                     >
                       <div className="flex-1">
                         <p className="font-medium text-sm">{checkin.attendeeName}</p>
-                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                           <span>🎟️</span> {checkin.ticketType}
                         </p>
                       </div>
@@ -539,7 +541,7 @@ export default function CheckinPage() {
                 onChange={(e) => setManualTicketId(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleManualCheckin()}
               />
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 You can find the ticket ID on the attendee&apos;s QR code or email
               </p>
             </div>

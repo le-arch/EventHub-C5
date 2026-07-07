@@ -190,7 +190,7 @@ export function DateRangePicker({
             variant="outline"
             className={cn(
               "justify-start text-left font-normal w-full md:w-auto",
-              !hasRange && "text-gray-500"
+              !hasRange && "text-muted-foreground"
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
@@ -201,7 +201,7 @@ export function DateRangePicker({
           <div className="flex flex-col md:flex-row">
             {/* Preset Options */}
             <div className="border-b md:border-b-0 md:border-r p-2 min-w-36">
-              <p className="text-xs font-medium text-gray-500 mb-2 px-2">Quick Select</p>
+              <p className="text-xs font-medium text-muted-foreground mb-2 px-2">Quick Select</p>
               <div className="space-y-1">
                 {presetOptions.map((preset) => (
                   <Button

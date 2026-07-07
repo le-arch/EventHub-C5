@@ -227,14 +227,14 @@ export default function AdminEventsPage() {
   if (!adminUser || adminUser.role !== 'admin') {
     return (
       <div className="p-4 bg-[#fcfaff] min-h-screen flex items-center justify-center">
-        <Card className="text-center py-12 border-2 border-red-200 bg-white shadow-xl max-w-md w-full">
+        <Card className="text-center py-12 border-2 border-red-200 bg-card shadow-xl max-w-md w-full">
           <CardContent>
             <div className="flex flex-col items-center gap-4">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center border border-red-300">
                 <AlertCircle className="h-8 w-8 text-red-600" />
               </div>
-              <h3 className="font-black text-xl text-gray-900 tracking-tight">Access Denied</h3>
-              <p className="text-gray-700 max-w-sm text-sm font-medium leading-relaxed">
+              <h3 className="font-black text-xl text-foreground tracking-tight">Access Denied</h3>
+              <p className="text-foreground max-w-sm text-sm font-medium leading-relaxed">
                 You need administrative credentials and structural privileges to view this management platform module.
               </p>
             </div>
@@ -245,7 +245,7 @@ export default function AdminEventsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 bg-[#fcfaff] min-h-screen text-gray-900">
+    <div className="space-y-6 max-w-7xl mx-auto p-4 bg-[#fcfaff] min-h-screen text-foreground">
       {/* Breadcrumb Section */}
       <Breadcrumb 
         items={[
@@ -268,13 +268,13 @@ export default function AdminEventsPage() {
             </p>
           </div>
         </div>
-        <div className="text-purple-950 text-sm font-bold bg-white px-4 py-2.5 rounded-xl shadow-md border border-purple-200">
+        <div className="text-purple-950 text-sm font-bold bg-card px-4 py-2.5 rounded-xl shadow-md border border-purple-200">
           Total Base: <span className="text-purple-700 font-extrabold text-base ml-1">{totalCount}</span> metrics accounts
         </div>
       </div>
 
       {/* Filter and Search Layout Grid */}
-      <Card className="border-2 border-purple-100 bg-white shadow-sm">
+      <Card className="border-2 border-purple-100 bg-card shadow-sm">
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
@@ -286,7 +286,7 @@ export default function AdminEventsPage() {
                   setSearchTerm(e.target.value)
                   setPage(1)
                 }}
-                className="pl-11 pr-4 py-6 text-gray-900 placeholder:text-gray-500 font-medium border-2 border-purple-100 focus-visible:border-purple-500 focus-visible:ring-purple-500 rounded-xl shadow-sm bg-white"
+                className="pl-11 pr-4 py-6 text-foreground placeholder:text-muted-foreground font-medium border-2 border-purple-100 focus-visible:border-purple-500 focus-visible:ring-purple-500 rounded-xl shadow-sm bg-card"
               />
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
@@ -294,14 +294,14 @@ export default function AdminEventsPage() {
                 setStatusFilter(value)
                 setPage(1)
               }}>
-                <SelectTrigger className="w-full sm:w-52 py-6 border-2 border-purple-100 text-gray-900 font-bold focus:border-purple-500 focus:ring-purple-500 bg-white rounded-xl shadow-sm">
+                <SelectTrigger className="w-full sm:w-52 py-6 border-2 border-purple-100 text-foreground font-bold focus:border-purple-500 focus:ring-purple-500 bg-card rounded-xl shadow-sm">
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4 text-purple-600" />
                     <SelectValue placeholder="Filter by status" />
                   </div>
                 </SelectTrigger>
-                <SelectContent className="border-2 border-purple-100 bg-white font-semibold">
-                  <SelectItem value="all" className="text-gray-900">All Status Categories</SelectItem>
+                <SelectContent className="border-2 border-purple-100 bg-card font-semibold bg-white">
+                  <SelectItem value="all" className="text-foreground">All Status Categories</SelectItem>
                   <SelectItem value="published" className="text-emerald-950"> Published Events</SelectItem>
                   <SelectItem value="draft" className="text-amber-950"> Draft Backlogs</SelectItem>
                   <SelectItem value="cancelled" className="text-red-950"> Cancelled Buffers</SelectItem>
@@ -324,13 +324,13 @@ export default function AdminEventsPage() {
       </Card>
 
       {/* Dynamic Count Tracker Info Layer */}
-      <div className="text-sm text-gray-700 flex items-center gap-2 px-1 font-semibold">
+      <div className="text-sm text-foreground flex items-center gap-2 px-1 font-semibold">
         <CalendarDays className="h-4 w-4 text-purple-600" />
-        Showing <span className="text-purple-700 font-black">{localEvents.length}</span> out of <span className="text-gray-900 font-black">{totalCount}</span> functional system queries
+        Showing <span className="text-purple-700 font-black">{localEvents.length}</span> out of <span className="text-foreground font-black">{totalCount}</span> functional system queries
       </div>
 
       {/* Main Core Architecture Spreadsheet Table */}
-      <Card className="border border-purple-100 bg-white shadow-md rounded-2xl overflow-hidden">
+      <Card className="border border-purple-100 bg-card shadow-md rounded-2xl overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
@@ -349,13 +349,13 @@ export default function AdminEventsPage() {
               <TableBody>
                 {localEvents.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-16 bg-white">
+                    <TableCell colSpan={8} className="text-center py-16 bg-card">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center border-2 border-purple-100">
                           <AlertCircle className="h-8 w-8 text-purple-600" />
                         </div>
-                        <p className="text-gray-900 font-black text-lg">No matching records found <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" > 📭</span> </p>
-                        <p className="text-sm text-gray-600 font-medium max-w-sm leading-relaxed">
+                        <p className="text-foreground font-black text-lg">No matching records found <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" > 📭</span> </p>
+                        <p className="text-sm text-muted-foreground font-medium max-w-sm leading-relaxed">
                           {searchTerm || statusFilter !== 'all' 
                             ? 'The filters applied yield zero query records. Adjust parameters to check alternate rows.' 
                             : 'No events are registered on the host clusters yet.'}
@@ -380,10 +380,10 @@ export default function AdminEventsPage() {
                     >
                       <TableCell className="py-4">
                         <div>
-                          <p className="font-bold text-gray-900 text-base leading-snug">{event.title}</p>
+                          <p className="font-bold text-foreground text-base leading-snug">{event.title}</p>
                           <p className="text-xs font-mono font-bold text-purple-700 mt-1">ID: {event.id.slice(0, 8)}</p>
                           {event.capacityRange && (
-                            <div className="text-xs text-gray-700 font-semibold bg-gray-100 border border-gray-200 inline-block px-2 py-0.5 rounded-md mt-1.5">
+                            <div className="text-xs text-foreground font-semibold bg-muted/30 border border-border inline-block px-2 py-0.5 rounded-md mt-1.5">
                               Capacity bounds: {event.capacityRange.lower} – {event.capacityRange.upper}
                             </div>
                           )}
@@ -395,15 +395,15 @@ export default function AdminEventsPage() {
                             <Users className="h-4 w-4 text-purple-700" />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-gray-900">{event.organizerName}</p>
-                            <p className="text-xs font-semibold text-gray-600 mt-0.5">{event.organizerEmail}</p>
+                            <p className="text-sm font-bold text-foreground">{event.organizerName}</p>
+                            <p className="text-xs font-semibold text-muted-foreground mt-0.5">{event.organizerEmail}</p>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell className="py-4">
                         <div className="flex items-start gap-1.5 max-w-[180px]">
                           <MapPin className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" />
-                          <span className="text-sm font-bold text-gray-800 leading-tight">
+                          <span className="text-sm font-bold text-foreground leading-tight">
                             {event.venue}, <span className="text-purple-950 font-black">{event.city}</span>
                           </span>
                         </div>
@@ -411,16 +411,16 @@ export default function AdminEventsPage() {
                       <TableCell className="py-4">
                         <div className="flex items-center gap-1.5">
                           <Calendar className="h-4 w-4 text-purple-600 shrink-0" />
-                          <span className="text-sm font-bold text-gray-800">
+                          <span className="text-sm font-bold text-foreground">
                             {formatDate(event.startDate)}
-                            <span className="block text-xs font-semibold text-gray-500 mt-0.5">
+                            <span className="block text-xs font-semibold text-muted-foreground mt-0.5">
                               {event.startTime}
                             </span>
                           </span>
                         </div>
                       </TableCell>
                       <TableCell className="py-4">
-                        <span className="font-extrabold text-gray-900 bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-200 text-sm">
+                        <span className="font-extrabold text-foreground bg-muted/30 px-2.5 py-1 rounded-lg border border-border text-sm">
                           {event.ticketsSold.toLocaleString()}
                         </span>
                       </TableCell>
@@ -436,14 +436,14 @@ export default function AdminEventsPage() {
                             <Button 
                               variant="ghost" 
                               size="icon"
-                              className="hover:bg-purple-100 text-gray-700 hover:text-purple-950 border border-transparent hover:border-purple-200 rounded-xl h-9 w-9"
+                              className="hover:bg-purple-100 text-foreground hover:text-purple-950 border border-transparent hover:border-purple-200 rounded-xl h-9 w-9"
                             >
                               <MoreVertical className="h-5 w-5" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="border-2 border-purple-100 bg-white p-1.5 rounded-xl shadow-lg min-w-[170px] font-bold">
+                          <DropdownMenuContent align="end" className="border-2 border-purple-100 bg-card p-1.5 rounded-xl shadow-lg min-w-[170px] font-bold">
                             <DropdownMenuItem asChild>
-                              <Link href={`/e/${event.id}`} target="_blank" className="cursor-pointer flex items-center gap-2 p-2 rounded-lg text-gray-900 hover:bg-purple-50">
+                              <Link href={`/e/${event.id}`} target="_blank" className="cursor-pointer flex items-center gap-2 p-2 rounded-lg text-foreground hover:bg-purple-50">
                                 <Eye className="h-4 w-4 text-purple-700" />
                                  View Live Link
                               </Link>
@@ -471,7 +471,7 @@ export default function AdminEventsPage() {
 
       {/* Pagination Controller Container */}
       {totalPages > 1 && (
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-purple-100">
+        <div className="bg-card p-4 rounded-xl shadow-sm border border-purple-100">
           <Pagination
             currentPage={page}
             totalPages={totalPages}
@@ -487,45 +487,45 @@ export default function AdminEventsPage() {
 
       {/* High-Contrast Bottom Aggregated KPI Cards Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-2 border-purple-200 bg-white shadow-sm rounded-xl">
+        <Card className="border-2 border-purple-200 bg-card shadow-sm rounded-xl">
           <CardContent className="pt-5 pb-5">
             <div className="text-center">
               <CalendarDays className="h-7 w-7 text-purple-700 mx-auto mb-2" />
-              <p className="text-3xl font-black text-gray-900 tracking-tight">{localEvents.length}</p>
-              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Total Query Rows</p>
+              <p className="text-3xl font-black text-foreground tracking-tight">{localEvents.length}</p>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Total Query Rows</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-emerald-300 bg-white shadow-sm rounded-xl">
+        <Card className="border-2 border-emerald-300 bg-card shadow-sm rounded-xl">
           <CardContent className="pt-5 pb-5">
             <div className="text-center">
               <CheckCircle className="h-7 w-7 text-emerald-700 mx-auto mb-2" />
               <p className="text-3xl font-black text-emerald-700 tracking-tight">
                 {localEvents.filter(e => e.status === 'published').length}
               </p>
-              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Live Broadcasts </p>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Live Broadcasts </p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-blue-300 bg-white shadow-sm rounded-xl">
+        <Card className="border-2 border-blue-300 bg-card shadow-sm rounded-xl">
           <CardContent className="pt-5 pb-5">
             <div className="text-center">
               <Ticket className="h-7 w-7 text-blue-700 mx-auto mb-2" />
               <p className="text-3xl font-black text-blue-900 tracking-tight">
                 {localEvents.reduce((sum, e) => sum + e.ticketsSold, 0).toLocaleString()}
               </p>
-              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Receipt Indexes </p>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Receipt Indexes </p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-amber-300 bg-white shadow-sm rounded-xl">
+        <Card className="border-2 border-amber-300 bg-card shadow-sm rounded-xl">
           <CardContent className="pt-5 pb-5">
             <div className="text-center">
               <DollarSign className="h-7 w-7 text-amber-700 mx-auto mb-2" />
               <p className="text-3xl font-black text-amber-900 tracking-tight">
                 {formatCurrency(localEvents.reduce((sum, e) => sum + e.totalRevenue, 0))}
               </p>
-              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Combined Ledger </p>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Combined Ledger </p>
             </div>
           </CardContent>
         </Card>

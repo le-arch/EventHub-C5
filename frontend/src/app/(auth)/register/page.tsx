@@ -108,7 +108,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card className="shadow-lg border-l-4">
+    <Card className="glass border-l-4">
       <CardHeader className="space-y-1 text-center">
         <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
         <CardDescription>
@@ -136,7 +136,7 @@ export default function RegisterPage() {
             {errors.fullName && (
               <p className="text-sm text-red-500 mt-1">{errors.fullName.message}</p>
             )}
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Your full name will be displayed on your organizer profile
             </p>
           </div>
@@ -158,7 +158,7 @@ export default function RegisterPage() {
             {errors.email && (
               <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
             )}
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               We&apos;ll send a verification code to this email
             </p>
           </div>
@@ -169,7 +169,7 @@ export default function RegisterPage() {
               Phone Number <span className="text-red-500">*</span>
             </Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                 +237
               </span>
               <Input
@@ -185,7 +185,7 @@ export default function RegisterPage() {
             {errors.phone && (
               <p className="text-sm text-red-500 mt-1">{errors.phone.message}</p>
             )}
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Enter your phone number without the country code (e.g., 612345678)
             </p>
           </div>
@@ -208,7 +208,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? (<EyeOff className="h-4 w-4" aria-hidden="true" />) : (<Eye className="h-4 w-4" aria-hidden="true" />)}
               </button>
@@ -216,7 +216,7 @@ export default function RegisterPage() {
             {errors.password && (
               <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
             )}
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Must be at least 8 characters with one uppercase letter and one number
             </p>
           </div>
@@ -239,7 +239,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 {showConfirmPassword ? (<EyeOff className="h-4 w-4" aria-hidden="true" />) : (<Eye className="h-4 w-4" aria-hidden="true" />)}
               </button>
@@ -266,7 +266,7 @@ export default function RegisterPage() {
           </Button>
 
           {/* Terms Agreement Notice */}
-          <p className="text-xs text-center text-gray-500">
+          <p className="text-xs text-center text-muted-foreground">
             By creating an account, you agree to our{' '}
             <Link href="/terms" className="text-primary hover:underline">
               Terms of Service
@@ -278,7 +278,7 @@ export default function RegisterPage() {
           </p>
 
           {/* Link to Login Page */}
-          <p className="text-center text-sm text-gray-600">
+          <p className="text-center text-sm text-muted-foreground">
             Already have an account?{' '}
             <Link href="/login" className="text-primary hover:underline font-medium">
               Log in

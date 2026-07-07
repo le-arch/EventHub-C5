@@ -212,20 +212,20 @@ export default function CreateEventPage() {
           }`}>
             {step === 'basic' ? '1' : <Check className="h-4 w-4" />}
           </div>
-          <span className={`${step === 'basic' ? 'font-semibold text-purple-700' : 'text-gray-500'}`}>
+          <span className={`${step === 'basic' ? 'font-semibold text-purple-700' : 'text-muted-foreground'}`}>
              Basic Info
           </span>
         </div>
-        <div className={`w-12 h-0.5 ${step === 'basic' ? 'bg-gradient-to-r from-purple-500 to-blue-500' : 'bg-gray-300'}`} />
+        <div className={`w-12 h-0.5 ${step === 'basic' ? 'bg-gradient-to-r from-purple-500 to-blue-500' : 'bg-muted'}`} />
         <div className="flex items-center gap-2">
           <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
             step === 'tickets' 
               ? 'bg-gradient-to-r from-purple-600 to-blue-500 text-white shadow-lg shadow-purple-500/25' 
-              : 'bg-gray-100 text-gray-400 border-2 border-gray-200'
+              : 'bg-muted/30 text-muted-foreground border-2 border-border'
           }`}>
             2
           </div>
-          <span className={`${step === 'tickets' ? 'font-semibold text-purple-700' : 'text-gray-400'}`}>
+          <span className={`${step === 'tickets' ? 'font-semibold text-purple-700' : 'text-muted-foreground'}`}>
             Ticket Types
           </span>
         </div>
@@ -280,7 +280,7 @@ export default function CreateEventPage() {
               <CardContent className="space-y-5">
                 {/* Cover Image */}
                 <div className="space-y-2">
-                  <Label className="text-gray-700 font-medium flex items-center gap-1.5">
+                  <Label className="text-foreground font-medium flex items-center gap-1.5">
                     <ImageIcon className="h-4 w-4 text-purple-500" />
                     Event Cover Image
                   </Label>
@@ -295,7 +295,7 @@ export default function CreateEventPage() {
 
                 {/* Title */}
                 <div>
-                  <Label htmlFor="title" className="text-gray-700 font-medium">Event Title *</Label>
+                  <Label htmlFor="title" className="text-foreground font-medium">Event Title *</Label>
                   <Input
                     id="title"
                     placeholder="e.g., Douala Music Fest 2025"
@@ -311,7 +311,7 @@ export default function CreateEventPage() {
 
                 {/* Description */}
                 <div>
-                  <Label htmlFor="description" className="text-gray-700 font-medium">Description </Label>
+                  <Label htmlFor="description" className="text-foreground font-medium">Description </Label>
                   <Textarea
                     id="description"
                     placeholder="Describe your event..."
@@ -324,7 +324,7 @@ export default function CreateEventPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Venue */}
                   <div>
-                    <Label htmlFor="venue" className="text-gray-700 font-medium">Venue Name and Address *</Label>
+                    <Label htmlFor="venue" className="text-foreground font-medium">Venue Name and Address *</Label>
                     <Input
                       id="venue"
                       placeholder="e.g., Palais des Congrès"
@@ -340,15 +340,15 @@ export default function CreateEventPage() {
 
                   {/* City */}
                   <div>
-                    <Label htmlFor="city" className="text-gray-700 font-medium">City *</Label>
+                    <Label htmlFor="city" className="text-foreground font-medium">City *</Label>
                     <Select
                       onValueChange={(value) => basicForm.setValue('city', value)}
                       value={basicForm.watch('city')}
                     >
-                      <SelectTrigger className="bg-white border-purple-200 focus:border-purple-500 focus:ring-purple-500"> 
+                      <SelectTrigger className="bg-card border-purple-200 focus:border-purple-500 focus:ring-purple-500 bg-white"> 
                         <SelectValue placeholder=" Select a city" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white">
+                      <SelectContent className="bg-card">
                         {CAMEROON_CITIES.map((city) => (
                           <SelectItem key={city} value={city}>
                             {city}
@@ -367,7 +367,7 @@ export default function CreateEventPage() {
                 {/* Date and Time */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="startDate" className="text-gray-700 font-medium">Event Date *</Label>
+                    <Label htmlFor="startDate" className="text-foreground font-medium">Event Date *</Label>
                     <Input
                       id="startDate"
                       type="date"
@@ -381,7 +381,7 @@ export default function CreateEventPage() {
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="startTime" className="text-gray-700 font-medium">Start Time *</Label>
+                    <Label htmlFor="startTime" className="text-foreground font-medium">Start Time *</Label>
                     <Input
                       id="startTime"
                       type="time"
@@ -395,7 +395,7 @@ export default function CreateEventPage() {
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="endTime" className="text-gray-700 font-medium">End Time *</Label>
+                    <Label htmlFor="endTime" className="text-foreground font-medium">End Time *</Label>
                     <Input
                       id="endTime"
                       type="time"
@@ -413,7 +413,7 @@ export default function CreateEventPage() {
                 {/* Ticket Sales Window */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="salesStartDate" className="text-gray-700 font-medium">Ticket Sales Start Date *</Label>
+                    <Label htmlFor="salesStartDate" className="text-foreground font-medium">Ticket Sales Start Date *</Label>
                     <Input
                       id="salesStartDate"
                       type="date"
@@ -427,7 +427,7 @@ export default function CreateEventPage() {
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="salesEndDate" className="text-gray-700 font-medium">Ticket Sales End Date *</Label>
+                    <Label htmlFor="salesEndDate" className="text-foreground font-medium">Ticket Sales End Date *</Label>
                     <Input
                       id="salesEndDate"
                       type="date"
@@ -445,7 +445,7 @@ export default function CreateEventPage() {
                 {/* Capacity Range */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="capacityMin" className="text-gray-700 font-medium">Minimum Capacity</Label>
+                    <Label htmlFor="capacityMin" className="text-foreground font-medium">Minimum Capacity</Label>
                     <Input
                       id="capacityMin"
                       type="number"
@@ -455,7 +455,7 @@ export default function CreateEventPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="capacityMax" className="text-gray-700 font-medium">Maximum Capacity</Label>
+                    <Label htmlFor="capacityMax" className="text-foreground font-medium">Maximum Capacity</Label>
                     <Input
                       id="capacityMax"
                       type="number"
@@ -524,7 +524,7 @@ export default function CreateEventPage() {
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
-                            <Label className="text-gray-700 font-medium">Ticket Name</Label>
+                            <Label className="text-foreground font-medium">Ticket Name</Label>
                             <Input
                               placeholder="e.g., Early Bird"
                               {...ticketForm.register(`ticketTypes.${index}.name`)}
@@ -535,7 +535,7 @@ export default function CreateEventPage() {
                             )}
                           </div>
                           <div>
-                            <Label className="text-gray-700 font-medium">Price (XAF)</Label>
+                            <Label className="text-foreground font-medium">Price (XAF)</Label>
                             <Input
                               type="number"
                               placeholder="5000"
@@ -549,7 +549,7 @@ export default function CreateEventPage() {
                             )}
                           </div>
                           <div>
-                            <Label className="text-gray-700 font-medium">Quantity Available</Label>
+                            <Label className="text-foreground font-medium">Quantity Available</Label>
                             <Input
                               type="number"
                               placeholder="100"

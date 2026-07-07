@@ -51,7 +51,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="bg-gray-900 text-gray-400">
+    <footer className="bg-card text-muted-foreground">
       {/* Main Footer */}
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
@@ -63,20 +63,20 @@ export function Footer() {
               </div>
               <span className="text-white font-bold text-xl">EventHub</span>
             </Link>
-            <p className="text-sm text-gray-400 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               The complete event management platform for Cameroon. Create events, sell tickets, and manage check-ins with ease.
             </p>
             <div className="flex space-x-4">
-              <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+              <a href="#" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-white transition-colors">
                 <FacebookIcon href="#" />
               </a>
-              <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+              <a href="#" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-white transition-colors">
                 <TwitterIcon href="#" />
               </a>
-              <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+              <a href="#" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-white transition-colors">
                 <InstagramIcon href="#" />
               </a>
-              <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+              <a href="#" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-white transition-colors">
                 <LinkedinIcon href="#" />
               </a>
             </div>
@@ -140,7 +140,7 @@ export function Footer() {
         </div>
 
         {/* Contact Info Bar */}
-        <div className="border-t border-gray-800 mt-8 pt-8">
+        <div className="border-t border-border mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
             <div className="flex flex-wrap justify-center gap-6">
               <div className="flex items-center gap-2">

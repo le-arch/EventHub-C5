@@ -74,7 +74,7 @@ export function SearchBar({
 
   return (
     <div className={cn("relative", className)}>
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       
       <Input
         type="text"
@@ -86,7 +86,7 @@ export function SearchBar({
       />
       
       {isLoading && (
-        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 animate-spin" />
+        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
       )}
       
       {!isLoading && localValue && (

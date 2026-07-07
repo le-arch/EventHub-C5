@@ -106,7 +106,7 @@ export default function VerifyOTPPage() {
   }
 
   return (
-    <Card className="shadow-lg border-0">
+    <Card className="glass border-0">
       <CardHeader className="space-y-1 text-center">
         <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
           <Mail className="h-6 w-6 text-primary" />
@@ -115,7 +115,7 @@ export default function VerifyOTPPage() {
         <CardDescription>
           We sent a 6-digit verification code to
           <br />
-          <span className="font-medium text-gray-900">{email}</span>
+          <span className="font-medium text-foreground">{email}</span>
         </CardDescription>
       </CardHeader>
       
@@ -152,7 +152,7 @@ export default function VerifyOTPPage() {
 
           {/* Resend Code Section */}
           <div className="text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Didn&apos;t receive the code?{' '}
               <button
                 onClick={handleResend}
@@ -185,7 +185,7 @@ export default function VerifyOTPPage() {
           <div className="text-center pt-2">
             <Link 
               href="/login" 
-              className="text-sm text-gray-500 hover:text-gray-700 inline-flex items-center gap-1"
+              className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
             >
               <ArrowLeft className="h-3 w-3" />
               Back to Login

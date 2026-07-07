@@ -93,7 +93,7 @@ export function Pagination({
       {/* Page Size Selector */}
       {onPageSizeChange && (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">Show</span>
+          <span className="text-sm text-muted-foreground">Show</span>
           <Select
             value={pageSize.toString()}
             onValueChange={(value) => onPageSizeChange(Number(value))}
@@ -109,13 +109,13 @@ export function Pagination({
               ))}
             </SelectContent>
           </Select>
-          <span className="text-sm text-gray-500">per page</span>
+          <span className="text-sm text-muted-foreground">per page</span>
         </div>
       )}
 
       {/* Total Items Info */}
       {totalItems && (
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-muted-foreground">
           Showing {((currentPage - 1) * pageSize) + 1} - {Math.min(currentPage * pageSize, totalItems)} of {totalItems}
         </div>
       )}

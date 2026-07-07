@@ -64,7 +64,7 @@ export function Breadcrumb({
   items: propItems, 
   className,
   showHome = true,
-  separator = <ChevronRight className="h-3 w-3 text-gray-400" />,
+  separator = <ChevronRight className="h-3 w-3 text-muted-foreground" />,
 }: BreadcrumbProps) {
   const pathname = usePathname()
   
@@ -82,13 +82,13 @@ export function Breadcrumb({
           <li className="flex items-center">
             <Link
               href="/"
-              className="text-gray-500 hover:text-primary transition-colors flex items-center"
+              className="text-muted-foreground hover:text-primary transition-colors flex items-center"
             >
               <Home className="h-4 w-4" />
               <span className="sr-only">Home</span>
             </Link>
             {items.length > 0 && (
-              <span className="mx-1 text-gray-400">{separator}</span>
+              <span className="mx-1 text-muted-foreground">{separator}</span>
             )}
           </li>
         )}
@@ -96,19 +96,19 @@ export function Breadcrumb({
         {items.map((item, index) => (
           <li key={item.href} className="flex items-center">
             {item.isActive ? (
-              <span className="text-gray-900 font-medium" aria-current="page">
+              <span className="text-foreground font-medium" aria-current="page">
                 {item.label}
               </span>
             ) : (
               <Link
                 href={item.href}
-                className="text-gray-500 hover:text-primary transition-colors"
+                className="text-muted-foreground hover:text-primary transition-colors"
               >
                 {item.label}
               </Link>
             )}
             {index < items.length - 1 && (
-              <span className="mx-1 text-gray-400">{separator}</span>
+              <span className="mx-1 text-muted-foreground">{separator}</span>
             )}
           </li>
         ))}

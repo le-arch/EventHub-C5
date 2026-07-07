@@ -59,8 +59,8 @@ export function TicketTypeList({
         {[1, 2].map((i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-4">
-              <div className="h-6 w-32 bg-gray-200 rounded mb-2" />
-              <div className="h-4 w-24 bg-gray-200 rounded" />
+              <div className="h-6 w-32 bg-muted rounded mb-2" />
+              <div className="h-4 w-24 bg-muted rounded" />
             </CardContent>
           </Card>
         ))}
@@ -136,7 +136,7 @@ export function TicketTypeList({
                     <p className="text-2xl font-bold text-primary mt-1">
                       {formatCurrency(ticket.price)}
                     </p>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                    <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                       <span>Total: {ticket.quantityAvailable}</span>
                       {soldCount > 0 && (
                         <span className="flex items-center gap-1">
@@ -176,7 +176,7 @@ export function TicketTypeList({
       {ticketTypes.length === 0 && !isAdding && (
         <Card className="text-center py-8">
           <CardContent>
-            <p className="text-gray-500 mb-3">No ticket types yet</p>
+            <p className="text-muted-foreground mb-3">No ticket types yet</p>
             <Button variant="outline" onClick={() => setIsAdding(true)}>
               <Plus className="h-4 w-4 mr-1" />
               Add your first ticket type

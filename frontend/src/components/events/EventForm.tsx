@@ -118,19 +118,19 @@ export function EventForm({
             )}>
               {step === 'basic' ? '1' : '✓'}
             </div>
-            <span className={step === 'basic' ? 'font-medium' : 'text-gray-500'}>
+            <span className={step === 'basic' ? 'font-medium' : 'text-muted-foreground'}>
               Basic Info
             </span>
           </div>
-          <div className="w-16 h-px bg-gray-300" />
+          <div className="w-16 h-px bg-muted" />
           <div className="flex items-center gap-2">
             <div className={cn(
               "w-8 h-8 rounded-full flex items-center justify-center",
-              step === 'tickets' ? "bg-primary text-white" : "text-gray-400"
+              step === 'tickets' ? "bg-primary text-white" : "text-muted-foreground"
             )}>
               2
             </div>
-            <span className={step === 'tickets' ? 'font-medium' : 'text-gray-500'}>
+            <span className={step === 'tickets' ? 'font-medium' : 'text-muted-foreground'}>
               Ticket Types
             </span>
           </div>
@@ -308,7 +308,7 @@ export function EventForm({
               ))}
 
               {fields.length === 0 && (
-                <p className="text-center text-gray-500 py-4">
+                <p className="text-center text-muted-foreground py-4">
                   Click &quot;Add Ticket&quot; to create ticket types
                 </p>
               )}

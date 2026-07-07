@@ -94,7 +94,7 @@ export function AttendeeCard({ attendee, onCheckIn, showActions = true }: Attend
             </div>
             
             {/* Phone Number */}
-            <div className="flex items-center gap-1 mt-1 text-sm text-gray-500">
+            <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
               <Phone className="h-3 w-3" />
               <span>{attendee.phone}</span>
             </div>
@@ -102,9 +102,9 @@ export function AttendeeCard({ attendee, onCheckIn, showActions = true }: Attend
         </div>
 
         {/* Ticket Details */}
-        <div className="bg-gray-50 rounded-lg p-3 space-y-2 mb-3">
+        <div className="bg-muted/50 rounded-lg p-3 space-y-2 mb-3">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Ticket className="h-4 w-4" />
               <span>Ticket Type:</span>
             </div>
@@ -112,12 +112,12 @@ export function AttendeeCard({ attendee, onCheckIn, showActions = true }: Attend
           </div>
           
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Quantity:</span>
+            <span className="text-sm text-muted-foreground">Quantity:</span>
             <span className="font-medium">{attendee.quantity}</span>
           </div>
           
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Unit Price:</span>
+            <span className="text-sm text-muted-foreground">Unit Price:</span>
             <span>{formatCurrency(attendee.unitPrice)}</span>
           </div>
           
@@ -128,7 +128,7 @@ export function AttendeeCard({ attendee, onCheckIn, showActions = true }: Attend
         </div>
 
         {/* Purchase and Check-in Info */}
-        <div className="space-y-1 text-xs text-gray-400">
+        <div className="space-y-1 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             <span>Purchased: {formatDate(attendee.purchasedAt)}</span>

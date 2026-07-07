@@ -66,19 +66,19 @@ export function EmptyState({
           className={cn("mx-auto mb-6", sizes.iconSize)}
         />
       ) : icon ? (
-        <div className={cn("mx-auto mb-6 text-gray-400", sizes.iconSize)}>
+        <div className={cn("mx-auto mb-6 text-muted-foreground", sizes.iconSize)}>
           {icon}
         </div>
       ) : null}
 
       {/* Title */}
-      <h3 className={cn("font-semibold text-gray-900 mb-2", sizes.titleSize)}>
+      <h3 className={cn("font-semibold text-foreground mb-2", sizes.titleSize)}>
         {title}
       </h3>
 
       {/* Description */}
       {description && (
-        <p className={cn("text-gray-500 max-w-sm mx-auto", sizes.descriptionSize)}>
+        <p className={cn("text-muted-foreground max-w-sm mx-auto", sizes.descriptionSize)}>
           {description}
         </p>
       )}

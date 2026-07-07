@@ -51,7 +51,7 @@ export function MobileHeader({
 
   return (
     <header className={cn(
-      "sticky top-0 z-40 bg-white border-b px-4 py-3 flex items-center justify-between",
+      "sticky top-0 z-40 bg-card border-b px-4 py-3 flex items-center justify-between",
       className
     )}>
       {/* Left Section */}
@@ -68,7 +68,7 @@ export function MobileHeader({
         )}
         
         {title && (
-          <h1 className="text-lg font-semibold text-gray-900 truncate">
+          <h1 className="text-lg font-semibold text-foreground truncate">
             {title}
           </h1>
         )}

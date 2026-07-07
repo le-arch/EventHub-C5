@@ -113,7 +113,7 @@ export function ImageUploader({
 
   return (
     <div className={cn("space-y-3", className)}>
-      <label className="block text-sm font-medium text-gray-700">
+      <label className="block text-sm font-medium text-foreground">
         {label}
       </label>
 
@@ -146,7 +146,7 @@ export function ImageUploader({
           className={cn(
             "border-2 border-dashed rounded-lg transition-colors cursor-pointer",
             "flex flex-col items-center justify-center p-6",
-            isDragActive ? "border-primary bg-primary/5" : "border-gray-300 hover:border-primary",
+            isDragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary",
             disabled && "opacity-50 cursor-not-allowed",
             aspectRatio === 'free' ? "min-h-[200px]" : aspectRatioClass[aspectRatio]
           )}
@@ -154,11 +154,11 @@ export function ImageUploader({
           <input {...getInputProps()} />
           
           {isUploading ? (
-            <Loader2 className="h-10 w-10 text-gray-400 animate-spin" />
+            <Loader2 className="h-10 w-10 text-muted-foreground animate-spin" />
           ) : (
             <>
-              <Upload className="h-10 w-10 text-gray-400 mb-3" />
-              <p className="text-sm text-gray-600 text-center">
+              <Upload className="h-10 w-10 text-muted-foreground mb-3" />
+              <p className="text-sm text-muted-foreground text-center">
                 {isDragActive ? (
                   "Drop your image here"
                 ) : (
@@ -167,7 +167,7 @@ export function ImageUploader({
                   </>
                 )}
               </p>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 JPEG, PNG or WebP (max {maxSize / 1024 / 1024}MB)
               </p>
             </>

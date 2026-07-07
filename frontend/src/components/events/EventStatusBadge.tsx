@@ -23,7 +23,7 @@ const statusConfig = {
   draft: {
     label: 'Draft',
     icon: FileText,
-    className: 'bg-gray-100 text-gray-700 border-gray-200',
+    className: 'bg-muted/30 text-foreground border-border',
   },
   published: {
     label: 'Published',

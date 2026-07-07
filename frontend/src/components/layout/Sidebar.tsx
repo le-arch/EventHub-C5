@@ -98,7 +98,7 @@ export function Sidebar({ isCollapsed = false, onToggle }: SidebarProps) {
     <TooltipProvider delayDuration={200}>
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-screen bg-white border-r transition-all duration-300",
+          "fixed left-0 top-0 z-40 h-screen bg-card border-r transition-all duration-300",
           isCollapsed ? "w-20" : "w-64"
         )}
       >
@@ -147,7 +147,7 @@ export function Sidebar({ isCollapsed = false, onToggle }: SidebarProps) {
                     isCollapsed && "justify-center",
                     isActive
                       ? "bg-primary text-white"
-                      : "text-gray-700 hover:bg-gray-100"
+                      : "text-foreground hover:bg-muted/30"
                   )}
                 >
                   <Icon className={cn("h-5 w-5", isCollapsed && "h-5 w-5")} />
@@ -188,7 +188,7 @@ export function Sidebar({ isCollapsed = false, onToggle }: SidebarProps) {
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{user?.fullName}</p>
-                  <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                 </div>
               </div>
               <Button
@@ -205,9 +205,9 @@ export function Sidebar({ isCollapsed = false, onToggle }: SidebarProps) {
               <TooltipTrigger asChild>
                 <button
                   onClick={handleLogout}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="p-2 rounded-lg hover:bg-muted/30 transition-colors"
                 >
-                  <LogOut className="h-5 w-5 text-gray-500" />
+                  <LogOut className="h-5 w-5 text-muted-foreground" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right">Logout</TooltipContent>

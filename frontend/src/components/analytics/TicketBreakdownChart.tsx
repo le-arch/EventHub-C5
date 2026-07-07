@@ -99,16 +99,16 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload
     return (
-      <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-        <p className="font-semibold text-gray-900 mb-2">{data.name}</p>
+      <div className="bg-card p-3 rounded-lg shadow-lg border border-border">
+        <p className="font-semibold text-foreground mb-2">{data.name}</p>
         <div className="space-y-1 text-sm">
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Tickets Sold: <span className="font-semibold">{data.sold}</span>
           </p>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Revenue: <span className="font-semibold">{formatCurrency(data.revenue)}</span>
           </p>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Percentage: <span className="font-semibold">{data.percentage}%</span>
           </p>
         </div>
@@ -156,7 +156,7 @@ export function TicketBreakdownChart({
         </CardHeader>
         <CardContent>
           <div className="h-80 flex items-center justify-center">
-            <div className="animate-pulse text-gray-400">Loading chart data...</div>
+            <div className="animate-pulse text-muted-foreground">Loading chart data...</div>
           </div>
         </CardContent>
       </Card>
@@ -172,8 +172,8 @@ export function TicketBreakdownChart({
         </CardHeader>
         <CardContent>
           <div className="h-80 flex items-center justify-center flex-col gap-2">
-            <p className="text-gray-400">No ticket data available</p>
-            <p className="text-sm text-gray-400">Add ticket types to see breakdown</p>
+            <p className="text-muted-foreground">No ticket data available</p>
+            <p className="text-sm text-muted-foreground">Add ticket types to see breakdown</p>
           </div>
         </CardContent>
       </Card>
@@ -215,7 +215,7 @@ export function TicketBreakdownChart({
                 align="right" 
                 verticalAlign="middle"
                 formatter={(value, entry: any, index) => (
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm text-foreground">
                     {value}: {chartData[index]?.percentage}%
                   </span>
                 )}
@@ -228,7 +228,7 @@ export function TicketBreakdownChart({
         <div className="mt-6 block md:hidden">
           <div className="space-y-2">
             {chartData.map((item, index) => (
-              <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+              <div key={index} className="flex justify-between items-center p-2 bg-muted/50 rounded-lg">
                 <div className="flex items-center gap-2">
                   <div 
                     className="w-3 h-3 rounded-full" 
@@ -238,7 +238,7 @@ export function TicketBreakdownChart({
                 </div>
                 <div className="text-right">
                   <p className="text-sm">{item.sold} tickets</p>
-                  <p className="text-xs text-gray-500">{item.percentage}%</p>
+                  <p className="text-xs text-muted-foreground">{item.percentage}%</p>
                 </div>
               </div>
             ))}

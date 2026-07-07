@@ -67,8 +67,8 @@ export function TicketSelector({ tickets, onSelect, isLoading = false }: TicketS
         {[1, 2, 3].map((i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-4">
-              <div className="h-6 w-32 bg-gray-200 rounded mb-2" />
-              <div className="h-8 w-24 bg-gray-200 rounded" />
+              <div className="h-6 w-32 bg-muted rounded mb-2" />
+              <div className="h-8 w-24 bg-muted rounded" />
             </CardContent>
           </Card>
         ))}
@@ -80,9 +80,9 @@ export function TicketSelector({ tickets, onSelect, isLoading = false }: TicketS
     return (
       <Card className="text-center py-8">
         <CardContent>
-          <Ticket className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">No tickets available</p>
-          <p className="text-sm text-gray-400">Check back later for ticket sales</p>
+          <Ticket className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground">No tickets available</p>
+          <p className="text-sm text-muted-foreground">Check back later for ticket sales</p>
         </CardContent>
       </Card>
     )
@@ -124,7 +124,7 @@ export function TicketSelector({ tickets, onSelect, isLoading = false }: TicketS
                   <p className="text-2xl font-bold text-primary mt-2">
                     {formatCurrency(ticket.price)}
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {ticket.quantityAvailable} tickets available
                   </p>
                 </div>
@@ -142,10 +142,10 @@ export function TicketSelector({ tickets, onSelect, isLoading = false }: TicketS
 
       {/* Quantity Selector and Proceed Button */}
       {selectedTicket && selectedTicket.quantityAvailable > 0 && (
-        <Card className="bg-gray-50 border-primary/20">
+        <Card className="bg-muted/50 border-primary/20">
           <CardContent className="p-4 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-gray-700 font-medium">Quantity:</span>
+              <span className="text-foreground font-medium">Quantity:</span>
               <div className="flex items-center gap-3">
                 <Button
                   type="button"
@@ -174,7 +174,7 @@ export function TicketSelector({ tickets, onSelect, isLoading = false }: TicketS
             </div>
 
             <div className="flex justify-between items-center pt-3 border-t">
-              <span className="font-semibold text-gray-700">Total:</span>
+              <span className="font-semibold text-foreground">Total:</span>
               <span className="text-2xl font-bold text-primary">
                 {formatCurrency(selectedTicket.price * quantity)}
               </span>

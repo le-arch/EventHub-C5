@@ -100,9 +100,9 @@ export function AttendeeTable({ attendees, onCheckIn, onViewDetails, isLoading =
   if (isLoading) {
     return (
       <div className="border rounded-lg">
-        <div className="h-12 bg-gray-100 animate-pulse" />
+        <div className="h-12 bg-muted/30 animate-pulse" />
         {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="h-16 border-t animate-pulse bg-gray-50" />
+          <div key={i} className="h-16 border-t animate-pulse bg-muted/50" />
         ))}
       </div>
     )
@@ -111,7 +111,7 @@ export function AttendeeTable({ attendees, onCheckIn, onViewDetails, isLoading =
   if (attendees.length === 0) {
     return (
       <div className="border rounded-lg text-center py-12">
-        <p className="text-gray-500">No attendees found</p>
+        <p className="text-muted-foreground">No attendees found</p>
       </div>
     )
   }
@@ -121,19 +121,19 @@ export function AttendeeTable({ attendees, onCheckIn, onViewDetails, isLoading =
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleSort('name')}>
+            <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('name')}>
               Attendee {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
             </TableHead>
-            <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleSort('phone')}>
+            <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('phone')}>
               Phone {sortField === 'phone' && (sortDirection === 'asc' ? '↑' : '↓')}
             </TableHead>
-            <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleSort('ticketType')}>
+            <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('ticketType')}>
               Ticket Type {sortField === 'ticketType' && (sortDirection === 'asc' ? '↑' : '↓')}
             </TableHead>
-            <TableHead className="text-center cursor-pointer hover:bg-gray-50" onClick={() => handleSort('quantity')}>
+            <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort('quantity')}>
               Qty {sortField === 'quantity' && (sortDirection === 'asc' ? '↑' : '↓')}
             </TableHead>
-            <TableHead className="text-right cursor-pointer hover:bg-gray-50" onClick={() => handleSort('totalPaid')}>
+            <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort('totalPaid')}>
               Amount Paid {sortField === 'totalPaid' && (sortDirection === 'asc' ? '↑' : '↓')}
             </TableHead>
             <TableHead className="text-center">Status</TableHead>
@@ -175,7 +175,7 @@ export function AttendeeTable({ attendees, onCheckIn, onViewDetails, isLoading =
                   </Badge>
                 )}
               </TableCell>
-              <TableCell className="text-sm text-gray-500">
+              <TableCell className="text-sm text-muted-foreground">
                 {attendee.checkedInAt ? formatTime(attendee.checkedInAt) : '-'}
               </TableCell>
               <TableCell>

@@ -93,7 +93,7 @@ export function Header({ onMobileMenuClick }: HeaderProps) {
     <header
       className={cn(
         "sticky top-0 z-50 w-full transition-all duration-300",
-        scrolled ? "bg-white/80 backdrop-blur-md shadow-sm" : "bg-white border-b"
+        scrolled ? "bg-white/80 backdrop-blur-md shadow-sm" : "bg-card border-b"
       )}
     >
       <div className="container mx-auto px-4">
@@ -103,7 +103,7 @@ export function Header({ onMobileMenuClick }: HeaderProps) {
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">EH</span>
             </div>
-            <span className="font-bold text-xl text-gray-900">EventHub</span>
+            <span className="font-bold text-xl text-foreground">EventHub</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -116,7 +116,7 @@ export function Header({ onMobileMenuClick }: HeaderProps) {
                   href={item.href}
                   className={cn(
                     "text-sm font-medium transition-colors hover:text-primary",
-                    isActive ? "text-primary" : "text-gray-600"
+                    isActive ? "text-primary" : "text-muted-foreground"
                   )}
                 >
                   {item.label}
@@ -136,10 +136,10 @@ export function Header({ onMobileMenuClick }: HeaderProps) {
                         {getInitials(user?.fullName || 'User')}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="hidden md:inline text-sm font-medium text-gray-700">
+                    <span className="hidden md:inline text-sm font-medium text-foreground">
                       {user?.fullName?.split(' ')[0]}
                     </span>
-                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -170,7 +170,7 @@ export function Header({ onMobileMenuClick }: HeaderProps) {
 
             {/* Mobile Menu Button */}
             <button
-              className="md:hidden p-2 rounded-md hover:bg-gray-100"
+              className="md:hidden p-2 rounded-md hover:bg-muted/30"
               onClick={onMobileMenuClick}
               aria-label="Menu"
             >

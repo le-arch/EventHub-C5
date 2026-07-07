@@ -85,7 +85,7 @@ export function NameInput({ eventTitle, onSubmit, isLoading = false }: NameInput
                 {errors.fullName.message}
               </p>
             )}
-            <p className="text-xs text-gray-400 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               Your name will appear on your ticket and will be used for check-in
             </p>
           </div>

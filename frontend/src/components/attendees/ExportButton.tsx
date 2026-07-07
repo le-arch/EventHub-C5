@@ -195,7 +195,7 @@ export function ExportButton({
           )}
           Export
           {attendees.length > 0 && (
-            <span className="ml-1 text-xs text-gray-500">
+            <span className="ml-1 text-xs text-muted-foreground">
               ({attendees.length})
             </span>
           )}
@@ -205,7 +205,7 @@ export function ExportButton({
         <DropdownMenuItem onClick={handleExportCSV} disabled={isExporting}>
           <FileSpreadsheet className="h-4 w-4 mr-2" />
           Export as CSV
-          <span className="ml-2 text-xs text-gray-400">(Excel compatible)</span>
+          <span className="ml-2 text-xs text-muted-foreground">(Excel compatible)</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleExportExcel} disabled={isExporting}>
           <FileSpreadsheet className="h-4 w-4 mr-2" />

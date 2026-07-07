@@ -141,7 +141,7 @@ export function SocialIcon({ href, label, color, className = "h-5 w-5", children
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className={`p-2 bg-gray-100 rounded-lg hover:bg-opacity-20 transition-colors group ${color}`}
+      className={`p-2 bg-muted/30 rounded-lg hover:bg-opacity-20 transition-colors group ${color}`}
       aria-label={label}
     >
       {children}
@@ -156,10 +156,10 @@ export function FacebookIcon({ href }: { href: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="p-2 bg-gray-100 rounded-lg hover:bg-blue-100 transition-colors group"
+      className="p-2 bg-muted/30 rounded-lg hover:bg-blue-100 transition-colors group"
       aria-label="Facebook"
     >
-      <FacebookSVG className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
+      <FacebookSVG className="h-5 w-5 text-muted-foreground group-hover:text-blue-600" />
     </a>
   )
 }
@@ -170,10 +170,10 @@ export function TwitterIcon({ href }: { href: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="p-2 bg-gray-100 rounded-lg hover:bg-sky-100 transition-colors group"
+      className="p-2 bg-muted/30 rounded-lg hover:bg-sky-100 transition-colors group"
       aria-label="Twitter"
     >
-      <TwitterSVG className="h-5 w-5 text-gray-600 group-hover:text-sky-500" />
+      <TwitterSVG className="h-5 w-5 text-muted-foreground group-hover:text-sky-500" />
     </a>
   )
 }
@@ -184,10 +184,10 @@ export function InstagramIcon({ href }: { href: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="p-2 bg-gray-100 rounded-lg hover:bg-pink-100 transition-colors group"
+      className="p-2 bg-muted/30 rounded-lg hover:bg-pink-100 transition-colors group"
       aria-label="Instagram"
     >
-      <InstagramSVG className="h-5 w-5 text-gray-600 group-hover:text-pink-600" />
+      <InstagramSVG className="h-5 w-5 text-muted-foreground group-hover:text-pink-600" />
     </a>
   )
 }
@@ -198,10 +198,10 @@ export function LinkedinIcon({ href }: { href: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="p-2 bg-gray-100 rounded-lg hover:bg-blue-100 transition-colors group"
+      className="p-2 bg-muted/30 rounded-lg hover:bg-blue-100 transition-colors group"
       aria-label="LinkedIn"
     >
-      <LinkedinSVG className="h-5 w-5 text-gray-600 group-hover:text-blue-700" />
+      <LinkedinSVG className="h-5 w-5 text-muted-foreground group-hover:text-blue-700" />
     </a>
   )
 }
@@ -212,10 +212,10 @@ export function WhatsAppIcon({ href }: { href: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="p-2 bg-gray-100 rounded-lg hover:bg-green-100 transition-colors group"
+      className="p-2 bg-muted/30 rounded-lg hover:bg-green-100 transition-colors group"
       aria-label="WhatsApp"
     >
-      <WhatsAppSVG className="h-5 w-5 text-gray-600 group-hover:text-green-600" />
+      <WhatsAppSVG className="h-5 w-5 text-muted-foreground group-hover:text-green-600" />
     </a>
   )
 }
@@ -226,10 +226,10 @@ export function YoutubeIcon({ href }: { href: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="p-2 bg-gray-100 rounded-lg hover:bg-red-100 transition-colors group"
+      className="p-2 bg-muted/30 rounded-lg hover:bg-red-100 transition-colors group"
       aria-label="YouTube"
     >
-      <YoutubeSVG className="h-5 w-5 text-gray-600 group-hover:text-red-600" />
+      <YoutubeSVG className="h-5 w-5 text-muted-foreground group-hover:text-red-600" />
     </a>
   )
 }
@@ -240,10 +240,10 @@ export function TiktokIcon({ href }: { href: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors group"
+      className="p-2 bg-muted/30 rounded-lg hover:bg-muted transition-colors group"
       aria-label="TikTok"
     >
-      <TiktokSVG className="h-5 w-5 text-gray-600 group-hover:text-black" />
+      <TiktokSVG className="h-5 w-5 text-muted-foreground group-hover:text-black" />
     </a>
   )
 }

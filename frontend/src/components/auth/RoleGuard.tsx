@@ -72,7 +72,7 @@ export function RoleGuard({
   if (showAccessDenied) {
     return (
       <div className="min-h-[calc(100vh-200px)] flex items-center justify-center p-4">
-        <Card className="max-w-md w-full text-center">
+        <Card className="glass max-w-md w-full text-center">
           <CardHeader>
             <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
               <AlertTriangle className="h-6 w-6 text-red-600" />
@@ -83,7 +83,7 @@ export function RoleGuard({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               This area requires {roles.length === 1 
                 ? `${roles[0]} privileges` 
                 : `one of these roles: ${roles.join(', ')}`}

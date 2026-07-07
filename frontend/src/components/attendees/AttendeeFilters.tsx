@@ -181,7 +181,7 @@ export function AttendeeFilters({
             </Label>
             <div className="space-y-2">
               <div>
-                <Label className="text-xs text-gray-500">From</Label>
+                <Label className="text-xs text-muted-foreground">From</Label>
                 <input
                   type="date"
                   value={localFilters.dateFrom}
@@ -190,7 +190,7 @@ export function AttendeeFilters({
                 />
               </div>
               <div>
-                <Label className="text-xs text-gray-500">To</Label>
+                <Label className="text-xs text-muted-foreground">To</Label>
                 <input
                   type="date"
                   value={localFilters.dateTo}

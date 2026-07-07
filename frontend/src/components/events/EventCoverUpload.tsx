@@ -10,7 +10,7 @@
 
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Upload, X, Image as ImageIcon, Loader2, Crop } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -46,6 +46,13 @@ export function EventCoverUpload({
   const [preview, setPreview] = useState<string | null>(value || null)
   const [isUploading, setIsUploading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+
+  // Sync preview when value prop changes (e.g. when editing an existing event)
+  useEffect(() => {
+    if (value) {
+      setPreview(value)
+    }
+  }, [value])
 
   const validateAspectRatio = (file: File): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -124,9 +131,9 @@ export function EventCoverUpload({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <label className="block text-sm font-medium text-gray-700">
+      <label className="block text-sm font-medium text-foreground">
         {label}
-        <span className="text-xs text-gray-400 ml-2">(16:9 recommended, max 5MB)</span>
+        <span className="text-xs text-muted-foreground ml-2">(16:9 recommended, max 5MB)</span>
       </label>
 
       {preview ? (
@@ -167,7 +174,7 @@ export function EventCoverUpload({
           className={cn(
             "border-2 border-dashed rounded-lg transition-colors cursor-pointer",
             "aspect-video flex flex-col items-center justify-center",
-            isDragActive ? "border-primary bg-primary/5" : "border-gray-300 hover:border-primary",
+            isDragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary",
             (disabled || isUploading) && "opacity-50 cursor-not-allowed"
           )}
           onDragEnter={() => setIsDragging(true)}
@@ -176,13 +183,13 @@ export function EventCoverUpload({
           <input id="cover-upload-input" {...getInputProps()} />
           
           {isUploading ? (
-            <Loader2 className="h-10 w-10 text-gray-400 animate-spin" />
+            <Loader2 className="h-10 w-10 text-muted-foreground animate-spin" />
           ) : (
             <>
-              <div className="p-3 bg-gray-100 rounded-full mb-3">
-                <Upload className="h-6 w-6 text-gray-500" />
+              <div className="p-3 bg-muted/30 rounded-full mb-3">
+                <Upload className="h-6 w-6 text-muted-foreground" />
               </div>
-              <p className="text-sm text-gray-600 text-center">
+              <p className="text-sm text-muted-foreground text-center">
                 {isDragActive ? (
                   "Drop your image here"
                 ) : (
@@ -191,10 +198,10 @@ export function EventCoverUpload({
                   </>
                 )}
               </p>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 JPG, PNG or WebP (max 5MB)
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 16:9 aspect ratio recommended
               </p>
             </>

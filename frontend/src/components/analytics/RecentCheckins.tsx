@@ -80,10 +80,10 @@ export function RecentCheckins({
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="flex items-center gap-3 animate-pulse">
-                <div className="w-10 h-10 bg-gray-200 rounded-full" />
+                <div className="w-10 h-10 bg-muted rounded-full" />
                 <div className="flex-1">
-                  <div className="h-4 w-32 bg-gray-200 rounded mb-2" />
-                  <div className="h-3 w-24 bg-gray-200 rounded" />
+                  <div className="h-4 w-32 bg-muted rounded mb-2" />
+                  <div className="h-3 w-24 bg-muted rounded" />
                 </div>
               </div>
             ))}
@@ -102,9 +102,9 @@ export function RecentCheckins({
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">No check-ins yet</p>
-            <p className="text-sm text-gray-400 mt-1">
+            <Users className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">No check-ins yet</p>
+            <p className="text-sm text-muted-foreground mt-1">
               Check-ins will appear here once attendees arrive
             </p>
           </div>
@@ -124,7 +124,7 @@ export function RecentCheckins({
           {displayCheckins.map((checkin) => (
             <div 
               key={checkin.id} 
-              className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
             >
               <Avatar className="h-10 w-10">
                 <AvatarFallback className={getAvatarColor(checkin.attendeeName)}>
@@ -134,7 +134,7 @@ export function RecentCheckins({
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-medium text-gray-900 truncate">
+                  <p className="font-medium text-foreground truncate">
                     {checkin.attendeeName}
                   </p>
                   <Badge variant="outline" className="text-xs">
@@ -142,8 +142,8 @@ export function RecentCheckins({
                   </Badge>
                 </div>
                 <div className="flex items-center gap-1 mt-1">
-                  <Clock className="h-3 w-3 text-gray-400" />
-                  <p className="text-xs text-gray-500">
+                  <Clock className="h-3 w-3 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">
                     Checked in at {formatTime(checkin.checkedInAt)}
                   </p>
                 </div>
@@ -155,7 +155,7 @@ export function RecentCheckins({
         </div>
 
         {checkins.length > maxItems && (
-          <p className="text-center text-sm text-gray-400 mt-4 pt-2 border-t">
+          <p className="text-center text-sm text-muted-foreground mt-4 pt-2 border-t">
             +{checkins.length - maxItems} more check-ins
           </p>
         )}

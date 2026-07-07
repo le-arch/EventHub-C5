@@ -196,8 +196,8 @@ export default function AdminTransactionsPage() {
         )
       case 'refunded':
         return (
-          <Badge className="bg-slate-100 text-slate-800 border border-slate-200 font-semibold shadow-none flex items-center gap-1 hover:bg-slate-100">
-            <RefreshCw className="h-3 w-3 text-slate-500" />
+          <Badge className="bg-muted/30 text-foreground border border-border font-semibold shadow-none flex items-center gap-1 hover:bg-muted/30">
+            <RefreshCw className="h-3 w-3 text-muted-foreground" />
             Refunded
           </Badge>
         )
@@ -227,7 +227,7 @@ export default function AdminTransactionsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-6 bg-slate-50/50 min-h-screen text-slate-900 antialiased">
+    <div className="space-y-6 max-w-7xl mx-auto p-6 bg-muted/50/50 min-h-screen text-foreground antialiased">
       {/* Breadcrumb Engine */}
       <Breadcrumb 
         items={[
@@ -245,7 +245,7 @@ export default function AdminTransactionsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight">Transaction History</h1>
-            <p className="text-slate-400 text-xs font-medium mt-0.5">
+            <p className="text-muted-foreground text-xs font-medium mt-0.5">
               Audit operational cash flows, track system revenues, and process manual refund overrides.
             </p>
           </div>
@@ -261,11 +261,11 @@ export default function AdminTransactionsPage() {
       </div>
 
       {/* Inputs, Filters & Modifiers Container */}
-      <Card className="border-slate-200/80 bg-white shadow-sm rounded-2xl">
+      <Card className="border-border/80 bg-card shadow-sm rounded-2xl">
         <CardContent className="p-5">
           <div className="flex flex-col xl:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 z-10" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
               <Input
                 placeholder="Search entries by reference hash, client name, or event title..."
                 value={searchTerm}
@@ -273,7 +273,7 @@ export default function AdminTransactionsPage() {
                   setSearchTerm(e.target.value)
                   setPage(1)
                 }}
-                className="pl-9 pr-4 h-11 text-sm text-slate-900 placeholder:text-slate-400 font-medium border-slate-200 focus-visible:border-slate-400 focus-visible:ring-0 rounded-xl bg-white shadow-none"
+                className="pl-9 pr-4 h-11 text-sm text-foreground placeholder:text-muted-foreground font-medium border-border focus-visible:border-slate-400 focus-visible:ring-0 rounded-xl bg-card shadow-none"
               />
             </div>
             
@@ -282,13 +282,13 @@ export default function AdminTransactionsPage() {
                 setStatusFilter(value)
                 setPage(1)
               }}>
-                <SelectTrigger className="w-full h-11 border-slate-200 text-slate-700 font-medium focus:border-slate-400 focus:ring-0 bg-white rounded-xl shadow-none">
+                <SelectTrigger className="w-full h-11 border-border text-foreground font-medium focus:border-slate-400 focus:ring-0 bg-card rounded-xl shadow-none">
                   <div className="flex items-center gap-2 text-sm">
-                    <Filter className="h-3.5 w-3.5 text-slate-400" />
+                    <Filter className="h-3.5 w-3.5 text-muted-foreground" />
                     <SelectValue placeholder="Status" />
                   </div>
                 </SelectTrigger>
-                <SelectContent className="border-slate-200 bg-white font-medium">
+                <SelectContent className="border-border bg-card font-medium bg-white">
                   <SelectItem value="all">All Operations</SelectItem>
                   <SelectItem value="paid">Settled (Paid)</SelectItem>
                   <SelectItem value="pending">Processing (Pending)</SelectItem>
@@ -301,13 +301,13 @@ export default function AdminTransactionsPage() {
                 setMethodFilter(value)
                 setPage(1)
               }}>
-                <SelectTrigger className="w-full h-11 border-slate-200 text-slate-700 font-medium focus:border-slate-400 focus:ring-0 bg-white rounded-xl shadow-none">
+                <SelectTrigger className="w-full h-11 border-border text-foreground font-medium focus:border-slate-400 focus:ring-0 bg-card rounded-xl shadow-none">
                   <div className="flex items-center gap-2 text-sm">
-                    <CreditCard className="h-3.5 w-3.5 text-slate-400" />
+                    <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
                     <SelectValue placeholder="Payment Method" />
                   </div>
                 </SelectTrigger>
-                <SelectContent className="border-slate-200 bg-white font-medium">
+                <SelectContent className="border-border bg-card font-medium bg-white">
                   <SelectItem value="all">All Gateway Channels</SelectItem>
                   <SelectItem value="mtn_momo">MTN MoMo Engine</SelectItem>
                   <SelectItem value="orange_money">Orange Money Gateway</SelectItem>
@@ -329,25 +329,25 @@ export default function AdminTransactionsPage() {
       </Card>
 
       {/* Row Quantifier Metaspace */}
-      <div className="text-xs text-slate-500 flex items-center gap-2 px-1 font-medium">
-        <CreditCard className="h-3.5 w-3.5 text-slate-400" />
-        Tracking <span className="text-slate-800 font-semibold">{transactions.length}</span> nodes out of <span className="text-slate-800 font-semibold">{totalCount}</span> total pipeline hashes
+      <div className="text-xs text-muted-foreground flex items-center gap-2 px-1 font-medium">
+        <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+        Tracking <span className="text-foreground font-semibold">{transactions.length}</span> nodes out of <span className="text-foreground font-semibold">{totalCount}</span> total pipeline hashes
       </div>
 
       {/* Transaction Records Structured Table Layout */}
-      <Card className="border border-slate-200/80 bg-white shadow-sm rounded-2xl overflow-hidden">
+      <Card className="border border-border/80 bg-card shadow-sm rounded-2xl overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-slate-50/70 border-b border-slate-200">
+              <TableHeader className="bg-muted/50/70 border-b border-border">
                 <TableRow>
-                  <TableHead className="text-slate-700 font-bold text-xs py-3.5">Reference Hash</TableHead>
-                  <TableHead className="text-slate-700 font-bold text-xs py-3.5">Attendee Client</TableHead>
-                  <TableHead className="text-slate-700 font-bold text-xs py-3.5">Registered Context</TableHead>
-                  <TableHead className="text-slate-700 font-bold text-xs py-3.5">Gross Settlement</TableHead>
-                  <TableHead className="text-slate-700 font-bold text-xs py-3.5">Network Provider</TableHead>
-                  <TableHead className="text-slate-700 font-bold text-xs py-3.5">Entry Timestamp</TableHead>
-                  <TableHead className="text-slate-700 font-bold text-xs py-3.5">Gateway Status</TableHead>
+                  <TableHead className="text-foreground font-bold text-xs py-3.5">Reference Hash</TableHead>
+                  <TableHead className="text-foreground font-bold text-xs py-3.5">Attendee Client</TableHead>
+                  <TableHead className="text-foreground font-bold text-xs py-3.5">Registered Context</TableHead>
+                  <TableHead className="text-foreground font-bold text-xs py-3.5">Gross Settlement</TableHead>
+                  <TableHead className="text-foreground font-bold text-xs py-3.5">Network Provider</TableHead>
+                  <TableHead className="text-foreground font-bold text-xs py-3.5">Entry Timestamp</TableHead>
+                  <TableHead className="text-foreground font-bold text-xs py-3.5">Gateway Status</TableHead>
                   <TableHead className="w-12 py-3.5"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -365,20 +365,20 @@ export default function AdminTransactionsPage() {
                   ))
                 ) : transactions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-16 bg-white">
+                    <TableCell colSpan={8} className="text-center py-16 bg-card">
                       <div className="flex flex-col items-center gap-2">
-                        <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-200/60">
-                          <AlertCircle className="h-5 w-5 text-slate-400" />
+                        <div className="w-12 h-12 bg-muted/50 rounded-xl flex items-center justify-center border border-border/60">
+                          <AlertCircle className="h-5 w-5 text-muted-foreground" />
                         </div>
-                        <p className="text-slate-900 font-bold text-base">No payments located in system registry</p>
-                        <p className="text-xs text-slate-500 font-medium max-w-sm leading-relaxed">
+                        <p className="text-foreground font-bold text-base">No payments located in system registry</p>
+                        <p className="text-xs text-muted-foreground font-medium max-w-sm leading-relaxed">
                           No accounting ledger rows correspond to your filter inputs. Clear keywords to resume normal activity tracking.
                         </p>
                         {(searchTerm || statusFilter !== 'all' || methodFilter !== 'all') && (
                           <Button
                             variant="link"
                             onClick={handleResetFilters}
-                            className="text-slate-900 text-xs font-semibold underline hover:text-slate-700 mt-1"
+                            className="text-foreground text-xs font-semibold underline hover:text-foreground mt-1"
                           >
                             Flush Active Filters
                           </Button>
@@ -391,32 +391,32 @@ export default function AdminTransactionsPage() {
                     const txId = (transaction as any).orderId || (transaction as any).id || ''
                     const txStatus = (transaction as any).paymentStatus || (transaction as any).status || ''
                     return (
-                    <TableRow key={txId} className="hover:bg-slate-50/40 border-b border-slate-100 transition-colors">
+                    <TableRow key={txId} className="hover:bg-muted/50/40 border-b border-slate-100 transition-colors">
                       <TableCell className="py-3.5">
-                        <code className="text-xs font-mono font-medium text-slate-600 bg-slate-100 border border-slate-200/60 px-1.5 py-0.5 rounded">
+                        <code className="text-xs font-mono font-medium text-muted-foreground bg-muted/30 border border-border/60 px-1.5 py-0.5 rounded">
                           {txId ? `${txId.slice(0, 12)}...` : 'N/A'}
                         </code>
                       </TableCell>
                       <TableCell className="py-3.5">
                         <div>
-                          <p className="font-semibold text-slate-900 text-sm">{transaction.attendeeName}</p>
-                          <p className="text-xs text-slate-400 font-medium mt-0.5">{(transaction as any).attendeePhone || ''}</p>
+                          <p className="font-semibold text-foreground text-sm">{transaction.attendeeName}</p>
+                          <p className="text-xs text-muted-foreground font-medium mt-0.5">{(transaction as any).attendeePhone || ''}</p>
                         </div>
                       </TableCell>
                       <TableCell className="py-3.5">
                         <div className="max-w-[200px] md:max-w-xs">
-                          <p className="text-sm font-semibold text-slate-800 truncate">{transaction.eventTitle}</p>
-                          <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">by {(transaction as any).organizerName || 'Organizer'}</p>
+                          <p className="text-sm font-semibold text-foreground truncate">{transaction.eventTitle}</p>
+                          <p className="text-xs text-muted-foreground font-medium mt-0.5 truncate">by {(transaction as any).organizerName || 'Organizer'}</p>
                         </div>
                       </TableCell>
                       <TableCell className="py-3.5">
-                        <span className="font-bold text-slate-900 text-sm">
+                        <span className="font-bold text-foreground text-sm">
                           {formatCurrency(transaction.amount)}
                         </span>
                       </TableCell>
                       <TableCell className="py-3.5">{getMethodBadge((transaction as any).paymentMethod || 'mtn_momo')}</TableCell>
                       <TableCell className="py-3.5">
-                        <span className="text-slate-500 font-medium text-xs">
+                        <span className="text-muted-foreground font-medium text-xs">
                           {formatDate(transaction.createdAt)}
                         </span>
                       </TableCell>
@@ -425,11 +425,11 @@ export default function AdminTransactionsPage() {
                         {txStatus === 'paid' && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="hover:bg-slate-100 h-8 w-8 rounded-lg">
-                                <MoreVertical className="h-4 w-4 text-slate-500" />
+                              <Button variant="ghost" size="icon" className="hover:bg-muted/30 h-8 w-8 rounded-lg">
+                                <MoreVertical className="h-4 w-4 text-muted-foreground" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-white border border-slate-200 font-medium shadow-sm rounded-xl">
+                            <DropdownMenuContent align="end" className="bg-card border border-border font-medium shadow-sm rounded-xl">
                               <DropdownMenuItem
                                 onClick={() => setTransactionToRefund(transaction)}
                                 className="text-rose-600 focus:text-rose-700 focus:bg-rose-50 cursor-pointer py-1.5 text-xs font-semibold"
@@ -453,7 +453,7 @@ export default function AdminTransactionsPage() {
 
       {/* Pagination Module Control Segment */}
       {totalPages > 1 && (
-        <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-200/80">
+        <div className="bg-card p-3 rounded-2xl shadow-sm border border-border/80">
           <Pagination
             currentPage={page}
             totalPages={totalPages}
@@ -469,49 +469,49 @@ export default function AdminTransactionsPage() {
 
       {/* Macro Metric Summaries Block Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-slate-200 bg-white shadow-sm rounded-2xl">
+        <Card className="border-border bg-card shadow-sm rounded-2xl">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-2xl font-extrabold text-slate-900 tracking-tight">{totalCount.toLocaleString()}</p>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Total Logs</p>
+              <p className="text-2xl font-extrabold text-foreground tracking-tight">{totalCount.toLocaleString()}</p>
+              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mt-0.5">Total Logs</p>
             </div>
-            <CreditCard className="h-6 w-6 text-slate-400 shrink-0" />
+            <CreditCard className="h-6 w-6 text-muted-foreground shrink-0" />
           </CardContent>
         </Card>
         
-        <Card className="border-slate-200 bg-white shadow-sm rounded-2xl">
+        <Card className="border-border bg-card shadow-sm rounded-2xl">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-2xl font-extrabold text-emerald-800 tracking-tight">
                 {transactions.filter(t => t.status === 'paid').length}
               </p>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Cleared Actions</p>
+              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mt-0.5">Cleared Actions</p>
             </div>
             <CheckCircle className="h-6 w-6 text-emerald-600 shrink-0" />
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200 bg-white shadow-sm rounded-2xl">
+        <Card className="border-border bg-card shadow-sm rounded-2xl">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-xl font-extrabold text-slate-900 truncate max-w-[160px] tracking-tight">
+              <p className="text-xl font-extrabold text-foreground truncate max-w-[160px] tracking-tight">
                 {formatCurrency(transactions.filter(t => t.status === 'paid').reduce((sum, t) => sum + t.amount, 0))}
               </p>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Gross Yield</p>
+              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mt-0.5">Gross Yield</p>
             </div>
             <TrendingUp className="h-6 w-6 text-indigo-600 shrink-0" />
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200 bg-white shadow-sm rounded-2xl">
+        <Card className="border-border bg-card shadow-sm rounded-2xl">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-2xl font-extrabold text-slate-900 tracking-tight">
+              <p className="text-2xl font-extrabold text-foreground tracking-tight">
                 {transactions.filter(t => t.paymentMethod === 'mtn_momo').length}
                 <span className="text-xs font-normal text-slate-300 mx-1">/</span>
                 {transactions.filter(t => t.paymentMethod === 'orange_money').length}
               </p>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">MoMo / Orange</p>
+              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mt-0.5">MoMo / Orange</p>
             </div>
             <div className="flex flex-col gap-0.5 opacity-60 shrink-0">
               <Smartphone className="h-3.5 w-3.5 text-amber-600" />
@@ -533,31 +533,31 @@ export default function AdminTransactionsPage() {
         variant="warning"
         isLoading={isProcessing}
       >
-        <div className="mt-3 p-4 bg-amber-50/50 rounded-xl border border-amber-200 text-slate-900 text-sm font-medium">
+        <div className="mt-3 p-4 bg-amber-50/50 rounded-xl border border-amber-200 text-foreground text-sm font-medium">
           <div className="flex items-center gap-2 text-amber-900 font-bold mb-3 text-xs uppercase tracking-wider">
             <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0" />
             <span>Reverse settlement loops are immutable</span>
           </div>
           <div className="space-y-2 text-xs">
             <div className="flex justify-between items-center py-1 border-b border-amber-200/40">
-              <span className="text-slate-500">Reference Token:</span>
-              <code className="font-mono font-semibold text-slate-900 bg-white border border-slate-200 px-1 py-0.5 rounded">
+              <span className="text-muted-foreground">Reference Token:</span>
+              <code className="font-mono font-semibold text-foreground bg-card border border-border px-1 py-0.5 rounded">
                 {transactionToRefund?.transactionId}
               </code>
             </div>
             <div className="flex justify-between items-center py-1 border-b border-amber-200/40">
-              <span className="text-slate-500">Recipient Account:</span>
-              <span className="font-semibold text-slate-900">{transactionToRefund?.attendeeName}</span>
+              <span className="text-muted-foreground">Recipient Account:</span>
+              <span className="font-semibold text-foreground">{transactionToRefund?.attendeeName}</span>
             </div>
             <div className="flex justify-between items-center py-1 border-b border-amber-200/40">
-              <span className="text-slate-500">Reversal Amount:</span>
+              <span className="text-muted-foreground">Reversal Amount:</span>
               <span className="font-bold text-rose-700 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded">
                 -{formatCurrency(transactionToRefund?.amount || 0)}
               </span>
             </div>
             <div className="flex justify-between items-center py-1">
-              <span className="text-slate-500">Event Context:</span>
-              <span className="font-semibold text-slate-900 max-w-[180px] truncate">{transactionToRefund?.eventTitle}</span>
+              <span className="text-muted-foreground">Event Context:</span>
+              <span className="font-semibold text-foreground max-w-[180px] truncate">{transactionToRefund?.eventTitle}</span>
             </div>
             <div className="border-t border-dashed border-rose-200 pt-2.5 mt-2 text-rose-900 bg-rose-50/40 p-2 rounded-lg border border-rose-100">
               <p className="font-bold mb-1">Associated Automations Lifecycle Impact:</p>

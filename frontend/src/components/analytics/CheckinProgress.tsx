@@ -50,8 +50,8 @@ export function CheckinProgress({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="animate-pulse h-2 w-full bg-gray-200 rounded-full" />
-            <div className="animate-pulse h-4 w-32 bg-gray-200 rounded mx-auto" />
+            <div className="animate-pulse h-2 w-full bg-muted rounded-full" />
+            <div className="animate-pulse h-4 w-32 bg-muted rounded mx-auto" />
           </div>
         </CardContent>
       </Card>
@@ -76,7 +76,7 @@ export function CheckinProgress({
         {/* Progress Bar */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Check-in Rate</span>
+            <span className="text-muted-foreground">Check-in Rate</span>
             <span className="font-semibold text-primary">{percentage}%</span>
           </div>
           <Progress value={percentage} className="h-3" />
@@ -88,16 +88,16 @@ export function CheckinProgress({
             <div className="text-center p-3 bg-green-50 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <CheckCircle className="h-4 w-4 text-green-600" />
-                <p className="text-xs text-gray-500">Checked In</p>
+                <p className="text-xs text-muted-foreground">Checked In</p>
               </div>
               <p className="text-2xl font-bold text-green-600">{checkedInCount}</p>
             </div>
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-center p-3 bg-muted/50 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-1">
-                <XCircle className="h-4 w-4 text-gray-400" />
-                <p className="text-xs text-gray-500">Not Checked</p>
+                <XCircle className="h-4 w-4 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">Not Checked</p>
               </div>
-              <p className="text-2xl font-bold text-gray-600">{remainingCount}</p>
+              <p className="text-2xl font-bold text-muted-foreground">{remainingCount}</p>
             </div>
           </div>
         )}
@@ -105,12 +105,12 @@ export function CheckinProgress({
         {/* Additional Info */}
         {(lastCheckinName || lastCheckinTime) && (
           <div className="pt-4 border-t">
-            <p className="text-sm text-gray-500 flex items-center gap-2">
+            <p className="text-sm text-muted-foreground flex items-center gap-2">
               <Users className="h-4 w-4" />
               Last check-in: 
-              <span className="font-medium text-gray-900">{lastCheckinName || '—'}</span>
+              <span className="font-medium text-foreground">{lastCheckinName || '—'}</span>
               {lastCheckinTime && (
-                <span className="text-xs text-gray-400">at {lastCheckinTime}</span>
+                <span className="text-xs text-muted-foreground">at {lastCheckinTime}</span>
               )}
             </p>
           </div>
@@ -127,7 +127,7 @@ export function CheckinProgress({
         )}
 
         {totalTickets === 0 && (
-          <p className="text-sm text-gray-400 text-center py-4">
+          <p className="text-sm text-muted-foreground text-center py-4">
             No tickets sold yet. Check-in progress will appear once tickets are purchased.
           </p>
         )}

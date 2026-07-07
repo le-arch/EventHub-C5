@@ -114,7 +114,7 @@ export function TimePicker({
           variant="outline"
           className={cn(
             "w-full justify-start text-left font-normal",
-            !value && "text-gray-500",
+            !value && "text-muted-foreground",
             className
           )}
           disabled={disabled}
@@ -128,14 +128,14 @@ export function TimePicker({
           <div className="flex gap-2 justify-center">
             {/* Hours */}
             <div className="text-center">
-              <p className="text-xs text-gray-500 mb-2">Hour</p>
+              <p className="text-xs text-muted-foreground mb-2">Hour</p>
               <div className="h-48 overflow-y-auto border rounded-md p-1">
                 {hourOptions.map((h) => (
                   <button
                     key={h}
                     onClick={() => handleHourSelect(h)}
                     className={cn(
-                      "w-12 py-2 text-center hover:bg-gray-100 rounded transition-colors",
+                      "w-12 py-2 text-center hover:bg-muted/30 rounded transition-colors",
                       hour === h && "bg-primary text-white hover:bg-primary/90"
                     )}
                   >
@@ -147,14 +147,14 @@ export function TimePicker({
 
             {/* Minutes */}
             <div className="text-center">
-              <p className="text-xs text-gray-500 mb-2">Minute</p>
+              <p className="text-xs text-muted-foreground mb-2">Minute</p>
               <div className="h-48 overflow-y-auto border rounded-md p-1">
                 {minuteOptions.map((m) => (
                   <button
                     key={m}
                     onClick={() => handleMinuteSelect(m)}
                     className={cn(
-                      "w-12 py-2 text-center hover:bg-gray-100 rounded transition-colors",
+                      "w-12 py-2 text-center hover:bg-muted/30 rounded transition-colors",
                       minute === m && "bg-primary text-white hover:bg-primary/90"
                     )}
                   >
@@ -167,7 +167,7 @@ export function TimePicker({
             {/* AM/PM (only for 12-hour format) */}
             {!use24Hour && (
               <div className="text-center">
-                <p className="text-xs text-gray-500 mb-2">Period</p>
+                <p className="text-xs text-muted-foreground mb-2">Period</p>
                 <div className="space-y-2">
                   <button
                     onClick={() => setPeriod('AM')}

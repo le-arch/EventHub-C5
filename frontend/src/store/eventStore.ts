@@ -138,13 +138,15 @@ export const useEventStore = create<EventState>()(
           const response = await api.get('/Organization/events', {
             params: {
               page,
-              limit: pageSize,
+              limit: pageSize + 1,
               search: searchTerm || undefined,
               status: statusFilter !== 'all' ? statusFilter : undefined,
             },
           })
           
-          const events = Array.isArray(response.data) ? response.data : []
+          const data = Array.isArray(response.data) ? response.data : []
+          const hasMore = data.length > pageSize
+          const events = hasMore ? data.slice(0, pageSize) : data
           set({
             events,
             totalCount: events.length,

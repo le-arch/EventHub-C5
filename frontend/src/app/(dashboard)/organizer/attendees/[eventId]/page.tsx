@@ -310,7 +310,7 @@ export default function AttendeeListPage() {
             <Users className="h-6 w-6 text-blue-600" />
             Attendees 
           </h1>
-          <p className="text-gray-500 mt-1 flex items-center gap-2">
+          <p className="text-muted-foreground mt-1 flex items-center gap-2">
             <Calendar className="h-3 w-3" />
             {formatDate(event.startDate)} at {formatTime(event.startTime)}
             <span className="mx-1">•</span>
@@ -334,10 +334,10 @@ export default function AttendeeListPage() {
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm text-gray-500">Total Attendees</p>
+                  <p className="text-sm text-muted-foreground">Total Attendees</p>
                   <p className="text-2xl font-bold">{summary.totalAttendees}</p>
                 </div>
-                <Users className="h-5 w-5 text-gray-400" />
+                <Users className="h-5 w-5 text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
@@ -346,12 +346,12 @@ export default function AttendeeListPage() {
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm text-gray-500">Total Revenue</p>
+                  <p className="text-sm text-muted-foreground">Total Revenue</p>
                   <p className="text-2xl font-bold text-green-600">
                     {formatCurrency(summary.totalRevenue)}
                   </p>
                 </div>
-                <TrendingUp className="h-5 w-5 text-gray-400" />
+                <TrendingUp className="h-5 w-5 text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
@@ -360,7 +360,7 @@ export default function AttendeeListPage() {
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm text-gray-500">Checked In </p>
+                  <p className="text-sm text-muted-foreground">Checked In </p>
                   <p className="text-2xl font-bold">
                     {summary.checkedInCount} / {summary.totalAttendees}
                   </p>
@@ -374,10 +374,10 @@ export default function AttendeeListPage() {
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm text-gray-500">Check-in Rate </p>
+                  <p className="text-sm text-muted-foreground">Check-in Rate </p>
                   <p className="text-2xl font-bold">{summary.checkInPercentage}%</p>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div className="w-full bg-muted rounded-full h-2 mt-2">
                   <div
                     className="bg-green-600 h-2 rounded-full transition-all duration-500"
                     style={{ width: `${summary.checkInPercentage}%` }}
@@ -403,11 +403,11 @@ export default function AttendeeListPage() {
               {summary.ticketBreakdown.map((ticket) => (
                 <div
                   key={ticket.name}
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                  className="flex justify-between items-center p-3 bg-muted/50 rounded-lg"
                 >
                   <div>
                     <p className="font-medium">{ticket.name}</p>
-                    <p className="text-sm text-gray-500">{ticket.sold} sold</p>
+                    <p className="text-sm text-muted-foreground">{ticket.sold} sold</p>
                   </div>
                   <p className="font-semibold text-primary">
                     {formatCurrency(ticket.revenue)}
@@ -444,7 +444,7 @@ export default function AttendeeListPage() {
       </div>
 
       {/* Result Status Strings */}
-      <div className="text-sm text-gray-500 flex items-center justify-between flex-wrap gap-2">
+      <div className="text-sm text-muted-foreground flex items-center justify-between flex-wrap gap-2">
         <span>
           Showing page data of {totalCount} total query results
         </span>
@@ -455,8 +455,8 @@ export default function AttendeeListPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <div className="flex flex-col items-center gap-3">
-              <AlertCircle className="h-12 w-12 text-gray-300" />
-              <p className="text-gray-500">No attendees match your target criteria 🔍</p>
+              <AlertCircle className="h-12 w-12 text-muted-foreground" />
+              <p className="text-muted-foreground">No attendees match your target criteria 🔍</p>
               {(searchTerm || activeFilterCount > 0) && (
                 <Button variant="link" onClick={handleResetFilters} className="mt-2">
                   Clear all filters

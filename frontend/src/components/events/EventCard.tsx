@@ -78,7 +78,7 @@ export function EventCard({ event, onEdit, onDelete, onDuplicate, onViewAttendee
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-2 left-2 bg-white/80 hover:bg-white h-8 w-8"
+              className="absolute top-2 left-2 bg-white/80 hover:bg-card h-8 w-8"
             >
               <MoreVertical className="h-4 w-4" />
             </Button>
@@ -117,12 +117,12 @@ export function EventCard({ event, onEdit, onDelete, onDuplicate, onViewAttendee
           {event.title}
         </h3>
         
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
           <Calendar className="h-3 w-3" />
           <span>{formatDate(event.startDate)}</span>
         </div>
         
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
           <MapPin className="h-3 w-3" />
           <span className="line-clamp-1">{event.venue}, {event.city}</span>
         </div>
@@ -130,14 +130,14 @@ export function EventCard({ event, onEdit, onDelete, onDuplicate, onViewAttendee
         {/* Ticket Stats */}
         <div className="grid grid-cols-2 gap-2 pt-3 border-t">
           <div className="text-center">
-            <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
+            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
               <Ticket className="h-3 w-3" />
               <span>Sold</span>
             </div>
             <p className="font-semibold text-sm">{event.ticketStats.totalSold}</p>
           </div>
           <div className="text-center">
-            <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
+            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
               <Users className="h-3 w-3" />
               <span>Revenue</span>
             </div>

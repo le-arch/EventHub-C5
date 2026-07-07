@@ -71,7 +71,7 @@ function PaymentCancelContent() {
             </div>
           )}
 
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             You cancelled the payment or the transaction failed. No charges have been made to your account.
           </p>
 

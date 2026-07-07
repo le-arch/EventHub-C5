@@ -133,7 +133,7 @@ export default function PublicEventPage() {
   // Loading Skeleton State Fallback
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 max-w-2xl mx-auto p-4 md:p-6 space-y-6">
+      <div className="min-h-screen bg-muted/50 max-w-2xl mx-auto p-4 md:p-6 space-y-6">
         <Skeleton className="h-48 md:h-64 w-full rounded-2xl bg-purple-100" />
         <div className="space-y-3">
           <Skeleton className="h-9 w-5/6 bg-purple-100" />
@@ -151,10 +151,10 @@ export default function PublicEventPage() {
   // Error boundary protection
   if (!event) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full text-center border-2 border-red-100 bg-white p-6 rounded-2xl shadow-sm">
-          <p className="text-slate-900 font-black text-lg">Event Missing </p>
-          <p className="text-slate-600 text-sm mt-1 font-medium">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center p-4">
+        <Card className="glass max-w-md w-full text-center border-2 border-red-100 p-6 rounded-2xl">
+          <p className="text-foreground font-black text-lg">Event Missing </p>
+          <p className="text-muted-foreground text-sm mt-1 font-medium">
             This checkout context has timed out or points to an invalid record entry.
           </p>
           <Button onClick={() => router.push('/')} className="mt-4 w-full bg-purple-700 hover:bg-purple-800 font-bold rounded-xl">
@@ -172,7 +172,7 @@ export default function PublicEventPage() {
   // Render Step 1: Attendee Name Input Identity Entry
   if (step === 'name') {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 pb-12">
+      <div className="min-h-screen bg-muted/50 text-foreground pb-12">
         {event.coverImageUrl && (
           <div className="relative h-48 md:h-64 w-full overflow-hidden border-b-2 border-purple-100">
             <Image
@@ -195,7 +195,7 @@ export default function PublicEventPage() {
 
           <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-950 mb-3">{event.title}</h1>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-700 font-semibold text-sm bg-white p-4 rounded-xl border border-purple-100 shadow-sm mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-foreground font-semibold text-sm bg-card p-4 rounded-xl border border-purple-100 shadow-sm mb-6">
             <div className="flex items-center gap-2.5">
               <Calendar className="h-4 w-4 text-purple-600 shrink-0" />
               <span>
@@ -216,7 +216,7 @@ export default function PublicEventPage() {
             </div>
 
             {event.capacityRange && (
-              <div className="flex items-center gap-2.5 sm:col-span-2 border-t border-slate-50 pt-2 text-slate-500 font-medium">
+              <div className="flex items-center gap-2.5 sm:col-span-2 border-t border-slate-50 pt-2 text-muted-foreground font-medium">
                 <Users className="h-4 w-4 text-purple-500 shrink-0" />
                 <span>Hosting Bracket: {event.capacityRange.lower} – {event.capacityRange.upper} seats</span>
               </div>
@@ -225,7 +225,7 @@ export default function PublicEventPage() {
 
           <Separator className="my-6 bg-purple-100" />
 
-          <div className="bg-white rounded-2xl border-2 border-purple-100 p-5 shadow-sm">
+          <div className="bg-card rounded-2xl border-2 border-purple-100 p-5 shadow-sm">
             <NameInput
               eventTitle={event.title}
               onSubmit={handleNameSubmit}
@@ -239,7 +239,7 @@ export default function PublicEventPage() {
   // Render Step 2: Interactive Ticket Selection Array Panel
   if (step === 'ticket') {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 pb-12">
+      <div className="min-h-screen bg-muted/50 text-foreground pb-12">
         {event.coverImageUrl && (
           <div className="relative h-36 md:h-44 w-full overflow-hidden border-b-2 border-purple-100">
             <Image
@@ -267,7 +267,7 @@ export default function PublicEventPage() {
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl border-2 border-purple-100 p-2 shadow-sm">
+          <div className="bg-card rounded-2xl border-2 border-purple-100 p-2 shadow-sm">
             <TicketSelector
               tickets={tickets}
               onSelect={handleTicketSelect}
@@ -276,7 +276,7 @@ export default function PublicEventPage() {
 
           <Button
             variant="ghost"
-            className="mt-6 w-full text-slate-700 hover:text-purple-900 hover:bg-purple-50 border-2 border-dashed border-purple-200 py-6 font-bold rounded-xl shadow-sm transition-all"
+            className="mt-6 w-full text-foreground hover:text-purple-900 hover:bg-purple-50 border-2 border-dashed border-purple-200 py-6 font-bold rounded-xl shadow-sm transition-all"
             onClick={() => setStep('name')}
           >
             <ArrowLeft className="h-4 w-4 mr-2 text-purple-600" />
@@ -303,13 +303,13 @@ export default function PublicEventPage() {
   // Render Step 3: Success Redirection State Catch
   if (step === 'success' && orderId) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full border-2 border-purple-200 bg-white p-6 rounded-2xl shadow-md text-center space-y-4">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center p-4">
+        <Card className="glass max-w-md w-full border-2 border-purple-200 p-6 rounded-2xl text-center space-y-4">
           <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center border border-emerald-200 mx-auto animate-pulse">
             <CheckCircle className="h-6 w-6 text-emerald-600" />
           </div>
           <p className="text-slate-950 font-black text-xl tracking-tight">Payment Verification Confirmed! <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" >🎉</span></p>
-          <p className="text-sm text-slate-600 font-semibold leading-relaxed">
+          <p className="text-sm text-muted-foreground font-semibold leading-relaxed">
             Your transaction pass has cleared successfully. Stand by while we redirect you to your high-resolution printable QR secure ticket node...
           </p>
           <Button 

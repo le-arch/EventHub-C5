@@ -96,7 +96,7 @@ const getActionBadge = (action: string) => {
   if (normalized.includes('publish')) 
     return <Badge className="bg-blue-100 text-blue-950 font-bold border border-blue-300 shadow-sm">📢 Publish</Badge>
   if (normalized.includes('login')) 
-    return <Badge variant="outline" className="bg-slate-100 text-slate-900 font-bold border border-slate-300 shadow-sm">🔑 Login</Badge>
+    return <Badge variant="outline" className="bg-muted/30 text-foreground font-bold border border-slate-300 shadow-sm">🔑 Login</Badge>
   if (normalized.includes('logout')) 
     return <Badge variant="outline" className="bg-zinc-100 text-zinc-900 font-bold border border-zinc-300 shadow-sm">🚪 Logout</Badge>
   return <Badge variant="outline" className="bg-purple-100 text-purple-950 font-bold border border-purple-300 shadow-sm">📝 {action}</Badge>
@@ -112,7 +112,7 @@ const getTargetBadge = (targetType: string) => {
     case 'order':
       return <Badge variant="outline" className="bg-cyan-100 text-cyan-950 font-bold border border-cyan-300 shadow-sm">🎟️ Order</Badge>
     default:
-      return <Badge variant="outline" className="bg-slate-100 text-slate-900 font-bold border border-slate-300 shadow-sm">⚙️ System</Badge>
+      return <Badge variant="outline" className="bg-muted/30 text-foreground font-bold border border-slate-300 shadow-sm">⚙️ System</Badge>
   }
 }
 
@@ -199,7 +199,7 @@ export default function AdminLogsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 bg-[#fcfaff] min-h-screen text-gray-900">
+    <div className="space-y-6 max-w-7xl mx-auto p-4 bg-[#fcfaff] min-h-screen text-foreground">
       {/* BreadCrumb Shell */}
       <Breadcrumb 
         items={[
@@ -228,13 +228,13 @@ export default function AdminLogsPage() {
             onClick={fetchLogs}
             className="bg-white/10 text-white border border-white/20 hover:bg-white/20 hover:text-white font-bold py-5 px-4 rounded-xl shadow-sm backdrop-blur-sm flex-1 sm:flex-initial"
           >
-            <RefreshCw className="h-4 w-4 mr-2 text-slate-700" />
+            <RefreshCw className="h-4 w-4 mr-2 text-foreground" />
             Refresh Log 
           </Button>
           <Button 
             variant="outline" 
             disabled 
-            className="bg-slate-800/40 text-gray-400 border border-slate-800 font-bold py-5 px-4 rounded-xl flex-1 sm:flex-initial"
+            className="bg-slate-800/40 text-muted-foreground border border-slate-800 font-bold py-5 px-4 rounded-xl flex-1 sm:flex-initial"
           >
             <Download className="h-4 w-4 mr-2 text-brown-700" />
             Export CSV 
@@ -243,7 +243,7 @@ export default function AdminLogsPage() {
       </div>
 
       {/* Search and Filters Architecture Block */}
-      <Card className="border-2 border-purple-100 bg-white shadow-sm">
+      <Card className="border-2 border-purple-100 bg-card shadow-sm">
         <CardContent className="pt-6">
           <div className="flex flex-col xl:flex-row gap-4">
             <div className="relative flex-1">
@@ -255,7 +255,7 @@ export default function AdminLogsPage() {
                   setSearchTerm(e.target.value)
                   setPage(1)
                 }}
-                className="pl-11 pr-4 py-6 text-gray-900 placeholder:text-gray-500 font-medium border-2 border-purple-100 focus-visible:border-purple-500 focus-visible:ring-purple-500 rounded-xl shadow-sm bg-white"
+                className="pl-11 pr-4 py-6 text-foreground placeholder:text-muted-foreground font-medium border-2 border-purple-100 focus-visible:border-purple-500 focus-visible:ring-purple-500 rounded-xl shadow-sm bg-card"
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -263,21 +263,21 @@ export default function AdminLogsPage() {
                 setActionFilter(value)
                 setPage(1)
               }}>
-                <SelectTrigger className="w-full py-6 border-2 border-purple-100 text-gray-900 font-bold focus:border-purple-500 focus:ring-purple-500 bg-white rounded-xl shadow-sm">
+                <SelectTrigger className="w-full py-6 border-2 border-purple-100 text-foreground font-bold focus:border-purple-500 focus:ring-purple-500 bg-card rounded-xl shadow-sm">
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4 text-purple-600" />
                     <SelectValue placeholder="Action Type" />
                   </div>
                 </SelectTrigger>
-                <SelectContent className="border-2 border-purple-100 bg-white font-semibold">
-                  <SelectItem value="all" className="text-gray-900">All Operations</SelectItem>
+                <SelectContent className="border-2 border-purple-100 bg-card font-semibold bg-white">
+                  <SelectItem value="all" className="text-foreground">All Operations</SelectItem>
                   <SelectItem value="verify" className="text-emerald-950"> Verify actions</SelectItem>
                   <SelectItem value="suspend" className="text-red-950"> Suspend actions</SelectItem>
                   <SelectItem value="delete" className="text-rose-950"> Delete actions</SelectItem>
                   <SelectItem value="refund" className="text-amber-950"> Refund actions</SelectItem>
                   <SelectItem value="cancel" className="text-orange-950"> Cancel actions</SelectItem>
                   <SelectItem value="publish" className="text-blue-950"> Publish actions</SelectItem>
-                  <SelectItem value="login" className="text-slate-900"> Logins</SelectItem>
+                  <SelectItem value="login" className="text-foreground"> Logins</SelectItem>
                   <SelectItem value="logout" className="text-zinc-900"> Logouts</SelectItem>
                 </SelectContent>
               </Select>
@@ -286,14 +286,14 @@ export default function AdminLogsPage() {
                 setTargetFilter(value)
                 setPage(1)
               }}>
-                <SelectTrigger className="w-full py-6 border-2 border-purple-100 text-gray-900 font-bold focus:border-purple-500 focus:ring-purple-500 bg-white rounded-xl shadow-sm">
+                <SelectTrigger className="w-full py-6 border-2 border-purple-100 text-foreground font-bold focus:border-purple-500 focus:ring-purple-500 bg-card rounded-xl shadow-sm">
                   <div className="flex items-center gap-2">
                     <Shield className="h-4 w-4 text-purple-600" />
                     <SelectValue placeholder="Target Type" />
                   </div>
                 </SelectTrigger>
-                <SelectContent className="border-2 border-purple-100 bg-white font-semibold">
-                  <SelectItem value="all" className="text-gray-900">All Data Classes</SelectItem>
+                <SelectContent className="border-2 border-purple-100 bg-card font-semibold bg-white">
+                  <SelectItem value="all" className="text-foreground">All Data Classes</SelectItem>
                   <SelectItem value="user" className="text-blue-950"> User Targets</SelectItem>
                   <SelectItem value="event" className="text-purple-950"> Event Targets</SelectItem>
                   <SelectItem value="order" className="text-cyan-950"> Order Targets</SelectItem>
@@ -315,13 +315,13 @@ export default function AdminLogsPage() {
       </Card>
 
       {/* Tracker Status Metatag */}
-      <div className="text-sm text-gray-700 flex items-center gap-2 px-1 font-semibold">
+      <div className="text-sm text-foreground flex items-center gap-2 px-1 font-semibold">
         <Activity className="h-4 w-4 text-purple-600 animate-pulse" />
-        Rendered payload stream maps <span className="text-purple-700 font-black">{logs.length}</span> nodes out of <span className="text-gray-900 font-black">{totalCount}</span> total pipeline index entries
+        Rendered payload stream maps <span className="text-purple-700 font-black">{logs.length}</span> nodes out of <span className="text-foreground font-black">{totalCount}</span> total pipeline index entries
       </div>
 
       {/* Infrastructure Core Logs Grid Spread Table */}
-      <Card className="border-l-4 border-purple-100 bg-white shadow-md rounded-2xl overflow-hidden">
+      <Card className="border-l-4 border-purple-100 bg-card shadow-md rounded-2xl overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
@@ -338,13 +338,13 @@ export default function AdminLogsPage() {
               <TableBody>
                 {logs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-16 bg-white">
+                    <TableCell colSpan={6} className="text-center py-16 bg-card">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center border-2 border-purple-100">
                           <AlertCircle className="h-8 w-8 text-purple-600" />
                         </div>
-                        <p className="text-gray-900 font-black text-lg">No audit entries match parameters 📭</p>
-                        <p className="text-sm text-gray-600 font-medium max-w-sm leading-relaxed">
+                        <p className="text-foreground font-black text-lg">No audit entries match parameters 📭</p>
+                        <p className="text-sm text-muted-foreground font-medium max-w-sm leading-relaxed">
                           Your filtration parameters returned zero transaction hashes. Clear query fields to monitor active clusters.
                         </p>
                         {(searchTerm || actionFilter !== 'all' || targetFilter !== 'all') && (
@@ -363,7 +363,7 @@ export default function AdminLogsPage() {
                   logs.map((log) => (
                     <TableRow key={log.id} className="hover:bg-purple-50/50 border-b border-purple-100/60 transition-colors">
                       <TableCell className="whitespace-nowrap py-4">
-                        <div className="flex items-center gap-1.5 font-bold text-gray-800 text-sm">
+                        <div className="flex items-center gap-1.5 font-bold text-foreground text-sm">
                           <Clock className="h-4 w-4 text-purple-600" />
                           <span>{formatDate(log.createdAt)}</span>
                           <span className="text-xs font-semibold text-purple-900/60 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100">
@@ -377,8 +377,8 @@ export default function AdminLogsPage() {
                             <User className="h-4 w-4 text-purple-700" />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-gray-900 leading-none">{log.adminName}</p>
-                            <p className="text-xs font-semibold text-gray-600 mt-1">{log.adminEmail}</p>
+                            <p className="text-sm font-bold text-foreground leading-none">{log.adminName}</p>
+                            <p className="text-xs font-semibold text-muted-foreground mt-1">{log.adminEmail}</p>
                           </div>
                         </div>
                       </TableCell>
@@ -386,7 +386,7 @@ export default function AdminLogsPage() {
                       <TableCell className="py-4">
                         <div className="space-y-1">
                           {getTargetBadge(log.targetType)}
-                          <p className="text-sm font-bold text-gray-800 leading-tight">{log.targetName}</p>
+                          <p className="text-sm font-bold text-foreground leading-tight">{log.targetName}</p>
                           <code className="block text-xs text-purple-700 font-mono font-bold bg-purple-50/50 border border-purple-100/60 rounded px-1 w-max">
                             ID: {log.targetId ? log.targetId.slice(0, 8) : 'N/A'}
                           </code>
@@ -404,7 +404,7 @@ export default function AdminLogsPage() {
                         </details>
                       </TableCell>
                       <TableCell className="py-4">
-                        <code className="text-xs bg-gray-100 text-gray-900 border border-gray-300 font-black px-2.5 py-1 rounded-lg font-mono shadow-inner shadow-gray-200/50">
+                        <code className="text-xs bg-muted/30 text-foreground border border-border font-black px-2.5 py-1 rounded-lg font-mono shadow-inner shadow-muted/50">
                           {log.ipAddress || '127.0.0.1'}
                         </code>
                       </TableCell>
@@ -419,7 +419,7 @@ export default function AdminLogsPage() {
 
       {/* Pagination Module Row */}
       {totalPages > 1 && (
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-purple-100">
+        <div className="bg-card p-4 rounded-xl shadow-sm border border-purple-100">
           <Pagination
             currentPage={page}
             totalPages={totalPages}
@@ -435,51 +435,51 @@ export default function AdminLogsPage() {
 
       {/* Aggregate Stats Analytics Blocks Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-2 border-purple-200 bg-white shadow-sm rounded-xl">
+        <Card className="border-2 border-purple-200 bg-card shadow-sm rounded-xl">
           <CardContent className="pt-5 pb-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-black text-gray-900 tracking-tight">{totalCount.toLocaleString()}</p>
-                <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Total Entries </p>
+                <p className="text-3xl font-black text-foreground tracking-tight">{totalCount.toLocaleString()}</p>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Total Entries </p>
               </div>
               <Activity className="h-8 w-8 text-purple-700 shrink-0" />
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-indigo-200 bg-white shadow-sm rounded-xl">
+        <Card className="border-2 border-indigo-200 bg-card shadow-sm rounded-xl">
           <CardContent className="pt-5 pb-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-3xl font-black text-indigo-9ived tracking-tight">
                   {new Set(logs.map(l => l.adminEmail)).size}
                 </p>
-                <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Active Clusters </p>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Active Clusters </p>
               </div>
               <Shield className="h-8 w-8 text-indigo-700 shrink-0" />
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-emerald-300 bg-white shadow-sm rounded-xl">
+        <Card className="border-2 border-emerald-300 bg-card shadow-sm rounded-xl">
           <CardContent className="pt-5 pb-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-3xl font-black text-emerald-800 tracking-tight">
                   {logs.filter(l => l.action.toLowerCase().includes('verify')).length}
                 </p>
-                <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Verifications </p>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Verifications </p>
               </div>
               <CheckCircle className="h-8 w-8 text-emerald-600 shrink-0" />
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-amber-200 bg-white shadow-sm rounded-xl">
+        <Card className="border-2 border-amber-200 bg-card shadow-sm rounded-xl">
           <CardContent className="pt-5 pb-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-3xl font-black text-amber-900 tracking-tight">
                   {logs.filter(l => l.createdAt > new Date(Date.now() - 7 * 86400000).toISOString()).length}
                 </p>
-                <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-1">Rolling 7-Day Cycle </p>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Rolling 7-Day Cycle </p>
               </div>
               <Calendar className="h-8 w-8 text-amber-700 shrink-0" />
             </div>

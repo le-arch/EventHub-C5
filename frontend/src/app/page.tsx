@@ -155,7 +155,7 @@ export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-[#fcfaff] text-gray-900 transition-colors duration-300">
+    <div className="min-h-screen bg-[#fcfaff] text-foreground transition-colors duration-300">
       
       {/* Navigation - Transparent Vivid Glass Sticky Layer */}
       <nav className="sticky top-0 z-50 bg-white/60 backdrop-blur-xl border-b border-purple-100/80 shadow-md shadow-purple-100/20">
@@ -178,13 +178,13 @@ export default function HomePage() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <Link href="#features" className="text-sm font-semibold text-gray-600 hover:text-purple-600 transition-colors">
+            <Link href="#features" className="text-sm font-semibold text-muted-foreground hover:text-purple-600 transition-colors">
               Features
             </Link>
-            <Link href="#how-it-works" className="text-sm font-semibold text-gray-600 hover:text-purple-600 transition-colors">
+            <Link href="#how-it-works" className="text-sm font-semibold text-muted-foreground hover:text-purple-600 transition-colors">
               How It Works
             </Link>
-            <Link href="#pricing" className="text-sm font-semibold text-gray-600 hover:text-purple-600 transition-colors">
+            <Link href="#pricing" className="text-sm font-semibold text-muted-foreground hover:text-purple-600 transition-colors">
               Pricing
             </Link>
             {isAuthenticated ? (
@@ -196,7 +196,7 @@ export default function HomePage() {
             ) : (
               <div className="flex gap-3">
                 <Link href="/login">
-                  <Button variant="ghost" className="hover:bg-purple-500/10 text-gray-700 font-semibold">Log In</Button>
+                  <Button variant="ghost" className="hover:bg-purple-500/10 text-foreground font-semibold">Log In</Button>
                 </Link>
                 <Link href="/register">
                   <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white shadow-md shadow-purple-500/20 btn-press font-semibold rounded-xl">
@@ -209,7 +209,7 @@ export default function HomePage() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 text-gray-700"
+            className="md:hidden p-2 text-foreground"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -220,12 +220,12 @@ export default function HomePage() {
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-white/95 backdrop-blur-lg border-b border-purple-100 py-4 px-4 space-y-3">
-            <Link href="#features" className="block py-2 font-semibold text-gray-700" onClick={() => setMobileMenuOpen(false)}>Features</Link>
-            <Link href="#how-it-works" className="block py-2 font-semibold text-gray-700" onClick={() => setMobileMenuOpen(false)}>How It Works</Link>
-            <Link href="#pricing" className="block py-2 font-semibold text-gray-700" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
+            <Link href="#features" className="block py-2 font-semibold text-foreground" onClick={() => setMobileMenuOpen(false)}>Features</Link>
+            <Link href="#how-it-works" className="block py-2 font-semibold text-foreground" onClick={() => setMobileMenuOpen(false)}>How It Works</Link>
+            <Link href="#pricing" className="block py-2 font-semibold text-foreground" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
             {isAuthenticated ? (
               <Link href="/organizer/events" onClick={() => setMobileMenuOpen(false)}>
-                <Button className="w-full bg-white border border-purple-200 text-purple-700 font-semibold">Dashboard</Button>
+                <Button className="w-full bg-card border border-purple-200 text-purple-700 font-semibold">Dashboard</Button>
               </Link>
             ) : (
               <div className="space-y-2 pt-2">
@@ -252,11 +252,11 @@ export default function HomePage() {
             <Badge className="mb-6 bg-purple-100 border border-purple-300 text-purple-800 px-3 py-1 text-xs font-bold rounded-full inline-flex items-center gap-1.5 shadow-sm">
               <Sparkles className="w-3.5 h-3.5 text-purple-600 animate-icon-glow" /> Now Available in Cameroon
             </Badge>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 mb-6 leading-[1.15] tracking-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-foreground mb-6 leading-[1.15] tracking-tight">
               The easiest way to manage
               <span className="gradient-text block mt-1">events in Cameroon</span>
             </h1>
-            <p className="text-base md:text-lg text-gray-700 mb-10 max-w-2xl lg:max-w-none font-medium leading-relaxed">
+            <p className="text-base md:text-lg text-foreground mb-10 max-w-2xl lg:max-w-none font-medium leading-relaxed">
               Create events, sell tickets via Mobile Money, and check-in attendees with crisp QR codes. 
               No app download required. Built to look magical, styled to run with perfect high-contrast readability.
             </p>
@@ -277,7 +277,7 @@ export default function HomePage() {
                     </Button>
                   </Link>
                   <Link href="/login">
-                    <Button size="lg" variant="outline" className="bg-white border-2 border-purple-200/80 hover:border-purple-400 text-purple-950 font-bold btn-press px-8 py-6 rounded-xl shadow-sm">
+                    <Button size="lg" variant="outline" className="bg-card border-2 border-purple-200/80 hover:border-purple-400 text-purple-950 font-bold btn-press px-8 py-6 rounded-xl shadow-sm">
                       I already have an account
                     </Button>
                   </Link>
@@ -316,8 +316,8 @@ export default function HomePage() {
       {/* Feature Section */}
       <section id="features" className="container mx-auto px-4 py-24 md:py-32">
         <div className="text-center mb-20 animate-fade-in">
-          <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4 tracking-tight">Everything you need to manage events</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto text-base font-medium">
+          <h2 className="text-3xl md:text-4xl font-black text-foreground mb-4 tracking-tight">Everything you need to manage events</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto text-base font-medium">
             From seamless digital ticket checkout pipelines to quick gate control, EventHub wraps complex actions into crystal clear, glowing tools.
           </p>
         </div>
@@ -325,15 +325,15 @@ export default function HomePage() {
           {features.map((feature, index) => {
             const Icon = feature.icon
             return (
-              <Card key={index} className="bg-white/60 backdrop-blur-md border-l-4 border-l-4-purple-200/60 card-hover shadow-md shadow-purple-500/5 p-4 rounded-2xl flex flex-col justify-between">
+              <Card key={index} className="bg-white/60 backdrop-blur-md border-l-4 border-l-purple-200/60 card-hover shadow-md shadow-purple-500/5 p-4 rounded-2xl flex flex-col justify-between">
                 <CardHeader className="pb-2">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 ${feature.color}`}>
                     <Icon className={`h-6 w-6 ${feature.animateClass}`} />
                   </div>
-                  <CardTitle className="text-xl font-extrabold tracking-tight text-gray-900">{feature.title}</CardTitle>
+                  <CardTitle className="text-xl font-extrabold tracking-tight text-foreground">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-sm leading-relaxed text-gray-700 font-medium">{feature.description}</CardDescription>
+                  <CardDescription className="text-sm leading-relaxed text-foreground font-medium">{feature.description}</CardDescription>
                 </CardContent>
               </Card>
             )
@@ -345,8 +345,8 @@ export default function HomePage() {
       <section id="how-it-works" className="py-24 md:py-32 border-t border-purple-100 relative bg-white/40">
         <div className="container mx-auto px-4">
           <div className="text-center mb-20">
-            <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4 tracking-tight">Simple Pipeline Mechanics</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto text-base font-medium">
+            <h2 className="text-3xl md:text-4xl font-black text-foreground mb-4 tracking-tight">Simple Pipeline Mechanics</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto text-base font-medium">
               Simple deployment structures for organizers, fluid zero-app experiences for attendees.
             </p>
           </div>
@@ -363,10 +363,10 @@ export default function HomePage() {
                     <div className="text-5xl font-black text-purple-600/60 mb-2 tracking-tighter">
                       {step.number}
                     </div>
-                    <CardTitle className="text-lg font-bold text-gray-900">{step.title}</CardTitle>
+                    <CardTitle className="text-lg font-bold text-foreground">{step.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription className="text-sm text-gray-700 font-medium leading-relaxed">{step.description}</CardDescription>
+                    <CardDescription className="text-sm text-foreground font-medium leading-relaxed">{step.description}</CardDescription>
                   </CardContent>
                   {index < organizerSteps.length - 1 && (
                     <div className="hidden md:flex items-center justify-center absolute top-1/2 -right-4 -translate-y-1/2 text-purple-500/50 z-10">
@@ -390,10 +390,10 @@ export default function HomePage() {
                     <div className="text-5xl font-black text-blue-600/60 mb-2 tracking-tighter">
                       {step.number}
                     </div>
-                    <CardTitle className="text-lg font-bold text-gray-900">{step.title}</CardTitle>
+                    <CardTitle className="text-lg font-bold text-foreground">{step.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription className="text-sm text-gray-700 font-medium leading-relaxed">{step.description}</CardDescription>
+                    <CardDescription className="text-sm text-foreground font-medium leading-relaxed">{step.description}</CardDescription>
                   </CardContent>
                   {index < attendeeSteps.length - 1 && (
                     <div className="hidden md:flex items-center justify-center absolute top-1/2 -right-4 -translate-y-1/2 text-blue-500/50 z-10">
@@ -410,8 +410,8 @@ export default function HomePage() {
       {/* Pricing Section */}
       <section id="pricing" className="container mx-auto px-4 py-24 md:py-32">
         <div className="text-center mb-20">
-          <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4 tracking-tight">Simple, Transparent Pricing</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto text-base font-medium">
+          <h2 className="text-3xl md:text-4xl font-black text-foreground mb-4 tracking-tight">Simple, Transparent Pricing</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto text-base font-medium">
             Start completely free, scale features as you build your audience.
           </p>
         </div>
@@ -420,17 +420,17 @@ export default function HomePage() {
           {/* Free Plan */}
           <Card className="bg-white/60 backdrop-blur-md border border-purple-200/80 card-hover p-4 rounded-3xl flex flex-col justify-between shadow-sm">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-gray-900">Free</CardTitle>
+              <CardTitle className="text-xl font-bold text-foreground">Free</CardTitle>
               <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-black text-gray-900">0 XAF</span>
-                <span className="text-gray-500 text-sm font-semibold">/event</span>
+                <span className="text-4xl font-black text-foreground">0 XAF</span>
+                <span className="text-muted-foreground text-sm font-semibold">/event</span>
               </div>
             </CardHeader>
             <CardContent className="mt-6 flex-1 flex flex-col justify-between">
-              <p className="text-sm text-gray-600 font-medium mb-6">Perfect for small meetups and configuration testing</p>
+              <p className="text-sm text-muted-foreground font-medium mb-6">Perfect for small meetups and configuration testing</p>
               <ul className="space-y-3 border-t border-purple-100 pt-6">
                 {['Up to 50 attendees', 'Basic glass event page', 'QR code tickets', 'WhatsApp sharing layer'].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2.5 text-sm text-gray-800 font-semibold">
+                  <li key={i} className="flex items-center gap-2.5 text-sm text-foreground font-semibold">
                     <CheckCircle className="h-4 w-4 text-purple-600 shrink-0" />
                     {item}
                   </li>
@@ -440,7 +440,7 @@ export default function HomePage() {
           </Card>
 
           {/* Pro Plan */}
-          <Card className="bg-white border-2 border-purple-500 shadow-xl shadow-purple-500/5 p-4 rounded-3xl relative overflow-hidden scale-[1.03] flex flex-col justify-between">
+          <Card className="bg-card border-2 border-purple-500 shadow-xl shadow-purple-500/5 p-4 rounded-3xl relative overflow-hidden scale-[1.03] flex flex-col justify-between">
             <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-blue-600 text-white px-4 py-1.5 text-xs font-bold rounded-bl-xl uppercase tracking-wider animate-pulse-slow">
               Popular
             </div>
@@ -448,14 +448,14 @@ export default function HomePage() {
               <CardTitle className="text-xl font-bold text-purple-950">Pro</CardTitle>
               <div className="mt-4 flex items-baseline gap-1">
                 <span className="text-4xl font-black gradient-text">15,000 XAF</span>
-                <span className="text-gray-500 text-sm font-semibold">/event</span>
+                <span className="text-muted-foreground text-sm font-semibold">/event</span>
               </div>
             </CardHeader>
             <CardContent className="mt-6 flex-1 flex flex-col justify-between">
-              <p className="text-sm text-gray-700 font-medium mb-6">Everything required for premium corporate or public gatherings</p>
+              <p className="text-sm text-foreground font-medium mb-6">Everything required for premium corporate or public gatherings</p>
               <ul className="space-y-3 border-t border-purple-100 pt-6">
                 {['Up to 500 attendees', 'Multiple ticket configuration groups', 'Attendee list with smart search', 'Full glass analytics dashboard', 'Priority developer support'].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2.5 text-sm text-gray-800 font-semibold">
+                  <li key={i} className="flex items-center gap-2.5 text-sm text-foreground font-semibold">
                     <CheckCircle className="h-4 w-4 text-blue-600 shrink-0" />
                     {item}
                   </li>
@@ -467,16 +467,16 @@ export default function HomePage() {
           {/* Enterprise Plan */}
           <Card className="bg-white/60 backdrop-blur-md border border-purple-200/80 card-hover p-4 rounded-3xl flex flex-col justify-between shadow-sm">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-gray-900">Enterprise</CardTitle>
+              <CardTitle className="text-xl font-bold text-foreground">Enterprise</CardTitle>
               <div className="mt-4">
-                <span className="text-4xl font-black text-gray-900">Custom</span>
+                <span className="text-4xl font-black text-foreground">Custom</span>
               </div>
             </CardHeader>
             <CardContent className="mt-6 flex-1 flex flex-col justify-between">
-              <p className="text-sm text-gray-600 font-medium mb-6">For large scale production workflows and high-volume operations</p>
+              <p className="text-sm text-muted-foreground font-medium mb-6">For large scale production workflows and high-volume operations</p>
               <ul className="space-y-3 border-t border-purple-100 pt-6">
                 {['Unlimited core attendee metrics', 'Dedicated system account manager', 'White-label custom branding', 'Full REST API integration access', 'SLA architecture guarantees'].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2.5 text-sm text-gray-800 font-semibold">
+                  <li key={i} className="flex items-center gap-2.5 text-sm text-foreground font-semibold">
                     <CheckCircle className="h-4 w-4 text-pink-600 shrink-0" />
                     {item}
                   </li>
@@ -485,7 +485,7 @@ export default function HomePage() {
             </CardContent>
           </Card>
         </div>
-        <p className="text-center text-xs text-gray-500 font-semibold mt-10">
+        <p className="text-center text-xs text-muted-foreground font-semibold mt-10">
           * A minimal 3% transaction gateway processor fee applies explicitly to paid tickets
         </p>
       </section>
@@ -502,7 +502,7 @@ export default function HomePage() {
           </p>
           {isAuthenticated ? (
             <Link href="/organizer/events">
-              <Button size="lg" className="bg-white text-purple-950 hover:bg-purple-50 font-bold px-8 py-6 rounded-xl shadow-lg shadow-black/20 btn-press">
+              <Button size="lg" className="bg-card text-purple-950 hover:bg-purple-50 font-bold px-8 py-6 rounded-xl shadow-lg shadow-black/20 btn-press">
                 Go to Dashboard
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
@@ -527,7 +527,7 @@ export default function HomePage() {
                 <Image src="/images/logo.svg" alt="EventHub Icon" width={30} height={30} className="w-7 h-7" />
                 <h3 className="text-white font-bold text-lg tracking-tight">EventHub</h3>
               </div>
-              <p className="text-sm text-gray-400 leading-relaxed font-medium">
+              <p className="text-sm text-muted-foreground leading-relaxed font-medium">
                 The complete custom digital event management pipeline architecture designed natively for Cameroon.
               </p>
             </div>
@@ -537,7 +537,7 @@ export default function HomePage() {
                 <ul className="space-y-2 text-sm">
                   {(section as string[]).slice(1).map((link, lIdx) => (
                     <li key={lIdx}>
-                      <Link href={link} className="text-gray-400 hover:text-purple-400 font-medium transition-colors">
+                      <Link href={link} className="text-muted-foreground hover:text-purple-400 font-medium transition-colors">
                         {link.replace('#', '').replace('/', '').replace('-', ' ')}
                       </Link>
                     </li>
@@ -546,7 +546,7 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-          <div className="border-t border-white/5 mt-12 pt-8 text-center text-xs text-gray-500 font-medium">
+          <div className="border-t border-white/5 mt-12 pt-8 text-center text-xs text-muted-foreground font-medium">
             <p>&copy; {new Date().getFullYear()} EventHub. All rights reserved.</p>
             <p className="mt-1">Built with 💜 for modern event organizers</p>
           </div>

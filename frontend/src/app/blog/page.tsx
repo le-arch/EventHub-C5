@@ -141,12 +141,12 @@ export default function BlogPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-muted/50">
         <div className="container mx-auto px-4 py-16 max-w-5xl">
           <Skeleton className="h-6 w-32 mb-8 mx-auto rounded-full" />
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5].map((i) => (
-              <Card key={i} className="bg-white border-slate-200">
+              <Card key={i} className="bg-card border-border">
                 <Skeleton className="h-44 w-full rounded-t-2xl" />
                 <CardHeader className="space-y-2">
                   <Skeleton className="h-5 w-1/4 rounded-full" />
@@ -161,14 +161,14 @@ export default function BlogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 antialiased selection:bg-purple-500/10 overflow-hidden relative">
+    <div className="min-h-screen bg-muted/50 text-foreground antialiased selection:bg-purple-500/10 overflow-hidden relative">
       
       {/* Light Gradient Background Mesh Ambient Glows */}
       <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-purple-200/20 rounded-full blur-[130px] pointer-events-none z-0" />
       <div className="absolute top-[300px] right-1/4 w-[700px] h-[700px] bg-blue-200/20 rounded-full blur-[150px] pointer-events-none z-0" />
 
       {/* Hero Header Section */}
-      <div className="relative border-b border-slate-200/80 bg-gradient-to-b from-purple-50/60 via-indigo-50/40 to-transparent pt-12 pb-20 z-10">
+      <div className="relative border-b border-border/80 bg-gradient-to-b from-purple-50/60 via-indigo-50/40 to-transparent pt-12 pb-20 z-10">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="flex justify-center mb-8">
             <Breadcrumb 
@@ -181,7 +181,7 @@ export default function BlogPage() {
             {/* Elegant Brand Logo Container */}
             <div className="inline-flex relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-blue-400 rounded-3xl blur-md opacity-30 group-hover:opacity-60 transition-opacity duration-500" />
-              <div className="relative p-4 bg-white border border-slate-200 rounded-3xl shadow-xl shadow-slate-200/60">
+              <div className="relative p-4 bg-card border border-border rounded-3xl shadow-xl shadow-slate-200/60">
                 <Image 
                   src="/images/logo.svg" 
                   alt="EventHub Brand Icon" 
@@ -197,12 +197,12 @@ export default function BlogPage() {
               <span className="text-xs font-bold uppercase tracking-widest bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 Resources and Insights
               </span>
-              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
+              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-foreground">
                 The EventHub Blog
               </h1>
             </div>
             
-            <p className="text-base sm:text-lg text-slate-600 max-w-xl mx-auto font-medium">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto font-medium">
               Expert guides, payment trends, and localized strategies built to support event growth inside Cameroon.
             </p>
           </div>
@@ -217,18 +217,18 @@ export default function BlogPage() {
             
             {/* Input Search Block */}
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search resources..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 h-11 bg-white border-slate-200 shadow-sm rounded-xl text-slate-800 placeholder:text-slate-400 focus-visible:ring-purple-500/20 focus-visible:border-purple-500"
+                className="pl-10 pr-4 h-11 bg-card border-border shadow-sm rounded-xl text-foreground placeholder:text-muted-foreground focus-visible:ring-purple-500/20 focus-visible:border-purple-500"
               />
             </div>
 
             {/* Total Count Flag */}
             {filteredPosts.length > 0 && (
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400 self-center px-1">
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground self-center px-1">
                 Showing {filteredPosts.length} post{filteredPosts.length !== 1 ? 's' : ''}
               </div>
             )}
@@ -249,11 +249,11 @@ export default function BlogPage() {
                   className={`rounded-full px-4 text-xs font-semibold h-8 transition-all ${
                     isActive 
                       ? 'bg-slate-900 text-white shadow-md' 
-                      : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-600'
+                      : 'bg-card border-border hover:bg-muted/50 text-muted-foreground'
                   }`}
                 >
                   <span>{category}</span>
-                  <span className={`ml-1.5 text-[10px] font-bold ${isActive ? 'text-purple-300' : 'text-slate-400'}`}>
+                  <span className={`ml-1.5 text-[10px] font-bold ${isActive ? 'text-purple-300' : 'text-muted-foreground'}`}>
                     ({count})
                   </span>
                 </Button>
@@ -264,13 +264,13 @@ export default function BlogPage() {
 
         {/* Missing Query Empty Canvas Case */}
         {filteredPosts.length === 0 ? (
-          <div className="text-center py-20 bg-white border border-slate-200 rounded-3xl shadow-xl shadow-slate-200/40 max-w-xl mx-auto space-y-4">
-            <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center mx-auto">
-              <Layers className="h-5 w-5 text-slate-400" />
+          <div className="text-center py-20 bg-card border border-border rounded-3xl shadow-xl shadow-slate-200/40 max-w-xl mx-auto space-y-4">
+            <div className="w-12 h-12 bg-muted/50 border border-border rounded-xl flex items-center justify-center mx-auto">
+              <Layers className="h-5 w-5 text-muted-foreground" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-bold text-slate-800 text-lg">No resources found</h3>
-              <p className="text-slate-500 text-sm max-w-xs mx-auto">We couldn&apos;t match any articles to your custom criteria parameters.</p>
+              <h3 className="font-bold text-foreground text-lg">No resources found</h3>
+              <p className="text-muted-foreground text-sm max-w-xs mx-auto">We couldn&apos;t match any articles to your custom criteria parameters.</p>
             </div>
             {(searchTerm || selectedCategory !== 'All') && (
               <Button
@@ -291,37 +291,37 @@ export default function BlogPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPosts.map((post) => (
               <Link href={`/blog/${post.slug}`} key={post.id} className="group">
-                <Card className="h-full bg-white border-slate-200/80 rounded-2xl overflow-hidden shadow-lg shadow-slate-200/40 transition-all duration-300 hover:-translate-y-1 hover:border-purple-500/30 flex flex-col">
+                <Card className="h-full bg-card border-border/80 rounded-2xl overflow-hidden shadow-lg shadow-slate-200/40 transition-all duration-300 hover:-translate-y-1 hover:border-purple-500/30 flex flex-col">
                   
                   {/* Decorative Banner Top Placeholder */}
                   <div className={`relative h-44 bg-gradient-to-br ${post.gradient} border-b flex items-center justify-center transition-all group-hover:opacity-90 overflow-hidden`}>
                     <div className="absolute inset-0 bg-grid-slate-200 [mask-image:linear-gradient(0deg,white,transparent)]" />
-                    <BookOpen className="h-10 w-10 text-slate-400/100 fill-blue-500 absolute" />
-                    <Badge className="absolute top-4 left-4 bg-white/90 border border-slate-200/60 shadow-sm text-slate-700 font-bold hover:bg-white text-[10px] uppercase tracking-wider rounded-md">
+                    <BookOpen className="h-10 w-10 text-muted-foreground/10 fill-blue-50 absolute" />
+                    <Badge className="absolute top-4 left-4 bg-white/90 border border-border/60 shadow-sm text-foreground font-bold hover:bg-card text-[10px] uppercase tracking-wider rounded-md">
                       {post.category}
                     </Badge>
                   </div>
 
                   <CardHeader className="space-y-2 pt-6 flex-1">
-                    <CardTitle className="text-lg font-bold text-slate-900 tracking-tight leading-snug line-clamp-2 group-hover:text-purple-600 transition-colors">
+                    <CardTitle className="text-lg font-bold text-foreground tracking-tight leading-snug line-clamp-2 group-hover:text-purple-600 transition-colors">
                       {post.title}
                     </CardTitle>
-                    <CardDescription className="line-clamp-3 text-slate-600 text-xs md:text-sm leading-relaxed">
+                    <CardDescription className="line-clamp-3 text-muted-foreground text-xs md:text-sm leading-relaxed">
                       {post.excerpt}
                     </CardDescription>
                   </CardHeader>
 
-                  <CardFooter className="flex justify-between items-center text-[11px] font-semibold text-slate-400 border-t border-slate-100 pt-4 pb-5 px-6">
+                  <CardFooter className="flex justify-between items-center text-[11px] font-semibold text-muted-foreground border-t border-slate-100 pt-4 pb-5 px-6">
                     <div className="flex items-center gap-1.5">
-                      <User className="h-3 w-3 text-slate-400" />
-                      <span className="text-slate-500">{post.author}</span>
+                      <User className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-muted-foreground">{post.author}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <Calendar className="h-3 w-3 text-slate-400" />
+                      <Calendar className="h-3 w-3 text-muted-foreground" />
                       <span>{formatDate(post.publishedAt)}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <Clock className="h-3 w-3 text-slate-400" />
+                      <Clock className="h-3 w-3 text-muted-foreground" />
                       <span>{post.readTime} min</span>
                     </div>
                   </CardFooter>

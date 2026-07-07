@@ -246,7 +246,7 @@ export default function BlogPostPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-muted/50">
         <div className="container mx-auto px-4 py-16 max-w-3xl">
           <Skeleton className="h-5 w-40 mb-6 rounded-full" />
           <Skeleton className="h-10 w-5/6 mb-4 rounded-xl" />
@@ -264,14 +264,14 @@ export default function BlogPostPage() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="text-center max-w-sm bg-white p-8 border border-slate-200 shadow-xl rounded-2xl space-y-4">
-          <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center mx-auto">
-            <BookOpen className="h-5 w-5 text-slate-400" />
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center p-4">
+        <div className="text-center max-w-sm bg-card p-8 border border-border shadow-xl rounded-2xl space-y-4">
+          <div className="w-12 h-12 bg-muted/50 border border-border rounded-xl flex items-center justify-center mx-auto">
+            <BookOpen className="h-5 w-5 text-muted-foreground" />
           </div>
           <div className="space-y-1">
-            <h1 className="text-xl font-bold text-slate-900">Post Not Found</h1>
-            <p className="text-sm text-slate-500">The article you are searching for might have been updated or relocated.</p>
+            <h1 className="text-xl font-bold text-foreground">Post Not Found</h1>
+            <p className="text-sm text-muted-foreground">The article you are searching for might have been updated or relocated.</p>
           </div>
           <Link href="/blog" className="block">
             <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold h-10">
@@ -284,7 +284,7 @@ export default function BlogPostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 antialiased selection:bg-purple-500/10 relative overflow-hidden">
+    <div className="min-h-screen bg-muted/50 text-foreground antialiased selection:bg-purple-500/10 relative overflow-hidden">
       
       {/* Decorative Blur Background Mesh */}
       <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-purple-200/10 rounded-full blur-[120px] pointer-events-none z-0" />
@@ -306,47 +306,47 @@ export default function BlogPostPage() {
         {/* Hero Meta Header */}
         <div className="space-y-4 mb-8">
           <div>
-            <Badge className="bg-white border border-slate-200 shadow-sm text-slate-700 hover:bg-white text-[10px] uppercase tracking-wider rounded-md px-2.5 py-0.5 font-bold">
+            <Badge className="bg-card border border-border shadow-sm text-foreground hover:bg-card text-[10px] uppercase tracking-wider rounded-md px-2.5 py-0.5 font-bold">
               {post.category}
             </Badge>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight leading-tight">
             {post.title}
           </h1>
           
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-semibold text-slate-400">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-semibold text-muted-foreground">
             <div className="flex items-center gap-1.5">
-              <User className="h-3.5 w-3.5 text-slate-400" />
-              <span className="text-slate-600">{post.author}</span>
+              <User className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-muted-foreground">{post.author}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 text-slate-400" />
+              <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
               <span>{formatDate(post.publishedAt)}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-slate-400" />
+              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
               <span>{post.readTime} min read</span>
             </div>
           </div>
         </div>
 
         {/* Structural Visual Cover Section */}
-        <div className={`h-52 sm:h-80 rounded-2xl overflow-hidden mb-10 bg-gradient-to-br ${post.gradient} border border-slate-200/60 flex items-center justify-center relative shadow-inner shadow-slate-100`}>
+        <div className={`h-52 sm:h-80 rounded-2xl overflow-hidden mb-10 bg-gradient-to-br ${post.gradient} border border-border/60 flex items-center justify-center relative shadow-inner shadow-slate-100`}>
           <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,transparent)]" />
-          <BookOpen className="h-16 w-16 text-slate-400/30" />
+          <BookOpen className="h-16 w-16 text-muted-foreground/30" />
         </div>
 
         {/* Main Article Content Node */}
         <article 
-          className="prose prose-slate max-w-none mb-10 prose-headings:font-extrabold prose-headings:tracking-tight prose-headings:text-slate-900 prose-h2:text-xl sm:prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-p:text-slate-600 prose-p:text-sm sm:prose-p:text-base prose-p:leading-relaxed prose-a:text-purple-600 prose-a:font-semibold hover:prose-a:text-purple-700 prose-strong:text-slate-900 prose-li:text-slate-600 prose-li:text-sm sm:prose-li:text-base prose-ul:list-disc prose-ul:pl-5 space-y-2"
+          className="prose prose-slate max-w-none mb-10 prose-headings:font-extrabold prose-headings:tracking-tight prose-headings:text-foreground prose-h2:text-xl sm:prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-p:text-muted-foreground prose-p:text-sm sm:prose-p:text-base prose-p:leading-relaxed prose-a:text-purple-600 prose-a:font-semibold hover:prose-a:text-purple-700 prose-strong:text-foreground prose-li:text-muted-foreground prose-li:text-sm sm:prose-li:text-base prose-ul:list-disc prose-ul:pl-5 space-y-2"
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
 
         {/* Content Metadata Tags Array */}
         <div className="flex flex-wrap gap-2 mb-10">
           {post.tags.map((tag) => (
-            <Badge key={tag} variant="outline" className="text-[11px] font-semibold text-slate-500 bg-white border-slate-200 px-2.5 py-0.5 rounded-lg">
-              <Tag className="w-2.5 h-2.5 mr-1 text-slate-400" />
+            <Badge key={tag} variant="outline" className="text-[11px] font-semibold text-muted-foreground bg-card border-border px-2.5 py-0.5 rounded-lg">
+              <Tag className="w-2.5 h-2.5 mr-1 text-muted-foreground" />
               {tag}
             </Badge>
           ))}
@@ -355,7 +355,7 @@ export default function BlogPostPage() {
         <Separator className="my-10 bg-slate-200/80" />
 
         {/* Author Presentation Profile Card */}
-        <Card className="bg-white border-slate-200/80 rounded-2xl shadow-md shadow-slate-100 overflow-hidden mb-10">
+        <Card className="bg-card border-border/80 rounded-2xl shadow-md shadow-slate-100 overflow-hidden mb-10">
           <CardContent className="p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center">
               <div className="w-14 h-14 bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-500/10 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm shadow-purple-100">
@@ -365,32 +365,32 @@ export default function BlogPostPage() {
               </div>
               <div className="flex-1 space-y-1">
                 <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
-                  <h3 className="font-bold text-slate-900 text-base">About {post.author}</h3>
+                  <h3 className="font-bold text-foreground text-base">About {post.author}</h3>
                   <span className="text-xs font-semibold text-purple-600 sm:before:content-['•'] sm:before:mr-1 sm:before:text-slate-300">
                     {post.authorRole}
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">{post.authorBio}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{post.authorBio}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Share Matrix Footer Area */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-6 bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-6 bg-card border border-border/80 rounded-2xl p-4 shadow-sm">
           <div className="flex items-center gap-3 px-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Share:</span>
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Share:</span>
             <div className="flex items-center gap-1.5">
-              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 shadow-sm" onClick={shareOnFacebook}>
+              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg bg-card border-border text-muted-foreground hover:bg-muted/50 hover:text-foreground shadow-sm" onClick={shareOnFacebook}>
                 <FacebookIcon href="#" />
               </Button>
-              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 shadow-sm" onClick={shareOnTwitter}>
+              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg bg-card border-border text-muted-foreground hover:bg-muted/50 hover:text-foreground shadow-sm" onClick={shareOnTwitter}>
                 <TwitterIcon href="#" />
               </Button>
-              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 shadow-sm" onClick={shareOnLinkedIn}>
+              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg bg-card border-border text-muted-foreground hover:bg-muted/50 hover:text-foreground shadow-sm" onClick={shareOnLinkedIn}>
                 <LinkedinIcon href="#" />
               </Button>
-              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 shadow-sm" onClick={shareByEmail}>
+              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg bg-card border-border text-muted-foreground hover:bg-muted/50 hover:text-foreground shadow-sm" onClick={shareByEmail}>
                 <Mail className="h-3.5 w-3.5" />
               </Button>
             </div>
@@ -399,7 +399,7 @@ export default function BlogPostPage() {
           <Button 
             variant="ghost" 
             onClick={() => router.push('/blog')}
-            className="text-slate-600 hover:text-slate-900 text-xs font-semibold h-9 rounded-xl hover:bg-slate-50"
+            className="text-muted-foreground hover:text-foreground text-xs font-semibold h-9 rounded-xl hover:bg-muted/50"
           >
             <ArrowLeft className="h-3.5 w-3.5 mr-2" />
             Back to Blog Index

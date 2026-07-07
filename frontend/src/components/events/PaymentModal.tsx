@@ -132,17 +132,17 @@ export function PaymentModal({
         {step === 'form' ? (
           <>
             {/* Order Summary */}
-            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Event:</span>
+                <span className="text-muted-foreground">Event:</span>
                 <span className="font-medium">{eventId.slice(0, 8)}...</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Ticket:</span>
+                <span className="text-muted-foreground">Ticket:</span>
                 <span>{ticketType.name} × {quantity}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Attendee:</span>
+                <span className="text-muted-foreground">Attendee:</span>
                 <span>{attendeeName}</span>
               </div>
               <div className="border-t pt-2 mt-2 flex justify-between font-semibold">
@@ -196,7 +196,7 @@ export function PaymentModal({
             <div>
               <Label htmlFor="phone">Phone Number</Label>
               <div className="relative mt-1">
-                <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="phone"
                   type="tel"
@@ -206,7 +206,7 @@ export function PaymentModal({
                   className="pl-10"
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Enter the phone number registered with {paymentMethod === 'mtn' ? 'MTN' : 'Orange'}
               </p>
             </div>
@@ -228,10 +228,10 @@ export function PaymentModal({
                 <div className="w-full h-full rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
               </div>
               <h3 className="font-semibold text-lg mb-2">Please check your phone</h3>
-              <p className="text-gray-500 text-sm mb-2">
+              <p className="text-muted-foreground text-sm mb-2">
                 We&apos;ve sent a payment request to your {paymentMethod === 'mtn' ? 'MTN Momo' : 'Orange Money'}.
               </p>
-              <p className="text-gray-400 text-xs">
+              <p className="text-muted-foreground text-xs">
                 Enter your PIN to complete the payment. This may take a few seconds.
               </p>
             </div>
@@ -245,7 +245,7 @@ export function PaymentModal({
         )}
 
         {/* Security Note */}
-        <div className="flex items-center justify-center gap-2 text-xs text-gray-400 pt-2">
+        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-2">
           <Shield className="h-3 w-3" />
           <span>Secured by EventHub • Your payment information is encrypted</span>
         </div>

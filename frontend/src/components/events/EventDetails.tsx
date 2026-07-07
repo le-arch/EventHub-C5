@@ -85,9 +85,9 @@ export function EventDetails({
               <Calendar className="h-5 w-5 text-primary mt-0.5" />
               <div>
                 <p className="font-medium">Date</p>
-                <p className="text-gray-600">{formatDate(event.startDate)}</p>
+                <p className="text-muted-foreground">{formatDate(event.startDate)}</p>
                 {event.endDate && event.endDate !== event.startDate && (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     to {formatDate(event.endDate)}
                   </p>
                 )}
@@ -102,9 +102,9 @@ export function EventDetails({
               <Clock className="h-5 w-5 text-primary mt-0.5" />
               <div>
                 <p className="font-medium">Time</p>
-                <p className="text-gray-600">{formatTime(event.startTime)}</p>
+                <p className="text-muted-foreground">{formatTime(event.startTime)}</p>
                 {event.endTime && event.endTime !== event.startTime && (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     to {formatTime(event.endTime)}
                   </p>
                 )}
@@ -119,11 +119,11 @@ export function EventDetails({
               <MapPin className="h-5 w-5 text-primary mt-0.5" />
               <div>
                 <p className="font-medium">Venue</p>
-                <p className="text-gray-600">{event.venueName}</p>
+                <p className="text-muted-foreground">{event.venueName}</p>
                 {event.venueAddress && (
-                  <p className="text-sm text-gray-500">{event.venueAddress}</p>
+                  <p className="text-sm text-muted-foreground">{event.venueAddress}</p>
                 )}
-                <p className="text-sm text-gray-500">{event.city}</p>
+                <p className="text-sm text-muted-foreground">{event.city}</p>
               </div>
             </div>
           </CardContent>
@@ -136,10 +136,10 @@ export function EventDetails({
                 <Ticket className="h-5 w-5 text-primary mt-0.5" />
                 <div>
                   <p className="font-medium">Tickets</p>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     {event.ticketStats.totalSold} sold
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     {event.ticketStats.availableTickets} available
                   </p>
                 </div>
@@ -157,7 +157,7 @@ export function EventDetails({
           </CardHeader>
           <CardContent>
             <div className="prose prose-sm max-w-none">
-              <p className="text-gray-600 whitespace-pre-wrap">
+              <p className="text-muted-foreground whitespace-pre-wrap">
                 {event.description}
               </p>
             </div>

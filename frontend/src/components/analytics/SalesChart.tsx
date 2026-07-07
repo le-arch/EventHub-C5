@@ -48,8 +48,8 @@ interface SalesChartProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-        <p className="font-semibold text-gray-900 mb-2">{label}</p>
+      <div className="bg-card p-3 rounded-lg shadow-lg border border-border">
+        <p className="font-semibold text-foreground mb-2">{label}</p>
         <div className="space-y-1 text-sm">
           <p className="text-blue-600">
             Tickets Sold: <span className="font-semibold">{payload[0]?.value || 0}</span>
@@ -81,7 +81,7 @@ export function SalesChart({
         </CardHeader>
         <CardContent>
           <div className="h-80 flex items-center justify-center">
-            <div className="animate-pulse text-gray-400">Loading chart data...</div>
+            <div className="animate-pulse text-muted-foreground">Loading chart data...</div>
           </div>
         </CardContent>
       </Card>
@@ -97,8 +97,8 @@ export function SalesChart({
         </CardHeader>
         <CardContent>
           <div className="h-80 flex items-center justify-center flex-col gap-2">
-            <p className="text-gray-400">No sales data available</p>
-            <p className="text-sm text-gray-400">Sales data will appear once tickets are purchased</p>
+            <p className="text-muted-foreground">No sales data available</p>
+            <p className="text-sm text-muted-foreground">Sales data will appear once tickets are purchased</p>
           </div>
         </CardContent>
       </Card>

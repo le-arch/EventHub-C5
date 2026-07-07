@@ -86,7 +86,7 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="shadow-lg border-l-4 ">
+    <Card className="glass border-l-4">
       <CardHeader className="space-y-1 text-center">
         <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
         <CardDescription>
@@ -142,7 +142,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? (<EyeOff className="h-4 w-4" aria-hidden="true" />) : (<Eye className="h-4 w-4" aria-hidden="true" />) }
               </button>
@@ -171,7 +171,7 @@ export default function LoginPage() {
           </Button>
 
           {/* Link to Registration Page */}
-          <p className="text-center text-sm text-gray-600 mt-4">
+          <p className="text-center text-sm text-muted-foreground mt-4">
             Don&apos;t have an account?{' '}
             <Link href="/register" className="text-primary hover:underline font-medium">
               Sign up

@@ -26,6 +26,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Card } from '@/components/ui/card'
+import api from '@/lib/api'
 
 // Types
 interface CheckinResult {
@@ -75,39 +76,34 @@ export function CheckinScanner({
   /**
    * Handle QR code scan result
    */
-  const handleScan = useCallback(async (result: any) => {
-    // Extract the text from the Scanner result
-    const qrText = result?.rawValue || result
-    if (!qrText || isProcessing) return
+  const handleScan = useCallback(async (detectedCodes: any[]) => {
+    if (!detectedCodes || detectedCodes.length === 0 || isProcessing) return
+    const qrText = detectedCodes[0]?.rawValue
+    if (!qrText) return
     
-    // Prevent duplicate scans
     if (lastScanned === qrText) return
     setLastScanned(qrText)
     
-    // Simulate API call - replace with actual API call
     try {
-      // const response = await api.post('/checkin', { qr_hash: result })
-      // onCheckinSuccess(response.data)
-      
-      // Mock success for demonstration
+      const response = await api.post('/checkin', { qr_hash: qrText, event_id: eventId })
+      const data = response.data
       onCheckinSuccess({
         success: true,
-        attendeeName: "John Doe",
-        ticketType: "VIP",
-        message: "John Doe checked in successfully"
+        attendeeName: data.attendee_name || data.attendeeName || 'Attendee',
+        ticketType: data.ticket_type || data.ticketType || 'General',
+        message: data.message || 'Checked in successfully',
       })
     } catch (error: any) {
-      onCheckinError?.(error.response?.data?.error || "Invalid or already used ticket")
+      onCheckinError?.(error.response?.data?.error || 'Invalid or already used ticket')
     }
     
-    // Reset last scanned after 2 seconds
     setTimeout(() => setLastScanned(null), 2000)
-  }, [isProcessing, lastScanned, onCheckinSuccess, onCheckinError])
+  }, [isProcessing, lastScanned, eventId, onCheckinSuccess, onCheckinError])
 
   /**
    * Handle scan error
    */
-  const handleError = useCallback((error: any) => {
+  const handleError = useCallback((error: Error) => {
     console.error('QR Scanner error:', error)
     if (error?.name === 'NotAllowedError' || error?.message?.includes('permission')) {
       setCameraPermission(false)
@@ -121,21 +117,20 @@ export function CheckinScanner({
     if (!manualTicketId) return
     
     try {
-      // const response = await api.post('/checkin', { ticket_id: manualTicketId })
-      // onCheckinSuccess(response.data)
-      
+      const response = await api.post('/checkin', { qr_hash: manualTicketId, event_id: eventId })
+      const data = response.data
       onCheckinSuccess({
         success: true,
-        attendeeName: "Jane Smith",
-        ticketType: "Regular",
-        message: "Jane Smith checked in successfully"
+        attendeeName: data.attendee_name || data.attendeeName || 'Attendee',
+        ticketType: data.ticket_type || data.ticketType || 'General',
+        message: data.message || 'Checked in successfully',
       })
       setShowManualEntry(false)
       setManualTicketId('')
     } catch (error: any) {
-      onCheckinError?.(error.response?.data?.error || "Invalid ticket ID")
+      onCheckinError?.(error.response?.data?.error || 'Invalid ticket ID')
     }
-  }, [manualTicketId, onCheckinSuccess, onCheckinError])
+  }, [manualTicketId, eventId, onCheckinSuccess, onCheckinError])
 
   /**
    * Retry camera permission
@@ -148,19 +143,19 @@ export function CheckinScanner({
     <div className="space-y-4">
       {/* Camera Permission Error */}
       {cameraPermission === false && (
-        <Card className="p-6 text-center bg-amber-50 border-amber-200">
-          <AlertCircle className="h-12 w-12 text-amber-600 mx-auto mb-3" />
-          <h3 className="font-semibold text-amber-800 mb-2">📷 Camera Access Required</h3>
-          <p className="text-sm text-amber-700 mb-4">
+        <Card className="p-6 text-center glass">
+          <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-3" />
+          <h3 className="font-semibold text-foreground mb-2">Camera Access Required</h3>
+          <p className="text-sm text-muted-foreground mb-4">
             Please allow camera access to scan QR codes. You can also use manual entry.
           </p>
           <div className="flex gap-3 justify-center">
             <Button variant="outline" onClick={() => setShowManualEntry(true)}>
-              📝 Manual Entry
+              Manual Entry
             </Button>
             <Button onClick={retryCameraPermission}>
               <Camera className="h-4 w-4 mr-2" />
-              Try Again 🔄
+              Try Again
             </Button>
           </div>
         </Card>

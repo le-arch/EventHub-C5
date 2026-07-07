@@ -138,7 +138,7 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
   // Step 1: Request Reset
   if (step === 'request') {
     return (
-      <Card className="w-full max-w-md mx-auto">
+      <Card className="glass w-full max-w-md mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl">Forgot Password?</CardTitle>
           <CardDescription>
@@ -150,7 +150,7 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
             <div>
               <Label htmlFor="reset-email">Email Address</Label>
               <div className="relative mt-1">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="reset-email"
                   type="email"
@@ -185,7 +185,7 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
 
   // Step 2: Verify OTP & Set New Password (combined)
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="glass w-full max-w-md mx-auto">
       <CardHeader>
         <div className="flex items-center gap-2 mb-2">
           <Button variant="ghost" size="sm" onClick={() => setStep('request')} className="p-0 h-auto">
@@ -211,7 +211,7 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
           <div>
             <Label htmlFor="new-password">New Password</Label>
             <div className="relative mt-1">
-              <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="new-password"
                 type="password"
@@ -231,7 +231,7 @@ export function PasswordResetForm({ onSuccess, onCancel }: PasswordResetFormProp
           <div>
             <Label htmlFor="confirm-password">Confirm Password</Label>
             <div className="relative mt-1">
-              <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="confirm-password"
                 type="password"

@@ -44,8 +44,8 @@ export function RevenueSummary({
           <Card key={i}>
             <CardContent className="pt-6">
               <div className="animate-pulse space-y-2">
-                <div className="h-4 w-24 bg-gray-200 rounded" />
-                <div className="h-8 w-32 bg-gray-200 rounded" />
+                <div className="h-4 w-24 bg-muted rounded" />
+                <div className="h-8 w-32 bg-muted rounded" />
               </div>
             </CardContent>
           </Card>
@@ -61,7 +61,7 @@ export function RevenueSummary({
         <CardContent className="pt-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Total Revenue</p>
+              <p className="text-sm text-muted-foreground mb-1">Total Revenue</p>
               <p className="text-3xl font-bold text-green-600">
                 {formatCurrency(totalRevenue)}
               </p>
@@ -91,7 +91,7 @@ export function RevenueSummary({
         <CardContent className="pt-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Tickets Sold</p>
+              <p className="text-sm text-muted-foreground mb-1">Tickets Sold</p>
               <p className="text-3xl font-bold text-blue-600">
                 {totalTickets.toLocaleString()}
               </p>
@@ -100,7 +100,7 @@ export function RevenueSummary({
               <Ticket className="h-5 w-5 text-blue-600" />
             </div>
           </div>
-          <p className="text-sm text-gray-500 mt-3">
+          <p className="text-sm text-muted-foreground mt-3">
             Total ticket sales
           </p>
         </CardContent>
@@ -111,7 +111,7 @@ export function RevenueSummary({
         <CardContent className="pt-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Average Ticket Price</p>
+              <p className="text-sm text-muted-foreground mb-1">Average Ticket Price</p>
               <p className="text-3xl font-bold text-purple-600">
                 {formatCurrency(averagePrice)}
               </p>
@@ -120,7 +120,7 @@ export function RevenueSummary({
               <Users className="h-5 w-5 text-purple-600" />
             </div>
           </div>
-          <p className="text-sm text-gray-500 mt-3">
+          <p className="text-sm text-muted-foreground mt-3">
             Based on {totalTickets} ticket{totalTickets !== 1 ? 's' : ''} sold
           </p>
         </CardContent>

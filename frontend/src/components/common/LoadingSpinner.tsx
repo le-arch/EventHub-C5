@@ -50,7 +50,7 @@ export function LoadingSpinner({
                 className
               )}
             />
-            {label && <p className="text-sm text-gray-500">{label}</p>}
+            {label && <p className="text-sm text-muted-foreground">{label}</p>}
           </div>
         )
       
@@ -67,16 +67,16 @@ export function LoadingSpinner({
         return (
           <div className="flex flex-col items-center gap-3">
             <div className={cn("bg-primary/20 rounded-full animate-pulse", spinnerSize)} />
-            {label && <p className="text-sm text-gray-500">{label}</p>}
+            {label && <p className="text-sm text-muted-foreground">{label}</p>}
           </div>
         )
       
       case 'skeleton':
         return (
           <div className="space-y-3 w-full">
-            <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4" />
-            <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2" />
-            <div className="h-4 bg-gray-200 rounded animate-pulse w-full" />
+            <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+            <div className="h-4 bg-muted rounded animate-pulse w-1/2" />
+            <div className="h-4 bg-muted rounded animate-pulse w-full" />
           </div>
         )
       

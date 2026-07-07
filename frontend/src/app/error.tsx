@@ -41,8 +41,8 @@ export default function ErrorBoundary({ error, reset }: ErrorProps) {
         </div>
 
         {/* Error Message */}
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Something Went Wrong</h1>
-        <p className="text-gray-500 mb-4">
+        <h1 className="text-3xl font-bold text-foreground mb-2">Something Went Wrong</h1>
+        <p className="text-muted-foreground mb-4">
           We apologize for the inconvenience. An unexpected error has occurred.
         </p>
 
@@ -57,7 +57,7 @@ export default function ErrorBoundary({ error, reset }: ErrorProps) {
                 {error.message}
               </p>
               {error.digest && (
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   Error ID: {error.digest}
                 </p>
               )}
@@ -82,7 +82,7 @@ export default function ErrorBoundary({ error, reset }: ErrorProps) {
         </div>
 
         {/* Support Message */}
-        <p className="text-sm text-gray-400 mt-8">
+        <p className="text-sm text-muted-foreground mt-8">
           If the problem persists, please contact our support team at{' '}
           <a href="mailto:support@eventhub.com" className="text-primary hover:underline">
             support@eventhub.com

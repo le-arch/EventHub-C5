@@ -226,7 +226,7 @@ export default function AdminUsersPage() {
     if (selectedUsers.size === 0) return
     setIsProcessing(true)
     try {
-      await api.post('/admin/users/batch-verify', { userIds: Array.from(selectedUsers) })
+      await api.post('/admin/users/batch-verify', { user_ids: Array.from(selectedUsers) })
       toast.success(`✅ Parameters verified for ${selectedUsers.size} accounts`)
       setSelectedUsers(new Set())
       fetchUsers()
@@ -243,7 +243,7 @@ export default function AdminUsersPage() {
     if (selectedUsers.size === 0) return
     setIsProcessing(true)
     try {
-      await api.post('/admin/users/batch-suspend', { userIds: Array.from(selectedUsers) })
+      await api.post('/admin/users/batch-suspend', { user_ids: Array.from(selectedUsers) })
       toast.success(`⛔ Access constraints configured successfully across ${selectedUsers.size} records`)
       setSelectedUsers(new Set())
       fetchUsers()
@@ -281,7 +281,7 @@ export default function AdminUsersPage() {
       )
     }
     return (
-      <Badge variant="secondary" className="flex items-center gap-1.5 font-bold text-slate-700 tracking-wide rounded-md px-2.5 py-0.5">
+      <Badge variant="secondary" className="flex items-center gap-1.5 font-bold text-foreground tracking-wide rounded-md px-2.5 py-0.5">
         <AlertCircle className="h-3 w-3 text-amber-500 shrink-0" />
         Pending
       </Badge>
@@ -310,7 +310,7 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 text-slate-900">
+    <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 text-foreground">
       <Breadcrumb 
         items={[
           { label: 'Admin', href: '/admin/users' },
@@ -326,7 +326,7 @@ export default function AdminUsersPage() {
           </div>
           <div>
             <h1 className="text-2xl font-black tracking-tight text-slate-950">User Management 👥</h1>
-            <p className="text-slate-500 font-medium text-sm mt-0.5">
+            <p className="text-muted-foreground font-medium text-sm mt-0.5">
               Overview operational matrices and configurations across systemic platform organizers.
             </p>
           </div>
@@ -357,16 +357,16 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      <Card className="border border-slate-200 rounded-2xl shadow-sm overflow-hidden bg-white">
+      <Card className="border border-border rounded-2xl shadow-sm overflow-hidden bg-card">
         <CardContent className="p-5">
           <div className="flex flex-col md:flex-row gap-3.5">
             <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="🔍 Track fields by specific profile names, emails, routing contact links..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-11 rounded-xl bg-slate-50 border-slate-200 text-sm font-medium placeholder:text-slate-400 focus-visible:bg-white"
+                className="pl-10 h-11 rounded-xl bg-muted/50 border-border text-sm font-medium placeholder:text-muted-foreground focus-visible:bg-card"
               />
             </div>
             <div className="flex flex-wrap sm:flex-nowrap gap-2.5">
@@ -374,17 +374,17 @@ export default function AdminUsersPage() {
                 setStatusFilter(value)
                 setPage(1)
               }}>
-                <SelectTrigger className="w-full sm:w-52 h-11 border-slate-200 bg-slate-50 rounded-xl text-sm font-semibold text-slate-700">
+                <SelectTrigger className="w-full sm:w-52 h-11 border-border bg-muted/50 rounded-xl text-sm font-semibold text-foreground">
                   <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-slate-500 shrink-0" />
+                    <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
                     <SelectValue placeholder="Filter by status" />
                   </div>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl bg-white">
-                  <SelectItem value="all" className="font-medium text-slate-800">All System Accounts</SelectItem>
-                  <SelectItem value="verified" className="font-medium text-slate-800"> Verified Profiles Only</SelectItem>
-                  <SelectItem value="pending" className="font-medium text-slate-800"> Pending Validations</SelectItem>
-                  <SelectItem value="suspended" className="font-medium text-slate-800"> Suspended Segments</SelectItem>
+                <SelectContent className="rounded-xl bg-card bg-whte">
+                  <SelectItem value="all" className="font-medium text-foreground">All System Accounts</SelectItem>
+                  <SelectItem value="verified" className="font-medium text-foreground"> Verified Profiles Only</SelectItem>
+                  <SelectItem value="pending" className="font-medium text-foreground"> Pending Validations</SelectItem>
+                  <SelectItem value="suspended" className="font-medium text-foreground"> Suspended Segments</SelectItem>
                 </SelectContent>
               </Select>
               
@@ -392,7 +392,7 @@ export default function AdminUsersPage() {
                 <Button 
                   variant="ghost" 
                   onClick={handleResetFilters} 
-                  className="h-11 rounded-xl text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 px-4 shrink-0"
+                  className="h-11 rounded-xl text-xs font-bold text-muted-foreground border border-border hover:bg-muted/50 px-4 shrink-0"
                 >
                   <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
                   Reset Configuration Options
@@ -403,16 +403,16 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      <div className="text-xs text-slate-500 font-bold tracking-wide uppercase flex items-center gap-1.5 px-1">
+      <div className="text-xs text-muted-foreground font-bold tracking-wide uppercase flex items-center gap-1.5 px-1">
         <Users className="h-4 w-4 text-purple-600" />
         Evaluation Space Includes: {users.length} Mapped Page Nodes of {stats.total} Profile Records Total
       </div>
 
-      <Card className="border border-slate-200 rounded-2xl shadow-sm overflow-hidden bg-white">
+      <Card className="border border-border rounded-2xl shadow-sm overflow-hidden bg-card">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-slate-50/70 border-b border-slate-100">
+              <TableHeader className="bg-muted/50/70 border-b border-slate-100">
                 <TableRow>
                   <TableHead className="w-12 px-4 py-3.5">
                     <div className="flex items-center h-5">
@@ -424,25 +424,25 @@ export default function AdminUsersPage() {
                       />
                     </div>
                   </TableHead>
-                  <TableHead className="font-bold text-slate-700 text-xs uppercase tracking-wider py-3.5">👤 Operator Identity Details</TableHead>
-                  <TableHead className="font-bold text-slate-700 text-xs uppercase tracking-wider py-3.5">📧 Communication Routing Channels</TableHead>
-                  <TableHead className="font-bold text-slate-700 text-xs uppercase tracking-wider py-3.5">🎟️ Associated Events</TableHead>
-                  <TableHead className="font-bold text-slate-700 text-xs uppercase tracking-wider py-3.5">📊 Verified Matrix State</TableHead>
-                  <TableHead className="font-bold text-slate-700 text-xs uppercase tracking-wider py-3.5">📅 Origin Date Index</TableHead>
+                  <TableHead className="font-bold text-foreground text-xs uppercase tracking-wider py-3.5">👤 Operator Identity Details</TableHead>
+                  <TableHead className="font-bold text-foreground text-xs uppercase tracking-wider py-3.5">📧 Communication Routing Channels</TableHead>
+                  <TableHead className="font-bold text-foreground text-xs uppercase tracking-wider py-3.5">🎟️ Associated Events</TableHead>
+                  <TableHead className="font-bold text-foreground text-xs uppercase tracking-wider py-3.5">📊 Verified Matrix State</TableHead>
+                  <TableHead className="font-bold text-foreground text-xs uppercase tracking-wider py-3.5">📅 Origin Date Index</TableHead>
                   <TableHead className="w-12 py-3.5"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-16 bg-slate-50/20">
+                    <TableCell colSpan={7} className="text-center py-16 bg-muted/50/20">
                       <div className="flex flex-col items-center justify-center max-w-sm mx-auto space-y-3">
-                        <div className="p-3 bg-slate-100 rounded-full border border-slate-200">
-                          <AlertCircle className="h-6 w-6 text-slate-400" />
+                        <div className="p-3 bg-muted/30 rounded-full border border-border">
+                          <AlertCircle className="h-6 w-6 text-muted-foreground" />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-slate-900 font-bold text-sm">No Active User Matches Found 📭</p>
-                          <p className="text-slate-500 text-xs leading-relaxed font-medium">
+                          <p className="text-foreground font-bold text-sm">No Active User Matches Found 📭</p>
+                          <p className="text-muted-foreground text-xs leading-relaxed font-medium">
                             Your criteria returned an empty index configuration.
                           </p>
                         </div>
@@ -457,8 +457,8 @@ export default function AdminUsersPage() {
                     return (
                       <TableRow 
                         key={user.id} 
-                        className={`transition-colors border-b border-slate-100 hover:bg-slate-50/50 ${
-                          isSuspendedUser ? 'bg-slate-50/70 opacity-90' : ''
+                        className={`transition-colors border-b border-slate-100 hover:bg-muted/50/50 ${
+                          isSuspendedUser ? 'bg-muted/50/70 opacity-90' : ''
                         }`}
                       >
                         <TableCell className="px-4 py-4">
@@ -475,7 +475,7 @@ export default function AdminUsersPage() {
                             <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-sm border ${
                               isAdminUser 
                                 ? 'bg-purple-100 border-purple-200 text-purple-700' 
-                                : 'bg-slate-100 border-slate-200 text-slate-600'
+                                : 'bg-muted/30 border-border text-muted-foreground'
                             }`}>
                               <Shield className="h-4 w-4 shrink-0" />
                             </div>
@@ -490,32 +490,32 @@ export default function AdminUsersPage() {
                           </div>
                         </TableCell>
                         <TableCell className="py-4">
-                          <div className="space-y-1 font-medium text-xs text-slate-600">
+                          <div className="space-y-1 font-medium text-xs text-muted-foreground">
                             <div className="flex items-center gap-1.5">
-                              <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                              <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                               <span className="truncate max-w-[180px]">{user.email}</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                              <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                              <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                               <span>{user.phone || 'N/A'}</span>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell className="py-4">
-                          <div className="flex items-baseline text-slate-900 font-black text-sm">
+                          <div className="flex items-baseline text-foreground font-black text-sm">
                             {user.eventsCount}
-                            <span className="text-slate-400 font-medium text-xs ml-1">listings</span>
+                            <span className="text-muted-foreground font-medium text-xs ml-1">listings</span>
                           </div>
                         </TableCell>
                         <TableCell className="py-4">{getStatusBadge(user)}</TableCell>
-                        <TableCell className="py-4 text-xs font-semibold text-slate-500">
+                        <TableCell className="py-4 text-xs font-semibold text-muted-foreground">
                           {formatDate(user.createdAt)}
                         </TableCell>
                         <TableCell className="py-4 text-right pr-4">
                           {!isAdminUser ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-500">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-muted/30 text-muted-foreground">
                                   <MoreVertical className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -523,7 +523,7 @@ export default function AdminUsersPage() {
                                 {!user.isEmailVerified && (
                                   <DropdownMenuItem 
                                     onClick={() => setUserToVerify(user)}
-                                    className="rounded-lg text-xs font-bold text-slate-700 focus:bg-slate-50 flex items-center gap-2 cursor-pointer"
+                                    className="rounded-lg text-xs font-bold text-foreground focus:bg-muted/50 flex items-center gap-2 cursor-pointer"
                                   >
                                     <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
                                     Verify Profile Credentials
@@ -540,7 +540,7 @@ export default function AdminUsersPage() {
                                 ) : (
                                   <DropdownMenuItem
                                     onClick={() => handleRestoreUser(user.id)}
-                                    className="rounded-lg text-xs font-bold text-slate-700 focus:bg-slate-50 flex items-center gap-2 cursor-pointer"
+                                    className="rounded-lg text-xs font-bold text-foreground focus:bg-muted/50 flex items-center gap-2 cursor-pointer"
                                   >
                                     <CheckCircle className="h-4 w-4 text-purple-600 shrink-0" />
                                     Restore Authorization Permissions
@@ -563,7 +563,7 @@ export default function AdminUsersPage() {
       </Card>
 
       {totalPages > 1 && (
-        <div className="border border-slate-200 rounded-2xl bg-white p-3 shadow-sm">
+        <div className="border border-border rounded-2xl bg-card p-3 shadow-sm">
           <Pagination
             currentPage={page}
             totalPages={totalPages}
@@ -579,36 +579,36 @@ export default function AdminUsersPage() {
 
       {/* Analytics System Cards using Global state updates */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
-        <Card className="border border-slate-200 rounded-2xl shadow-sm bg-white overflow-hidden">
+        <Card className="border border-border rounded-2xl shadow-sm bg-card overflow-hidden">
           <CardContent className="p-5 flex items-center gap-4">
             <div className="p-3 bg-purple-50 rounded-xl border border-purple-100 text-purple-700">
               <Users className="h-5 w-5" />
             </div>
             <div>
               <p className="text-2xl font-black tracking-tight text-slate-950">{stats.total}</p>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Active Pool Nodes</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Total Active Pool Nodes</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border border-slate-200 rounded-2xl shadow-sm bg-white overflow-hidden">
+        <Card className="border border-border rounded-2xl shadow-sm bg-card overflow-hidden">
           <CardContent className="p-5 flex items-center gap-4">
             <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-700">
               <UserCheck className="h-5 w-5" />
             </div>
             <div>
               <p className="text-2xl font-black tracking-tight text-emerald-700">{stats.verified}</p>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Verified Segment Bounds</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Verified Segment Bounds</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border border-slate-200 rounded-2xl shadow-sm bg-white overflow-hidden">
+        <Card className="border border-border rounded-2xl shadow-sm bg-card overflow-hidden">
           <CardContent className="p-5 flex items-center gap-4">
             <div className="p-3 bg-red-50 rounded-xl border border-red-100 text-red-700">
               <UserX className="h-5 w-5" />
             </div>
             <div>
               <p className="text-2xl font-black tracking-tight text-red-600">{stats.suspended}</p>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Suspended Isolation Groups</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Suspended Isolation Groups</p>
             </div>
           </CardContent>
         </Card>

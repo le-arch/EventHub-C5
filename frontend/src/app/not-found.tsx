@@ -38,8 +38,8 @@ export default function NotFoundPage() {
         </div>
 
         {/* Error Message */}
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Page Not Found</h1>
-        <p className="text-gray-500 mb-8">
+        <h1 className="text-4xl font-bold text-foreground mb-2">Page Not Found</h1>
+        <p className="text-muted-foreground mb-8">
           Oops! The page you're looking for doesn't exist or has been moved.
         </p>
 
@@ -70,26 +70,26 @@ export default function NotFoundPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <Link href="/" className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition">
+              <Link href="/" className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-lg transition">
                 <div className="flex items-center gap-3">
-                  <Home className="h-4 w-4 text-gray-400" />
+                  <Home className="h-4 w-4 text-muted-foreground" />
                   <span>Homepage</span>
                 </div>
-                <span className="text-gray-400 text-sm">→</span>
+                <span className="text-muted-foreground text-sm">→</span>
               </Link>
-              <Link href="/login" className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition">
+              <Link href="/login" className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-lg transition">
                 <div className="flex items-center gap-3">
-                  <ArrowLeft className="h-4 w-4 text-gray-400" />
+                  <ArrowLeft className="h-4 w-4 text-muted-foreground" />
                   <span>Login to your account</span>
                 </div>
-                <span className="text-gray-400 text-sm">→</span>
+                <span className="text-muted-foreground text-sm">→</span>
               </Link>
-              <Link href="/register" className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition">
+              <Link href="/register" className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-lg transition">
                 <div className="flex items-center gap-3">
-                  <Calendar className="h-4 w-4 text-gray-400" />
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span>Create a new account</span>
                 </div>
-                <span className="text-gray-400 text-sm">→</span>
+                <span className="text-muted-foreground text-sm">→</span>
               </Link>
             </div>
           </CardContent>
