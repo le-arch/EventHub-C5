@@ -34,6 +34,7 @@ type Querier interface {
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByIDForAdmin(ctx context.Context, id uuid.UUID) (GetUserByIDForAdminRow, error)
+	GetUserByPhone(ctx context.Context, phone string) (User, error)
 	InsertWebhookLog(ctx context.Context, arg InsertWebhookLogParams) (WebhookLog, error)
 	ListAllTransactions(ctx context.Context, arg ListAllTransactionsParams) ([]ListAllTransactionsRow, error)
 	ListAttendeesByEvent(ctx context.Context, eventID uuid.UUID) ([]ListAttendeesByEventRow, error)

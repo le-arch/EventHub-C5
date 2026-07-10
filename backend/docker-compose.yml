@@ -20,7 +20,7 @@ services:
       timeout: 5s
       retries: 10
 
-  api:
+  api: 
     container_name: go-api
     build:
       context: .

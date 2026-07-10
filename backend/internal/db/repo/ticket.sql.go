@@ -138,7 +138,7 @@ type UpdateTicketTypeParams struct {
 	ID                uuid.UUID `json:"id"`
 	EventID           uuid.UUID `json:"event_id"`
 	Name              *string   `json:"name"`
-	Description       *string   `json:"description"`
+	Description       string    `json:"description"`
 	Price             *int32    `json:"price"`
 	QuantityAvailable *int32    `json:"quantity_available"`
 	IsActive          *bool     `json:"is_active"`

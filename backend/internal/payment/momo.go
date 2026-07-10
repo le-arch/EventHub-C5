@@ -17,6 +17,10 @@ import (
 	"github.com/le-arch/EventHub-C5/internal/utils"
 )
 
+func (c *Client) IsSandbox() bool {
+	return c.cfg.APIURL == "" || strings.Contains(strings.ToLower(c.cfg.TargetEnvironment), "sandbox")
+}
+
 type Config struct {
 	APIURL            string
 	SubscriptionKey   string

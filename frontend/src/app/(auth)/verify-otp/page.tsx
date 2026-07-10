@@ -100,9 +100,24 @@ export default function VerifyOTPPage() {
   /**
    * Handle complete OTP entry
    */
-  const handleOTPComplete = (otpString: string) => {
-    // Auto-submit when all digits are entered
-    handleVerify()
+  const handleOTPComplete = async (otpString: string) => {
+    // Auto-submit when all digits are entered using the passed string directly
+    // (state may not be updated yet due to React batching)
+    if (otpString.length !== 6) {
+      toast.error('❌ Please enter the complete 6-digit code')
+      return
+    }
+
+    try {
+      await verifyOTP(email, otpString)
+      localStorage.removeItem('verify_email')
+      toast.success('✅ Email verified! You can now log in.')
+      router.push('/login')
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || '❌ Invalid verification code. Please try again.'
+      toast.error(errorMessage)
+      setOtp(['', '', '', '', '', ''])
+    }
   }
 
   return (

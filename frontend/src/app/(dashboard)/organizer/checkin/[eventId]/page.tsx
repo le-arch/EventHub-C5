@@ -102,6 +102,9 @@ export default function CheckinPage() {
 
   // Keep a ref of the current flash timeout ID to overwrite overlapping frames
   const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  // Prevent re-scanning the same QR code immediately
+  const lastScannedRef = useRef<{ value: string; time: number } | null>(null)
+  const SCAN_COOLDOWN_MS = 5000
 
   // QR Scanner hook
   const {
@@ -115,6 +118,11 @@ export default function CheckinPage() {
   } = useQRScanner({
     onScanSuccess: async (result) => {
       if (isProcessing) return
+
+      // Debounce: ignore if same QR was scanned within cooldown
+      const now = Date.now()
+      if (lastScannedRef.current && lastScannedRef.current.value === result && (now - lastScannedRef.current.time) < SCAN_COOLDOWN_MS) return
+      lastScannedRef.current = { value: result, time: now }
       
       setIsProcessing(true)
       const executionId = crypto.randomUUID()
@@ -156,7 +164,7 @@ export default function CheckinPage() {
         if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current)
         feedbackTimeoutRef.current = setTimeout(() => {
           setLastResult(current => current?.id === executionId ? null : current)
-        }, 3000)
+        }, 4000)
 
       } catch (error: any) {
         const errorMessage = error.response?.data?.error || '❌ Invalid or already used ticket'
@@ -173,7 +181,7 @@ export default function CheckinPage() {
         if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current)
         feedbackTimeoutRef.current = setTimeout(() => {
           setLastResult(current => current?.id === executionId ? null : current)
-        }, 3000)
+        }, 4000)
       } finally {
         setIsProcessing(false)
       }

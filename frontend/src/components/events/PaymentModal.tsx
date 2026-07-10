@@ -58,6 +58,9 @@ export function PaymentModal({
   const [phoneNumber, setPhoneNumber] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<'mtn' | 'orange'>('mtn')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const TEST_PHONE = '237612345678'
 
   const totalAmount = ticketType.price * quantity
 
@@ -80,13 +83,14 @@ export function PaymentModal({
     setPhoneNumber(formatted)
   }
 
-  const handlePayment = async () => {
-    const cleanPhone = phoneNumber.replace(/\D/g, '')
+  const doCreateOrder = async (phone: string, onDone: (orderId: string) => void) => {
+    const cleanPhone = phone.replace(/\D/g, '')
     if (!validatePhoneNumber(cleanPhone)) {
-      onError?.('Please enter a valid Cameroon phone number (e.g., 237 612 345 678)')
+      setErrorMessage('Please enter a valid Cameroon phone number (e.g., 237 612 345 678)')
       return
     }
 
+    setErrorMessage(null)
     setIsProcessing(true)
 
     try {
@@ -98,20 +102,22 @@ export function PaymentModal({
         quantity: quantity,
       })
 
-      onSuccess(response.data.id)
-      setStep('form')
       setPhoneNumber('')
+      onDone(response.data.id)
       onClose()
     } catch (error: any) {
-      onError?.(error.response?.data?.error || 'Payment failed. Please try again.')
+      setErrorMessage(error.response?.data?.error || 'Payment failed. Please try again.')
     } finally {
       setIsProcessing(false)
     }
   }
 
+  const handlePayment = () => doCreateOrder(phoneNumber, onSuccess)
+
   const handleClose = () => {
     if (!isProcessing) {
       setPhoneNumber('')
+      setErrorMessage(null)
       onClose()
     }
   }
@@ -216,35 +222,23 @@ export function PaymentModal({
                   Pay {formatCurrency(totalAmount)}
                 </Button>
               </DialogFooter>
+              {errorMessage && (
+                <p className="text-sm text-red-500 text-center font-medium">{errorMessage}</p>
+              )}
               <div className="flex gap-2 justify-center border-t pt-3">
                 <Button
                   variant="ghost"
                   size="sm"
                   className="text-green-600 hover:text-green-700 hover:bg-green-50 text-xs"
                   disabled={isProcessing}
-                  onClick={async () => {
-                    const cleanPhone = phoneNumber.replace(/\D/g, '')
-                    if (!validatePhoneNumber(cleanPhone)) {
-                      onError?.('Please enter a valid phone number')
+                  onClick={() => {
+                    const phone = phoneNumber.replace(/\D/g, '')
+                    if (!validatePhoneNumber(phone)) {
+                      setPhoneNumber(TEST_PHONE)
+                      setErrorMessage('Test phone 237612345678 auto-filled — click again')
                       return
                     }
-                    setIsProcessing(true)
-                    try {
-                      const response = await api.post('/orders', {
-                        event_id: eventId,
-                        ticket_type_id: ticketType.id,
-                        attendee_name: attendeeName,
-                        attendee_phone: cleanPhone,
-                        quantity: quantity,
-                      })
-                      onSuccess(response.data.id)
-                      setPhoneNumber('')
-                      onClose()
-                    } catch (error: any) {
-                      onError?.(error.response?.data?.error || 'Order creation failed')
-                    } finally {
-                      setIsProcessing(false)
-                    }
+                    doCreateOrder(phone, onSuccess)
                   }}
                 >
                   Simulate Success
@@ -254,29 +248,16 @@ export function PaymentModal({
                   size="sm"
                   className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
                   disabled={isProcessing}
-                  onClick={async () => {
-                    const cleanPhone = phoneNumber.replace(/\D/g, '')
-                    if (!validatePhoneNumber(cleanPhone)) {
-                      onError?.('Please enter a valid phone number')
+                  onClick={() => {
+                    const phone = phoneNumber.replace(/\D/g, '')
+                    if (!validatePhoneNumber(phone)) {
+                      setPhoneNumber(TEST_PHONE)
+                      setErrorMessage('Test phone 237612345678 auto-filled — click again')
                       return
                     }
-                    setIsProcessing(true)
-                    try {
-                      const response = await api.post('/orders', {
-                        event_id: eventId,
-                        ticket_type_id: ticketType.id,
-                        attendee_name: attendeeName,
-                        attendee_phone: cleanPhone,
-                        quantity: quantity,
-                      })
-                      setPhoneNumber('')
-                      onClose()
-                      router.push(`/payment/cancel?error=Payment+declined+by+provider&order_id=${response.data.id}`)
-                    } catch (error: any) {
-                      onError?.(error.response?.data?.error || 'Order creation failed')
-                    } finally {
-                      setIsProcessing(false)
-                    }
+                    doCreateOrder(phone, (orderId) => {
+                      router.push(`/payment/cancel?error=Payment+declined+by+provider&order_id=${orderId}`)
+                    })
                   }}
                 >
                   Simulate Failure
