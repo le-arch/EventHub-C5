@@ -99,7 +99,6 @@ export function PaymentModal({
       })
 
       onSuccess(response.data.id)
-      setStep('form')
       setPhoneNumber('')
       onClose()
     } catch (error: any) {

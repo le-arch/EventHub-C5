@@ -21,7 +21,9 @@ interface User {
   fullName: string
   email: string
   phone: string
+  role: 'organizer' | 'admin'
   isEmailVerified: boolean
+  isActive: boolean
   createdAt: string
 }
 
@@ -74,16 +76,10 @@ export default function SettingsPage() {
   const handleUpdateProfile = async (data: ProfileFormValues) => {
     setIsSaving(true)
     try {
-      const updatedUser = { ...authUser, ...data } as User
+      const res = await api.put('/auth/profile', data)
+      const updatedUser = res.data.user as User
       useAuthStore.getState().setUser(updatedUser)
       localStorage.setItem(STORAGE_KEYS.NOTIFICATION_PREFERENCES, JSON.stringify({ emailNotifications }))
-
-      try {
-        await api.put('/auth/profile', data)
-      } catch {
-        // backend endpoint not available; saved locally
-      }
-
       toast.success('Profile updated successfully')
     } catch {
       toast.error('Failed to update profile')

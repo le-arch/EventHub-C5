@@ -363,7 +363,7 @@ export default function AdminUsersPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="🔍 Track fields by specific profile names, emails, routing contact links..."
+                placeholder=" Track fields by specific profile names, emails, routing contact links..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 h-11 rounded-xl bg-muted/50 border-border text-sm font-medium placeholder:text-muted-foreground focus-visible:bg-card"

@@ -198,6 +198,7 @@ type Order struct {
 	QrCodeHash             string           `json:"qr_code_hash"`
 	QrCodeImageUrl         string           `json:"qr_code_image_url"`
 	QrCodePlaintext        string           `json:"qr_code_plaintext"`
+	ManualCode             string           `json:"manual_code"`
 	IsUsed                 bool             `json:"is_used"`
 	UsedAt                 pgtype.Timestamp `json:"used_at"`
 	CheckedInBy            *uuid.UUID       `json:"checked_in_by"`

@@ -51,7 +51,7 @@ export default function SystemSettingsTab({ settings, onChange }: SystemSettings
               <AlertCircle className="h-5 w-5 text-amber-600" />
               <span className="font-medium">Email Service</span>
             </div>
-            <p className="text-sm text-amber-700 mt-1"> Not Configured</p>
+            <p className="text-sm text-green-700 mt-1">Configured</p>
           </div>
         </div>
 

@@ -60,6 +60,7 @@ type EventResponse struct{
 	ID				uuid.UUID 	`json:"id"`
 	OrganizerID		uuid.UUID	`json:"organizerId,omitempty"`
 	OrganizerName 	string		`json:"organizerName,omitempty"`
+	OrganizerEmail string		`json:"organizerEmail,omitempty"`
 
 	Title          string           `json:"title"`
 	Slug           string           `json:"slug"`
@@ -138,6 +139,7 @@ type OrderResponse struct {
 	TransactionID   *string   `json:"transactionId,omitempty"`
 	QRCodeHash      string    `json:"qrCodeHash"`
 	QRCodeImageURL  string    `json:"qrCodeImageUrl"`
+	ManualCode      string    `json:"manualCode"`
 	IsUsed          bool      `json:"isUsed"`
 	CreatedAt       string    `json:"createdAt"`
 }
@@ -185,6 +187,7 @@ type TicketDetailsResponse struct {
 	EventVenue    string    `json:"eventVenue"`
 	EventCity     string    `json:"eventCity"`
 	QrCodeData    string    `json:"qrCodeData"`
+	ManualCode    string    `json:"manualCode"`
 	CreatedAt     string    `json:"createdAt"`
 }
 

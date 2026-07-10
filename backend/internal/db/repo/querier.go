@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	CountAdminLogs(ctx context.Context, arg CountAdminLogsParams) (int64, error)
 	CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
 	CreateTicketType(ctx context.Context, arg CreateTicketTypeParams) (TicketType, error)
@@ -21,11 +22,14 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	GetAllUsers(ctx context.Context, role UserRole) ([]User, error)
 	GetEventAnalytics(ctx context.Context, eventID uuid.UUID) (GetEventAnalyticsRow, error)
+	GetDailySales(ctx context.Context, eventID uuid.UUID) ([]GetDailySalesRow, error)
+	GetTicketTypeBreakdown(ctx context.Context, eventID uuid.UUID) ([]GetTicketTypeBreakdownRow, error)
 	GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
 	GetEventByIDPublic(ctx context.Context, id uuid.UUID) (Event, error)
 	GetEventBySlugPublic(ctx context.Context, slug string) (GetEventBySlugPublicRow, error)
 	GetEventsBySlug(ctx context.Context, slug string) (Event, error)
 	GetOrderByID(ctx context.Context, id uuid.UUID) (Order, error)
+	GetOrderByManualCode(ctx context.Context, manualCode string) (Order, error)
 	GetOrderByQRHash(ctx context.Context, qrCodeHash string) (Order, error)
 	GetOrderByTransactionID(ctx context.Context, transactionID *string) (Order, error)
 	GetPlatformAnalytics(ctx context.Context) (GetPlatformAnalyticsRow, error)
@@ -35,6 +39,7 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByIDForAdmin(ctx context.Context, id uuid.UUID) (GetUserByIDForAdminRow, error)
 	InsertWebhookLog(ctx context.Context, arg InsertWebhookLogParams) (WebhookLog, error)
+	ListAdminLogs(ctx context.Context, arg ListAdminLogsParams) ([]ListAdminLogsRow, error)
 	ListAllTransactions(ctx context.Context, arg ListAllTransactionsParams) ([]ListAllTransactionsRow, error)
 	ListAttendeesByEvent(ctx context.Context, eventID uuid.UUID) ([]ListAttendeesByEventRow, error)
 	ListCheckinHistoryByEvent(ctx context.Context, arg ListCheckinHistoryByEventParams) ([]ListCheckinHistoryByEventRow, error)
@@ -42,8 +47,8 @@ type Querier interface {
 	ListEventsByCity(ctx context.Context, city string) ([]Event, error)
 	ListEventsByStatus(ctx context.Context, status EventStatus) ([]Event, error)
 	ListOrderByEvent(ctx context.Context, eventID uuid.UUID) ([]Order, error)
-	ListOrganizerEvent(ctx context.Context, arg ListOrganizerEventParams) (Event, error)
-	ListOrganizerEvents(ctx context.Context, organizerID uuid.UUID) ([]Event, error)
+	ListOrganizerEvent(ctx context.Context, arg ListOrganizerEventParams) (ListOrganizerEventsRow, error)
+	ListOrganizerEvents(ctx context.Context, organizerID uuid.UUID) ([]ListOrganizerEventsRow, error)
 	MarkOrderUsed(ctx context.Context, id uuid.UUID) error
 	PartialEventUpdate(ctx context.Context, arg PartialEventUpdateParams) (Event, error)
 	UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event, error)
@@ -55,6 +60,7 @@ type Querier interface {
 	UpdateTicketType(ctx context.Context, arg UpdateTicketTypeParams) (TicketType, error)
 	UpdateUserActiveStatus(ctx context.Context, arg UpdateUserActiveStatusParams) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
+	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (UpdateUserProfileRow, error)
 	UpdateUserVerification(ctx context.Context, arg UpdateUserVerificationParams) error
 }
 

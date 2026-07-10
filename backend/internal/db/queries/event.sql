@@ -14,19 +14,53 @@ WHERE slug = $1
 LIMIT 1;
 
 -- name: ListOrganizerEvents :many
-SELECT * FROM events 
-WHERE organizer_id = $1
-ORDER BY start_date DESC, start_time DESC;
+SELECT e.*, u.full_name as organizer_name, u.email as organizer_email,
+       COALESCE(t.tickets_sold, 0)::int as tickets_sold,
+       COALESCE(t.total_revenue, 0)::int as total_revenue
+FROM events e
+INNER JOIN users u ON e.organizer_id = u.id
+LEFT JOIN (
+    SELECT o.event_id,
+           SUM(o.quantity) AS tickets_sold,
+           SUM(o.total_amount) AS total_revenue
+    FROM orders o
+    WHERE o.payment_status = 'paid'
+    GROUP BY o.event_id
+) t ON t.event_id = e.id
+WHERE e.organizer_id = $1
+ORDER BY e.start_date DESC, e.start_time DESC;
 
 
 -- name: ListOrganizerEvent :one
-SELECT * FROM events 
-WHERE id = $1 AND organizer_id = $2;
-
--- name: ListEvents :many
-SELECT e.*, u.full_name as organizer_name
+SELECT e.*, u.full_name as organizer_name, u.email as organizer_email,
+       COALESCE(t.tickets_sold, 0)::int as tickets_sold,
+       COALESCE(t.total_revenue, 0)::int as total_revenue
 FROM events e
 INNER JOIN users u ON e.organizer_id = u.id
+LEFT JOIN (
+    SELECT o.event_id,
+           SUM(o.quantity) AS tickets_sold,
+           SUM(o.total_amount) AS total_revenue
+    FROM orders o
+    WHERE o.payment_status = 'paid'
+    GROUP BY o.event_id
+) t ON t.event_id = e.id
+WHERE e.id = $1 AND e.organizer_id = $2;
+
+-- name: ListEvents :many
+SELECT e.*, u.full_name as organizer_name, u.email as organizer_email,
+       COALESCE(t.tickets_sold, 0)::int as tickets_sold,
+       COALESCE(t.total_revenue, 0)::int as total_revenue
+FROM events e
+INNER JOIN users u ON e.organizer_id = u.id
+LEFT JOIN (
+    SELECT o.event_id,
+           SUM(o.quantity) AS tickets_sold,
+           SUM(o.total_amount) AS total_revenue
+    FROM orders o
+    WHERE o.payment_status = 'paid'
+    GROUP BY o.event_id
+) t ON t.event_id = e.id
 ORDER BY u.full_name, e.start_date;
 
 

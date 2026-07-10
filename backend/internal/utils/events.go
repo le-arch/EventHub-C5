@@ -1,6 +1,9 @@
 package utils
 
 import (
+    "strconv"
+    "strings"
+
     "github.com/jackc/pgx/v5/pgtype"
     "github.com/le-arch/EventHub-C5/internal/models"
 )
@@ -36,6 +39,19 @@ func ToDBRange(cr *models.CapacityRangeJSON) *pgtype.Range[pgtype.Int4] {
 }
 
 // FromDBRange converts *pgtype.Range[pgtype.Int4] to JSON
+// ParsePgTime converts a "HH:MM" string to pgtype.Time.
+func ParsePgTime(s string) pgtype.Time {
+	var t pgtype.Time
+	parts := strings.Split(s, ":")
+	if len(parts) == 2 {
+		h, _ := strconv.Atoi(parts[0])
+		m, _ := strconv.Atoi(parts[1])
+		t.Microseconds = int64((h*3600 + m*60) * 1e6)
+		t.Valid = true
+	}
+	return t
+}
+
 func FromDBRange(r *pgtype.Range[pgtype.Int4]) *models.CapacityRangeJSON {
     if r == nil || !r.Valid || !r.Lower.Valid || !r.Upper.Valid {
         return nil

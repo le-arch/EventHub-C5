@@ -19,8 +19,6 @@ import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -77,15 +75,19 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'sales' | 'tickets' | 'checkins'>('sales')
 
+  const eventId = params.eventId as string
+
   useEffect(() => {
-    fetchAnalytics()
-  }, [params.eventId])
+    if (eventId) {
+      fetchAnalytics()
+    }
+  }, [eventId])
 
   const fetchAnalytics = async () => {
     try {
       const [eventRes, analyticsRes] = await Promise.all([
-        api.get(`/events/${params.eventId}`),
-        api.get(`/events/${params.eventId}/analytics`),
+        api.get(`/events/${eventId}`),
+        api.get(`/events/${eventId}/analytics`),
       ])
       
       setEvent(eventRes.data)
@@ -99,7 +101,7 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div key={params.eventId} className="space-y-6">
+      <div className="space-y-6">
         <Skeleton className="h-6 w-64" />
         <Skeleton className="h-8 w-48" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -115,15 +117,8 @@ export default function AnalyticsPage() {
 
   if (!event || !analytics) return null
 
-  // Get accent based on active tab
-  const tabAccents = {
-    sales: 'border-blue-600 text-blue-600 bg-blue-50/50',
-    tickets: 'border-emerald-600 text-emerald-600 bg-emerald-50/50',
-    checkins: 'border-purple-600 text-purple-600 bg-purple-50/50',
-  }
-
   return (
-    <div key={params.eventId} className="space-y-6">
+    <div className="space-y-6">
       {/* Breadcrumb */}
       <Breadcrumb 
         items={[
@@ -138,15 +133,14 @@ export default function AnalyticsPage() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <Button
+         {/* <Button
             variant="ghost"
             size="sm"
             onClick={() => router.push('/organizer/events')}
             className="-ml-2"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Events
-          </Button>
+          </Button>*/}
         </div>
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg">
@@ -165,7 +159,7 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Summary Card */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-100">
           <CardContent className="pt-6">
@@ -272,13 +266,13 @@ export default function AnalyticsPage() {
                 }
               `}
             >
-              <CheckCircle className="h-4 w-4" />
+              <CheckCircle className="h-6 w-6" />
               Check-ins
             </button>
           </div>
         </div>
 
-        {/* Tab Content - Directly under the triggers */}
+        {/* Tab Content */}
         <div className="space-y-6">
           {activeTab === 'sales' && (
             <SalesAnalyticsTab dailySales={analytics.dailySales} />
@@ -287,7 +281,10 @@ export default function AnalyticsPage() {
             <TicketAnalyticsTab ticketBreakdown={analytics.ticketBreakdown} />
           )}
           {activeTab === 'checkins' && (
-            <CheckinAnalyticsTab recentCheckins={analytics.recentCheckins} />
+            <CheckinAnalyticsTab
+              recentCheckins={analytics.recentCheckins}
+              ticketBreakdown={analytics.ticketBreakdown}
+            />
           )}
         </div>
       </div>

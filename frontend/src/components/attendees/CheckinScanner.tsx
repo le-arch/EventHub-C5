@@ -12,7 +12,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Scanner } from '@yudiel/react-qr-scanner'
+import { Scanner, type IScannerError } from '@yudiel/react-qr-scanner'
 import { Camera, AlertCircle, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -103,9 +103,9 @@ export function CheckinScanner({
   /**
    * Handle scan error
    */
-  const handleError = useCallback((error: Error) => {
+  const handleError = useCallback((error: IScannerError) => {
     console.error('QR Scanner error:', error)
-    if (error?.name === 'NotAllowedError' || error?.message?.includes('permission')) {
+    if (error?.kind === 'permission-denied' || error?.message?.includes('permission')) {
       setCameraPermission(false)
     }
   }, [])

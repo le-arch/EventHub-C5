@@ -74,10 +74,10 @@ interface Event {
 }
 
 interface Summary {
-  totalAttendees: number
+  totalTickets: number
   totalRevenue: number
-  checkedInCount: number
-  checkInPercentage: number
+  checkinCount: number
+  checkinPercentage: number
   ticketBreakdown: {
     name: string
     sold: number
@@ -179,8 +179,8 @@ export default function AttendeeListPage() {
       if (summary) {
         setSummary({
           ...summary,
-          checkedInCount: summary.checkedInCount + 1,
-          checkInPercentage: parseFloat((((summary.checkedInCount + 1) / summary.totalAttendees) * 100).toFixed(1)),
+          checkinCount: summary.checkinCount + 1,
+          checkinPercentage: parseFloat((((summary.checkinCount + 1) / summary.totalTickets) * 100).toFixed(1)),
         })
       }
       
@@ -296,15 +296,14 @@ export default function AttendeeListPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Button
+            {/*<Button
               variant="ghost"
               size="sm"
               onClick={() => router.push('/organizer/events')}
               className="-ml-2"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Events
-            </Button>
+            </Button>*/}
           </div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Users className="h-6 w-6 text-blue-600" />
@@ -335,7 +334,7 @@ export default function AttendeeListPage() {
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Attendees</p>
-                  <p className="text-2xl font-bold">{summary.totalAttendees}</p>
+                  <p className="text-2xl font-bold">{summary.totalTickets}</p>
                 </div>
                 <Users className="h-5 w-5 text-muted-foreground" />
               </div>
@@ -362,7 +361,7 @@ export default function AttendeeListPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Checked In </p>
                   <p className="text-2xl font-bold">
-                    {summary.checkedInCount} / {summary.totalAttendees}
+                    {summary.checkinCount} / {summary.totalTickets}
                   </p>
                 </div>
                 <CheckCircle className="h-5 w-5 text-green-600" />
@@ -375,12 +374,12 @@ export default function AttendeeListPage() {
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm text-muted-foreground">Check-in Rate </p>
-                  <p className="text-2xl font-bold">{summary.checkInPercentage}%</p>
+                  <p className="text-2xl font-bold">{summary.checkinPercentage}%</p>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2 mt-2">
                   <div
                     className="bg-green-600 h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${summary.checkInPercentage}%` }}
+                    style={{ width: `${summary.checkinPercentage}%` }}
                   />
                 </div>
               </div>

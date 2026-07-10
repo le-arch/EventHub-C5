@@ -2,10 +2,10 @@
 INSERT INTO orders (
     event_id, ticket_type_id, attendee_name, attendee_phone, attendee_email,
     quantity, unit_price, total_amount, payment_status, transaction_id,
-    qr_code_hash, qr_code_plaintext, qr_code_image_url,
+    manual_code, qr_code_hash, qr_code_plaintext, qr_code_image_url,
     device_info, ip_address, platform_fee
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
 )
 RETURNING *;
 
@@ -57,6 +57,10 @@ WHERE id = $1;
 SELECT * FROM orders
 WHERE qr_code_hash = $1;
 
+-- name: GetOrderByManualCode :one
+SELECT * FROM orders
+WHERE manual_code = $1;
+
 
 -- name: MarkOrderUsed :exec
 UPDATE orders 
@@ -64,10 +68,25 @@ SET is_used = TRUE, used_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND is_used = FALSE;
 
 -- name: ListAttendeesByEvent :many
-SELECT id, attendee_name, attendee_phone, attendee_email, is_used, used_at, created_at
-FROM orders
-WHERE event_id = $1 AND payment_status = 'paid'
-ORDER BY created_at DESC;
+SELECT o.id, o.attendee_name, o.attendee_phone, o.attendee_email, o.quantity, o.unit_price, o.total_amount, o.is_used, o.used_at, o.created_at, tt.name AS ticket_type_name
+FROM orders o
+JOIN ticket_types tt ON o.ticket_type_id = tt.id
+WHERE o.event_id = $1 AND o.payment_status = 'paid'
+ORDER BY o.created_at DESC;
+
+-- name: GetDailySales :many
+SELECT DATE(o.created_at) AS sale_date, COUNT(*)::int AS tickets, SUM(o.total_amount)::int AS revenue
+FROM orders o
+WHERE o.event_id = $1 AND o.payment_status = 'paid'
+GROUP BY DATE(o.created_at)
+ORDER BY sale_date;
+
+-- name: GetTicketTypeBreakdown :many
+SELECT tt.name, COUNT(*)::int AS sold, SUM(o.total_amount)::int AS revenue
+FROM orders o
+JOIN ticket_types tt ON o.ticket_type_id = tt.id
+WHERE o.event_id = $1 AND o.payment_status = 'paid'
+GROUP BY tt.name;
 
 -- name: GetEventAnalytics :one
 SELECT

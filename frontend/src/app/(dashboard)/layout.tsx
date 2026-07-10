@@ -33,14 +33,9 @@ import {
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 import { useAuthStore } from '@/store/authStore'
+import { useEventStore } from '@/store/eventStore'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { toast } from 'sonner'
-
-const organizerNavItems = [
-  { href: '/organizer/events', label: 'Events', icon: Calendar },
-  { href: '/organizer/attendees', label: 'Attendees', icon: Users },
-  { href: '/organizer/analytics', label: 'Analytics', icon: TrendingUp },
-]
 
 const adminNavItems = [
   { href: '/admin/users', label: 'Users', icon: Users },
@@ -68,8 +63,17 @@ export default function DashboardLayout({
   const pathname = usePathname()
   const router = useRouter()
   const { user, logout, isLoading } = useAuthStore()
+  const currentEvent = useEventStore((s) => s.currentEvent)
 
   const isAdmin = user?.role === 'admin'
+  const eventId = currentEvent?.id
+
+  const organizerNavItems = [
+    { href: '/organizer/events', label: 'Events', icon: Calendar },
+    { href: eventId ? `/organizer/attendees/${eventId}` : '/organizer/events', label: 'Attendees', icon: Users },
+    { href: eventId ? `/organizer/analytics/${eventId}` : '/organizer/events', label: 'Analytics', icon: TrendingUp },
+  ]
+
   const navItems = isAdmin ? adminNavItems : organizerNavItems
 
   useEffect(() => {
@@ -125,7 +129,7 @@ export default function DashboardLayout({
                     const Icon = item.icon
                     return (
                       <Link
-                        key={item.href}
+                        key={item.label}
                         href={item.href}
                         className={`
                           flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
@@ -163,7 +167,7 @@ export default function DashboardLayout({
                         <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuContent align="end" className="bg-white w-56">
                       <DropdownMenuLabel className="text-xs font-semibold tracking-wider text-muted-foreground px-2.5 py-2 uppercase flex items-center gap-2 bg-white">
                         <User className="h-3.5 w-3.5 text-primary" />
                         My Account
@@ -232,7 +236,7 @@ export default function DashboardLayout({
                   const Icon = item.icon
                   return (
                     <Link
-                      key={item.href}
+                      key={item.label}
                       href={item.href}
                       className={`
                         flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all

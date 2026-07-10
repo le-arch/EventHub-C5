@@ -207,6 +207,52 @@ func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPassword
 	return err
 }
 
+const updateUserProfile = `-- name: UpdateUserProfile :one
+UPDATE users
+SET full_name = $2, email = $3, phone = $4
+WHERE id = $1
+RETURNING id, email, full_name, phone, role, is_email_verified, is_active, created_at
+`
+
+type UpdateUserProfileParams struct {
+	ID       uuid.UUID `json:"id"`
+	FullName string    `json:"full_name"`
+	Email    string    `json:"email"`
+	Phone    string    `json:"phone"`
+}
+
+type UpdateUserProfileRow struct {
+	ID              uuid.UUID        `json:"id"`
+	Email           string           `json:"email"`
+	FullName        string           `json:"full_name"`
+	Phone           string           `json:"phone"`
+	Role            UserRole         `json:"role"`
+	IsEmailVerified bool             `json:"is_email_verified"`
+	IsActive        bool             `json:"is_active"`
+	CreatedAt       pgtype.Timestamp `json:"created_at"`
+}
+
+func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (UpdateUserProfileRow, error) {
+	row := q.db.QueryRow(ctx, updateUserProfile,
+		arg.ID,
+		arg.FullName,
+		arg.Email,
+		arg.Phone,
+	)
+	var i UpdateUserProfileRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.FullName,
+		&i.Phone,
+		&i.Role,
+		&i.IsEmailVerified,
+		&i.IsActive,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const updateUserVerification = `-- name: UpdateUserVerification :exec
 UPDATE users 
 SET is_email_verified = $2 

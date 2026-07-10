@@ -38,6 +38,7 @@ interface OrderDetails {
   eventVenue: string
   eventCity: string
   qrCodeData: string
+  manualCode: string
   createdAt: string
 }
 
@@ -169,6 +170,10 @@ export default function TicketPage() {
                   fgColor="#0f172a"
                 />
               </div>
+            </div>
+            <div className="mt-4 px-4 py-2.5 bg-muted/30 border border-border/50 rounded-xl">
+              <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground mb-1">Manual Check-in Code</p>
+              <p className="text-lg font-mono font-extrabold tracking-widest text-foreground">{order.manualCode}</p>
             </div>
             <p className="text-xs font-semibold text-muted-foreground mt-4 max-w-[240px] mx-auto leading-normal">
               Present this cryptographically signed verification asset during venue entry gate processing.

@@ -37,6 +37,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { useAuthStore } from '@/store/authStore'
+import { useEventStore } from '@/store/eventStore'
 import { cn } from '@/lib/utils'
 
 interface NavItem {
@@ -47,20 +48,6 @@ interface NavItem {
   organizerOnly?: boolean
 }
 
-const navItems: NavItem[] = [
-  { label: 'Dashboard', href: '/organizer/events', icon: Home, organizerOnly: true },
-  { label: 'Events', href: '/organizer/events', icon: Calendar, organizerOnly: true },
-  { label: 'Attendees', href: '/organizer/attendees', icon: Users, organizerOnly: true },
-  { label: 'Check-in', href: '/organizer/checkin', icon: QrCode, organizerOnly: true },
-  { label: 'Analytics', href: '/organizer/analytics', icon: BarChart3, organizerOnly: true },
-  { label: 'Settings', href: '/organizer/settings', icon: Settings, organizerOnly: true },
-  // Admin items
-  { label: 'Users', href: '/admin/users', icon: Shield, adminOnly: true },
-  { label: 'All Events', href: '/admin/events', icon: Calendar, adminOnly: true },
-  { label: 'Transactions', href: '/admin/transactions', icon: CreditCard, adminOnly: true },
-  { label: 'System Logs', href: '/admin/logs', icon: FileText, adminOnly: true },
-]
-
 interface SidebarProps {
   isCollapsed?: boolean
   onToggle?: () => void
@@ -70,8 +57,24 @@ export function Sidebar({ isCollapsed = false, onToggle }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { user, logout } = useAuthStore()
+  const currentEvent = useEventStore((s) => s.currentEvent)
 
   const isAdmin = user?.role === 'admin'
+  const eventId = currentEvent?.id
+
+  const navItems: NavItem[] = [
+    { label: 'Dashboard', href: '/organizer/events', icon: Home, organizerOnly: true },
+    { label: 'Events', href: '/organizer/events', icon: Calendar, organizerOnly: true },
+    { label: 'Attendees', href: eventId ? `/organizer/attendees/${eventId}` : '/organizer/events', icon: Users, organizerOnly: true },
+    { label: 'Check-in', href: eventId ? `/organizer/checkin/${eventId}` : '/organizer/events', icon: QrCode, organizerOnly: true },
+    { label: 'Analytics', href: eventId ? `/organizer/analytics/${eventId}` : '/organizer/events', icon: BarChart3, organizerOnly: true },
+    { label: 'Settings', href: '/organizer/settings', icon: Settings, organizerOnly: true },
+    // Admin items
+    { label: 'Users', href: '/admin/users', icon: Shield, adminOnly: true },
+    { label: 'All Events', href: '/admin/events', icon: Calendar, adminOnly: true },
+    { label: 'Transactions', href: '/admin/transactions', icon: CreditCard, adminOnly: true },
+    { label: 'System Logs', href: '/admin/logs', icon: FileText, adminOnly: true },
+  ]
   
   // Filter nav items based on user role
   const filteredNavItems = navItems.filter(item => {

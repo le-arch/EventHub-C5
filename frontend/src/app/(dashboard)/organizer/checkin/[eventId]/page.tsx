@@ -243,8 +243,9 @@ export default function CheckinPage() {
     
     setIsProcessing(true)
     try {
-      const response = await api.post('/checkin', { 
-        qr_hash: manualTicketId.trim(),
+      const isManualCode = /^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(manualTicketId.trim().toUpperCase())
+      const response = await api.post('/checkin', {
+        [isManualCode ? 'manual_code' : 'qr_hash']: isManualCode ? manualTicketId.trim().toUpperCase() : manualTicketId.trim(),
         event_id: eventId,
       })
       
@@ -294,15 +295,15 @@ export default function CheckinPage() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <Button
+          {/*<Button
             variant="ghost"
             size="sm"
             onClick={() => router.push(`/organizer/events/${eventId}`)}
             className="-ml-2"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Event
-          </Button>
+      
+          </Button>*/}
         </div>
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg">
@@ -559,7 +560,7 @@ export default function CheckinPage() {
               Manual Ticket Entry 
             </DialogTitle>
             <DialogDescription>
-              Enter the ticket ID or QR code value manually
+              Enter the QR hash or manual check-in code (e.g. A7K2-M9P1)
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -567,9 +568,9 @@ export default function CheckinPage() {
               <Label htmlFor="ticketId">Ticket ID / QR Code</Label>
               <Input
                 id="ticketId"
-                placeholder="Enter ticket code..."
+                placeholder="QR hash or manual code (A7K2-M9P1)..."
                 value={manualTicketId}
-                onChange={(e) => setManualTicketId(e.target.value)}
+                onChange={(e) => setManualTicketId(e.target.value.toUpperCase())}
                 onKeyDown={(e) => e.key === 'Enter' && handleManualCheckin()}
               />
               <p className="text-xs text-muted-foreground mt-1">

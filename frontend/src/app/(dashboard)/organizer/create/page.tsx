@@ -498,6 +498,37 @@ export default function CreateEventPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Quick Select Presets */}
+                <div>
+                  <Label className="text-foreground font-medium mb-2 block">Quick Select</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {['VIP', 'Regular', 'Early Bird', 'VVIP', 'Gold', 'Silver', 'Student', 'Group'].map((preset) => {
+                      const alreadyAdded = fields.some((f) => {
+                        const idx = fields.indexOf(f)
+                        return ticketForm.watch(`ticketTypes.${idx}.name`) === preset
+                      })
+                      return (
+                        <button
+                          key={preset}
+                          type="button"
+                          disabled={alreadyAdded}
+                          onClick={() => {
+                            const price = preset === 'VIP' ? 15000 : preset === 'VVIP' ? 25000 : preset === 'Gold' ? 10000 : preset === 'Silver' ? 7500 : preset === 'Student' ? 3000 : preset === 'Group' ? 5000 : preset === 'Early Bird' ? 5000 : 5000
+                            append({ name: preset, price, quantityAvailable: 100 })
+                          }}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                            alreadyAdded
+                              ? 'bg-muted text-muted-foreground border-muted cursor-not-allowed'
+                              : 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 hover:border-purple-300 cursor-pointer'
+                          }`}
+                        >
+                          {preset} {alreadyAdded ? '✓' : '+'}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
                 {/* Ticket Types List */}
                 <div className="space-y-3">
                   {fields.map((field, index) => {

@@ -27,7 +27,9 @@ export function formatDate(date: string | Date | null | undefined): string {
 
 export function formatTime(time: string | null | undefined): string {
   if (!time) return '-'
-  const d = new Date(`2026-01-01T${time}`)
+  // Handle full datetime ("2026-07-10 14:30:05") and time-only ("14:30:00")
+  const hasDate = /^\d{4}-\d{2}-\d{2}/.test(time)
+  const d = hasDate ? new Date(time.replace(' ', 'T')) : new Date(`2026-01-01T${time}`)
   if (isNaN(d.getTime())) return '-'
   return new Intl.DateTimeFormat('en-CM', {
     hour: '2-digit',

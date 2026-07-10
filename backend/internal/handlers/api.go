@@ -66,21 +66,28 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 
 	// Public routes (no auth required, but optional JWT parsing)
 	r.GET("/api/v1/orders/:id/status", auth.OptionalAuthMiddleware(h.jwtSecret), h.handleGetOrderStatus)
-	
+	r.GET("/api/v1/orders/:id/details", auth.OptionalAuthMiddleware(h.jwtSecret), h.handleGetOrderDetails)
+
 	r.GET("/api/v1/events/public/:id", h.handleGetPublicEvent)
 	r.GET("/api/v1/events/public/:id/ticket-types", h.handleListTicketTypes)
+	r.GET("/api/v1/events/:id/ticket-types", auth.OptionalAuthMiddleware(h.jwtSecret), h.handleListTicketTypes)
 
 	Protection := r.Group("/api/v1")
 	Protection.Use(auth.AuthMiddleware(h.jwtSecret))
 	{
 		Protection.GET("/auth/me", h.handleGetCurrentUser)
-	
+	Protection.PUT("/auth/profile", h.handleUpdateProfile)
+	Protection.POST("/auth/change-password", h.handleChangePassword)
+	Protection.DELETE("/auth/account", h.handleDeleteAccount)
+
 	Protection.POST("/events", h.handleCreateEvent)
 	Protection.POST("/events/:id/ticket-types",h.handleCreateTicketType)
 	Protection.POST("/checkin", h.handleCheckin)
-	
-	// Protection.POST("/checkin", h.handleScanQRCode)
+	Protection.PUT("/orders/:id/mark-paid", h.handleOrganizerMarkOrderAsPaid)
+	Protection.POST("/attendees/:id/checkin", h.handleAttendeeCheckin)
+
 	Protection.POST("/events/upload-image", h.handleUploadImage)
+	Protection.POST("/events/:id/duplicate", h.handleDuplicateEvent)
 
 	Protection.PATCH("/events/:id", h.handleUpdateEvent)
 	Protection.PATCH("/events/:id/ticket-types/:ticket_id",h.handleUpdateTicketType)
@@ -89,21 +96,27 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	Protection.PATCH("/events/:id/unpublish", h.handleUnpublishEvent)
 	Protection.PATCH("/admin/events/:id/status", h.handleAdminUpdateEventStatus)
 	Protection.PATCH("/admin/events/:id/restore", h.handleAdminRestoreEvent)
+	Protection.PUT("/admin/events/:id/cancel", h.handleAdminSuspendEvent)
 
 	Protection.GET("/Organization/events", h.handleGetOrganisationEvents)
 	Protection.GET("/Organization/:id", h.handleGetOrganisationEvent)
 	Protection.GET("/events/:id/share-link", h.handleShareLink)
 	Protection.GET("/orders/:id/ticket", h.handleDownloadQRCode)
-	Protection.GET("/orders/:id/details", h.handleGetOrderDetails)
 	Protection.GET("/events/:id/attendees", h.handleGetAttendeeList)
+	Protection.GET("/events/:id/attendees/export", h.handleExportAttendees)
 	Protection.GET("/events/:id/analytics", h.handleGetEventAnalytics)
 	Protection.GET("/events/:id", h.handleEventDetails)
 	Protection.GET("/checkin/event/:eventId/history", h.handleGetCheckinHistory)
-	Protection.GET("/events/:id/ticket-types", h.handleListTicketTypes)
 	Protection.GET("/admin/users", h.handleListAllUsers)
+	Protection.PUT("/admin/users/:id", h.handleAdminUpdateUser)
+	Protection.POST("/admin/users/batch-verify", h.handleBatchVerifyUsers)
+	Protection.POST("/admin/users/batch-suspend", h.handleBatchSuspendUsers)
 	Protection.GET("/admin/transactions", h.handleViewAllTransactions)
+	Protection.POST("/admin/transactions/:id/refund", h.handleRefundTransaction)
+	Protection.PUT("/admin/orders/:id/mark-paid", h.handleMarkOrderAsPaid)
 	Protection.GET("/admin/events", h.handleViewAllEvents)
 	Protection.GET("/admin/analytics", h.handleGetPlatformAnalytics)
+	Protection.GET("/admin/logs", h.handleListAdminLogs)
 
 	Protection.PUT("/admin/users/:id/verify", h.handleVerifyOrganizer)
 	Protection.PUT("/admin/users/:id/suspend", h.handleSuspendUser)

@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuthStore } from '@/store/authStore'
+import { useEventStore } from '@/store/eventStore'
 import { cn } from '@/lib/utils'
 
 interface NavItem {
@@ -36,12 +37,6 @@ const publicNavItems: NavItem[] = [
   { label: 'Features', href: '/#features' },
   { label: 'How It Works', href: '/#how-it-works' },
   { label: 'Pricing', href: '/#pricing' },
-]
-
-const organizerNavItems: NavItem[] = [
-  { label: 'Events', href: '/organizer/events', icon: Calendar },
-  { label: 'Attendees', href: '/organizer/attendees', icon: Users },
-  { label: 'Analytics', href: '/organizer/analytics', icon: BarChart3 },
 ]
 
 const adminNavItems: NavItem[] = [
@@ -59,6 +54,7 @@ export function Header({ onMobileMenuClick }: HeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { user, isAuthenticated, logout } = useAuthStore()
+  const currentEvent = useEventStore((s) => s.currentEvent)
   const [scrolled, setScrolled] = useState(false)
 
   // Detect scroll for header background
@@ -71,6 +67,14 @@ export function Header({ onMobileMenuClick }: HeaderProps) {
   }, [])
 
   const isAdmin = user?.role === 'admin'
+  const eventId = currentEvent?.id
+
+  const organizerNavItems: NavItem[] = [
+    { label: 'Events', href: '/organizer/events', icon: Calendar },
+    { label: 'Attendees', href: eventId ? `/organizer/attendees/${eventId}` : '/organizer/events', icon: Users },
+    { label: 'Analytics', href: eventId ? `/organizer/analytics/${eventId}` : '/organizer/events', icon: BarChart3 },
+  ]
+
   const navItems = isAuthenticated 
     ? (isAdmin ? adminNavItems : organizerNavItems)
     : publicNavItems

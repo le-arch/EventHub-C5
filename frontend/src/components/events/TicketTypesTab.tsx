@@ -30,13 +30,14 @@ const ticketFormSchema = z.object({
 })
 
 export type TicketFormValues = z.infer<typeof ticketFormSchema>
+export type TicketFormInputValues = z.input<typeof ticketFormSchema>
 export { ticketFormSchema, ticketTypeSchema }
 
 interface TicketTypesTabProps {
-  ticketForm: UseFormReturn<TicketFormValues>
-  fields: UseFieldArrayReturn<TicketFormValues>['fields']
-  append: UseFieldArrayReturn<TicketFormValues>['append']
-  remove: UseFieldArrayReturn<TicketFormValues>['remove']
+  ticketForm: UseFormReturn<TicketFormInputValues>
+  fields: UseFieldArrayReturn<TicketFormInputValues>['fields']
+  append: UseFieldArrayReturn<TicketFormInputValues>['append']
+  remove: UseFieldArrayReturn<TicketFormInputValues>['remove']
   localTicketTypes: TicketType[]
   isSaving: boolean
   onSubmit: (data: TicketFormValues) => void
@@ -51,6 +52,10 @@ export function TicketTypesTab({
   isSaving,
   onSubmit,
 }: TicketTypesTabProps) {
+  const handleFormSubmit = ticketForm.handleSubmit((data: TicketFormInputValues) => {
+    onSubmit(data as TicketFormValues)
+  })
+
   return (
     <Card className="border-l-4 border-l-blue-500 border-border/80 shadow-sm rounded-2xl">
       <CardHeader>
@@ -63,7 +68,7 @@ export function TicketTypesTab({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form id="ticket-types-form" onSubmit={ticketForm.handleSubmit(onSubmit)} className="space-y-4">
+        <form id="ticket-types-form" onSubmit={handleFormSubmit} className="space-y-4">
           <div className="space-y-3">
             {fields.map((field, index) => {
               const originalTicket = localTicketTypes.find(t => t.id === field.id)

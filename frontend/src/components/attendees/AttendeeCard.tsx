@@ -38,6 +38,7 @@ interface AttendeeCardProps {
  * Get initials for avatar
  */
 const getInitials = (name: string): string => {
+  if (!name) return '?'
   return name
     .split(' ')
     .map(n => n[0])
@@ -60,6 +61,7 @@ const getAvatarColor = (name: string): string => {
     'bg-red-100 text-red-600',
     'bg-teal-100 text-teal-600',
   ]
+  if (!name) return colors[0]
   const index = name.length % colors.length
   return colors[index]
 }

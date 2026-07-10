@@ -38,3 +38,9 @@ WHERE id = $1;
 -- name: GetUserByIDForAdmin :one
 SELECT id, email, full_name, role, is_email_verified, is_active, created_at
 FROM users WHERE id = $1;
+
+-- name: UpdateUserProfile :one
+UPDATE users
+SET full_name = $2, email = $3, phone = $4
+WHERE id = $1
+RETURNING id, email, full_name, phone, role, is_email_verified, is_active, created_at;

@@ -18,6 +18,7 @@ import (
 func (h *EventHubHandler) handleCreateOrder(c *gin.Context) {
 	var req models.CreateOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("CreateOrder bind error: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -57,17 +58,14 @@ if deviceInfo != "" {
 	//  Compute total
 	total := ticket.Price * int32(req.Quantity)
 
-	// attendie can only order for one ticket. it now depend on the ticket type how many people are accepted for that ticket
-	if req.Quantity != 1 {
-    c.JSON(http.StatusBadRequest, gin.H{"error": "only one ticket per order is allowed"})
-    return
-	}
-
 	// Generate QR hash (HMAC)
 	salt := uuid.New().String()
 	qrHash := qrcode.GenerateQRHash(req.AttendeeName+salt, h.qrSecret)
 
 	qrPlaintext := qrHash
+
+	// Generate manual check-in code
+	manualCode := qrcode.GenerateManualCode()
 
 	// Create order (pending)
 	var emailPtr *string
@@ -89,12 +87,13 @@ if deviceInfo != "" {
 		TotalAmount:   total,
 		PaymentStatus: repo.PaymentStatusPending,
 		TransactionID: nil,
-		QrCodeHash:    qrHash,
+		ManualCode:      manualCode,
+		QrCodeHash:      qrHash,
 		QrCodePlaintext: qrPlaintext,
-		QrCodeImageUrl:  "", 
-		DeviceInfo: devicePtr,     
-    	IpAddress:  ipPtr, 
-    	PlatformFee:   platformFee,
+		QrCodeImageUrl:  "",
+		DeviceInfo:      devicePtr,
+		IpAddress:       ipPtr,
+		PlatformFee:     platformFee,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create order: " + err.Error()})
@@ -154,6 +153,7 @@ if deviceInfo != "" {
 		TransactionID:  &txID,
 		QRCodeHash:     order.QrCodeHash,
 		QRCodeImageURL: qrImageURL,
+		ManualCode:     order.ManualCode,
 		IsUsed:         order.IsUsed,
 		CreatedAt:      utils.FormatDateTime(order.CreatedAt),
 	}

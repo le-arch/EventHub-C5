@@ -27,8 +27,10 @@ func (h *EventHubHandler) handleCheckin(c *gin.Context) {
 		order, err = h.querier.GetOrderByID(c, req.OrderID)
 	} else if req.QRHash != "" {
 		order, err = h.querier.GetOrderByQRHash(c, req.QRHash)
+	} else if req.ManualCode != "" {
+		order, err = h.querier.GetOrderByManualCode(c, req.ManualCode)
 	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "either qr_hash or order_id is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "qr_hash, order_id, or manual_code is required"})
 		return
 	}
 	if err != nil {
@@ -105,13 +107,17 @@ func (h *EventHubHandler) handleGetAttendeeList(c *gin.Context) {
 	response := make([]gin.H, len(attendees))
 	for i, a := range attendees {
 		response[i] = gin.H{
-			"id":              a.ID,
-			"attendeeName":    a.AttendeeName,
-			"attendeePhone":   a.AttendeePhone,
-			"attendeeEmail":   a.AttendeeEmail,
-			"checkedIn":       a.IsUsed,
-			"checkedInAt":     utils.FormatDateTime(a.UsedAt),
-			"orderCreatedAt":  utils.FormatDateTime(a.CreatedAt),
+			"id":          a.ID,
+			"name":        a.AttendeeName,
+			"phone":       a.AttendeePhone,
+			"email":       a.AttendeeEmail,
+			"ticketType":  a.TicketTypeName,
+			"quantity":    a.Quantity,
+			"unitPrice":   a.UnitPrice,
+			"totalPaid":   a.TotalAmount,
+			"checkedIn":   a.IsUsed,
+			"checkedInAt": utils.FormatDateTime(a.UsedAt),
+			"purchasedAt": utils.FormatDateTime(a.CreatedAt),
 		}
 	}
 	c.JSON(http.StatusOK, response)
@@ -180,6 +186,7 @@ func (h *EventHubHandler) handleGetOrderDetails(c *gin.Context) {
 		EventVenue:    event.Venue,
 		EventCity:     event.City,
 		QrCodeData:    order.QrCodePlaintext,
+		ManualCode:    order.ManualCode,
 		CreatedAt:     utils.FormatDateTime(order.CreatedAt),
 	}
 

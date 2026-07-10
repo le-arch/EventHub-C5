@@ -80,6 +80,7 @@ CREATE TABLE orders (
     qr_code_hash VARCHAR(255) UNIQUE NOT NULL,
     qr_code_image_url TEXT DEFAULT '',
     qr_code_plaintext TEXT NOT NULL DEFAULT '',
+    manual_code VARCHAR(20) UNIQUE NOT NULL DEFAULT '',
     
     is_used BOOLEAN NOT NULL DEFAULT FALSE,
     used_at TIMESTAMP,
@@ -90,6 +91,7 @@ CREATE TABLE orders (
     ip_address INET,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 -- 5. WEBHOOK LOGS (For tracing payment notifications)
 CREATE TABLE webhook_logs (

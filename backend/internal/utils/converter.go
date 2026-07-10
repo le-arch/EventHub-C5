@@ -59,6 +59,28 @@ func FormatTime(t *string) string {
 
 // formats a time.Time object into a string in the format "YYYY-MM-DD HH:MM:SS"
 func FormatDateTime(t pgtype.Timestamp) string {
+	if !t.Valid {
+		return ""
+	}
 	return t.Time.Format(DateTimeFormat)
+}
+
+// FormatDateFromPgDate converts a pgtype.Date to a formatted date string.
+func FormatDateFromPgDate(d pgtype.Date) string {
+	if !d.Valid {
+		return ""
+	}
+	return d.Time.Format(DateFormat)
+}
+
+// FormatTimeFromPgTime converts a pgtype.Time to a formatted time string "HH:MM".
+func FormatTimeFromPgTime(t pgtype.Time) string {
+	if !t.Valid {
+		return ""
+	}
+	seconds := t.Microseconds / 1e6
+	h := seconds / 3600
+	m := (seconds % 3600) / 60
+	return fmt.Sprintf("%02d:%02d", h, m)
 }
 

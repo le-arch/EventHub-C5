@@ -21,7 +21,6 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	
 
 	startDate, err := utils.ParseDate(req.StartDate)
 	if err != nil {
@@ -45,10 +44,10 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 		endDate = &parsed
 	}
 
-	if req.Status == ""{
+	if req.Status == "" {
 		req.Status = "draft"
 	}
-	
+
 	var salesStartDate *time.Time
 	if req.SalesStartDate != "" {
 		parsed, err := utils.ParseDate(req.SalesStartDate)
@@ -84,31 +83,30 @@ func (h *EventHubHandler) handleCreateEvent(c *gin.Context) {
 		Status:         req.Status,
 		SalesStartDate: salesStartDate,
 		SalesEndDate:   salesEndDate,
-		CapacityRange: utils.ToDBRange(req.CapacityRange),
+		CapacityRange:  utils.ToDBRange(req.CapacityRange),
 	})
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 
-	
 	var endDateStr, salesStartDateStr, salesEndDateStr string
 	if event.EndDate != nil {
-		endDateStr = 	utils.FormatDatePtr(event.EndDate)
+		endDateStr = event.EndDate.Format("2006-01-02")
 	}
 	if event.SalesStartDate != nil {
-		salesStartDateStr = 	utils.FormatDatePtr(event.SalesStartDate)
+		salesStartDateStr = event.SalesStartDate.Format("2006-01-02")
 	}
 	if event.SalesEndDate != nil {
-		salesEndDateStr = 	utils.FormatDatePtr(event.SalesEndDate)
+		salesEndDateStr = event.SalesEndDate.Format("2006-01-02")
 	}
 
 	var startTimeStr, endTimeStr string
 	if event.StartTime != nil {
-		startTimeStr = utils.FormatTime(event.StartTime)
+		startTimeStr = *event.StartTime
 	}
 	if event.EndTime != nil {
-		endTimeStr = utils.FormatTime(event.EndTime)
+		endTimeStr = *event.EndTime
 	}
 
 	response := utils.CreateEventResponse{
@@ -201,6 +199,8 @@ func (h *EventHubHandler) handleGetOrganisationEvent(c *gin.Context) {
 	
 	response := utils.EventResponse{
 	ID: event.ID,
+	OrganizerName:  event.OrganizerName,
+	OrganizerEmail: event.OrganizerEmail,
 	Title: event.Title,
 	Slug: event.Slug,
 	Description: event.Description,
@@ -215,7 +215,10 @@ func (h *EventHubHandler) handleGetOrganisationEvent(c *gin.Context) {
 	SalesStartDate: 	utils.FormatDatePtr(event.SalesStartDate),
 	SalesEndDate: 	utils.FormatDatePtr(event.SalesEndDate),
 	CapacityRange: utils.FromDBRange(event.CapacityRange),
-	TicketStats:   utils.TicketStatsResponse{},
+	TicketStats: utils.TicketStatsResponse{
+		TotalSold:    event.TicketsSold,
+		TotalRevenue: event.TotalRevenue,
+	},
 	UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
 	
 }
@@ -230,6 +233,46 @@ func (h *EventHubHandler) handleGetOrganisationEvents(c *gin.Context) {
 		return
 	}
 
+	role, _ := utils.GetUserRole(c)
+
+	// Admin sees all events; organizer sees only their own
+	if role == "admin" {
+		allEvents, err := h.querier.ListEvents(c)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "no events found"})
+			return
+		}
+		response := make([]utils.EventResponse, 0, len(allEvents))
+		for _, event := range allEvents {
+			response = append(response, utils.EventResponse{
+				ID:             event.ID,
+				OrganizerName:  event.OrganizerName,
+				OrganizerEmail: event.OrganizerEmail,
+				Title:          event.Title,
+				Slug:           event.Slug,
+				Description:    event.Description,
+				Venue:          event.Venue,
+				City:           event.City,
+				StartDate:      utils.FormatDate(event.StartDate),
+				EndDate:        utils.FormatDatePtr(event.EndDate),
+				StartTime:      utils.FormatTime(event.StartTime),
+				EndTime:        utils.FormatTime(event.EndTime),
+				CoverImageUrl:  event.CoverImageUrl,
+				Status:         event.Status,
+				SalesStartDate: utils.FormatDatePtr(event.SalesStartDate),
+				SalesEndDate:   utils.FormatDatePtr(event.SalesEndDate),
+				CapacityRange:  utils.FromDBRange(event.CapacityRange),
+				TicketStats: utils.TicketStatsResponse{
+					TotalSold:    event.TicketsSold,
+					TotalRevenue: event.TotalRevenue,
+				},
+				UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
+			})
+		}
+		c.JSON(http.StatusOK, response)
+		return
+	}
+
     events, err := h.querier.ListOrganizerEvents(c,OrganizerID)
 	if err != nil {
         c.JSON(http.StatusNotFound, gin.H{"error": "no event created"})
@@ -241,6 +284,8 @@ func (h *EventHubHandler) handleGetOrganisationEvents(c *gin.Context) {
 	for _, event := range events {
 	response = append(response, utils.EventResponse{
 	ID: event.ID,
+	OrganizerName:  event.OrganizerName,
+	OrganizerEmail: event.OrganizerEmail,
 	Title: event.Title,
 	Slug: event.Slug,
 	Description: event.Description,
@@ -255,7 +300,10 @@ func (h *EventHubHandler) handleGetOrganisationEvents(c *gin.Context) {
 	SalesStartDate: 	utils.FormatDatePtr(event.SalesStartDate),
 	SalesEndDate: 	utils.FormatDatePtr(event.SalesEndDate),
 		CapacityRange: utils.FromDBRange(event.CapacityRange),
-		TicketStats:   utils.TicketStatsResponse{},
+		TicketStats: utils.TicketStatsResponse{
+			TotalSold:    event.TicketsSold,
+			TotalRevenue: event.TotalRevenue,
+		},
 		UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
 	})
 }
@@ -397,32 +445,43 @@ func (h *EventHubHandler) handleUpdateEvent(c *gin.Context) {
         OrganizerID: organizerID,
         Title:       req.Title,
         Slug:        req.Slug,
-        Description: req.Description,
-        Venue:       req.Venue,
+        Description: "",
+        Venue:       "",
         City:        req.City,
-        StartTime:   req.StartTime,
-        EndTime:     req.EndTime,
-        CoverImageUrl: req.CoverImageUrl,
+        CoverImageUrl: "",
         Status:      req.Status,
-        StartDate:   parseDatePtr(req.StartDate),
-        EndDate:     parseDatePtr(req.EndDate),
-        SalesStartDate: parseDatePtr(req.SalesStartDate),
-        SalesEndDate:   parseDatePtr(req.SalesEndDate),
 	}
 
+	if req.Description != nil {
+		eventUpdate.Description = *req.Description
+	}
+	if req.Venue != nil {
+		eventUpdate.Venue = *req.Venue
+	}
+	if req.CoverImageUrl != nil {
+		eventUpdate.CoverImageUrl = *req.CoverImageUrl
+	}
+	if req.StartDate != nil {
+		eventUpdate.StartDate = parseDatePtr(req.StartDate)
+	}
+	if req.EndDate != nil {
+		eventUpdate.EndDate = parseDatePtr(req.EndDate)
+	}
+	if req.SalesStartDate != nil {
+		eventUpdate.SalesStartDate = parseDatePtr(req.SalesStartDate)
+	}
+	if req.SalesEndDate != nil {
+		eventUpdate.SalesEndDate = parseDatePtr(req.SalesEndDate)
+	}
 	if req.StartTime != nil && *req.StartTime != "" {
-    eventUpdate.StartTime = req.StartTime
+		eventUpdate.StartTime = req.StartTime
 	}
 	if req.EndTime != nil && *req.EndTime != "" {
 		eventUpdate.EndTime = req.EndTime
 	}
-
-	 if req.CapacityRange != nil {
-        dbRange := utils.ToDBRange(req.CapacityRange)
-        eventUpdate.CapacityRange = dbRange
-    } else {
-        eventUpdate.CapacityRange = nil
-    }
+	if req.CapacityRange != nil {
+		eventUpdate.CapacityRange = utils.ToDBRange(req.CapacityRange)
+	}
 
 	updatedEvent, err := h.querier.PartialEventUpdate(c, eventUpdate)
 	if err != nil {
@@ -445,7 +504,7 @@ func (h *EventHubHandler) handleUpdateEvent(c *gin.Context) {
 		Status: updatedEvent.Status,
 		SalesStartDate: 	utils.FormatDatePtr(updatedEvent.SalesStartDate),
 		SalesEndDate: 	utils.FormatDatePtr(updatedEvent.SalesEndDate),
-		CapacityRange: utils.FromDBRange(event.CapacityRange),
+		CapacityRange: utils.FromDBRange(updatedEvent.CapacityRange),
 		TicketStats:   utils.TicketStatsResponse{},
 		UpdatedAt: utils.FormatDateTime(updatedEvent.UpdatedAt),
 	}
@@ -697,11 +756,15 @@ func (h *EventHubHandler) handleUpdateTicketType(c *gin.Context) {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
+    var desc string
+    if req.Description != nil {
+        desc = *req.Description
+    }
     params := repo.UpdateTicketTypeParams{
         ID:      ticketID,
         EventID: eventID,
         Name:    req.Name,
-        Description: req.Description,
+        Description: desc,
         Price:       req.Price,
         QuantityAvailable: req.QuantityAvailable,
         IsActive:    req.IsActive,
@@ -805,17 +868,50 @@ func (h *EventHubHandler) handleGetEventAnalytics(c *gin.Context) {
 	}
 
 	stats, err := h.querier.GetEventAnalytics(c, eventID)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch analytics"})
-        return
-    }
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch analytics"})
+		return
+	}
 
 	checkinCount := int(stats.CheckedInCount)
 	totalTickets := int(stats.PaidOrders)
 	checkinPercentage := 0.0
-    if totalTickets > 0 {
-        checkinPercentage = float64(checkinCount) / float64(totalTickets) * 100
-    }
+	if totalTickets > 0 {
+		checkinPercentage = float64(checkinCount) / float64(totalTickets) * 100
+	}
+
+	dailySales := make([]gin.H, 0)
+	salesData, err := h.querier.GetDailySales(c, eventID)
+	if err == nil {
+		for _, s := range salesData {
+			dailySales = append(dailySales, gin.H{
+				"date":    s.SaleDate.Time.Format("2006-01-02"),
+				"tickets": s.Tickets,
+				"revenue": s.Revenue,
+			})
+		}
+	}
+
+	ticketBreakdown := make([]gin.H, 0)
+	breakdown, err := h.querier.GetTicketTypeBreakdown(c, eventID)
+	if err == nil {
+		totalSold := int32(0)
+		for _, tb := range breakdown {
+			totalSold += tb.Sold
+		}
+		for _, tb := range breakdown {
+			pct := 0.0
+			if totalSold > 0 {
+				pct = float64(tb.Sold) / float64(totalSold) * 100
+			}
+			ticketBreakdown = append(ticketBreakdown, gin.H{
+				"name":       tb.Name,
+				"sold":       tb.Sold,
+				"revenue":    tb.Revenue,
+				"percentage": pct,
+			})
+		}
+	}
 
 	recentCheckins := make([]gin.H, 0)
 	history, err := h.querier.ListCheckinHistoryByEvent(c, repo.ListCheckinHistoryByEventParams{
@@ -826,7 +922,7 @@ func (h *EventHubHandler) handleGetEventAnalytics(c *gin.Context) {
 	if err == nil {
 		for _, h := range history {
 			recentCheckins = append(recentCheckins, gin.H{
-				"attendeeName": h.AttendeeName,
+				"name":         h.AttendeeName,
 				"ticketType":   "",
 				"checkedInAt":  utils.FormatDateTime(h.UsedAt),
 			})
@@ -834,14 +930,69 @@ func (h *EventHubHandler) handleGetEventAnalytics(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"totalTickets":       totalTickets,
-		"totalRevenue":       stats.NetRevenue,
-		"checkinCount":       checkinCount,
-		"checkinPercentage":  checkinPercentage,
-		"dailySales":         []gin.H{},
-		"ticketBreakdown":    []gin.H{},
-		"recentCheckins":     recentCheckins,
+		"totalTickets":      totalTickets,
+		"totalRevenue":      stats.NetRevenue,
+		"checkinCount":      checkinCount,
+		"checkinPercentage": checkinPercentage,
+		"dailySales":        dailySales,
+		"ticketBreakdown":   ticketBreakdown,
+		"recentCheckins":    recentCheckins,
 	})
+}
+
+func (h *EventHubHandler) handleDuplicateEvent(c *gin.Context) {
+	eventIDStr := c.Param("id")
+	eventID, err := uuid.Parse(eventIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+		return
+	}
+
+	original, err := h.querier.GetEventByID(c, eventID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "event duplicated", "id": original.ID})
+}
+
+func (h *EventHubHandler) handleExportAttendees(c *gin.Context) {
+	eventIDStr := c.Param("id")
+	eventID, err := uuid.Parse(eventIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
+		return
+	}
+
+	attendees, err := h.querier.ListAttendeesByEvent(c, eventID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "failed to fetch attendees"})
+		return
+	}
+
+	csv := "Name,Phone,Email,CheckedIn,CheckedInAt,CreatedAt\n"
+	for _, a := range attendees {
+		checkedIn := "No"
+		checkedInAt := ""
+		if a.IsUsed {
+			checkedIn = "Yes"
+			if a.UsedAt.Valid {
+				checkedInAt = a.UsedAt.Time.Format("2006-01-02 15:04:05")
+			}
+		}
+		email := ""
+		if a.AttendeeEmail != nil {
+			email = *a.AttendeeEmail
+		}
+		createdAt := ""
+		if a.CreatedAt.Valid {
+			createdAt = a.CreatedAt.Time.Format("2006-01-02 15:04:05")
+		}
+		csv += fmt.Sprintf("%s,%s,%s,%s,%s,%s\n", a.AttendeeName, a.AttendeePhone, email, checkedIn, checkedInAt, createdAt)
+	}
+
+	c.Data(http.StatusOK, "text/csv", []byte(csv))
 }
 
 

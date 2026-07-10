@@ -248,9 +248,15 @@ func (q *Queries) GetEventsBySlug(ctx context.Context, slug string) (Event, erro
 }
 
 const listEvents = `-- name: ListEvents :many
-SELECT e.id, e.organizer_id, e.title, e.slug, e.description, e.venue, e.city, e.start_date, e.end_date, e.start_time, e.end_time, e.cover_image_url, e.status, e.sales_start_date, e.sales_end_date, e.capacity_range, e.created_at, e.updated_at, u.full_name as organizer_name
+SELECT e.id, e.organizer_id, e.title, e.slug, e.description, e.venue, e.city, e.start_date, e.end_date, e.start_time, e.end_time, e.cover_image_url, e.status, e.sales_start_date, e.sales_end_date, e.capacity_range, e.created_at, e.updated_at, u.full_name as organizer_name, u.email as organizer_email, COALESCE(t.tickets_sold, 0)::int as tickets_sold, COALESCE(t.total_revenue, 0)::int as total_revenue
 FROM events e
 INNER JOIN users u ON e.organizer_id = u.id
+LEFT JOIN (
+    SELECT o.event_id, SUM(o.quantity) AS tickets_sold, SUM(o.total_amount) AS total_revenue
+    FROM orders o
+    WHERE o.payment_status = 'paid'
+    GROUP BY o.event_id
+) t ON t.event_id = e.id
 ORDER BY u.full_name, e.start_date
 `
 
@@ -274,6 +280,9 @@ type ListEventsRow struct {
 	CreatedAt      pgtype.Timestamp           `json:"created_at"`
 	UpdatedAt      pgtype.Timestamp           `json:"updated_at"`
 	OrganizerName  string                     `json:"organizer_name"`
+	OrganizerEmail string                     `json:"organizer_email"`
+	TicketsSold    int32                      `json:"tickets_sold"`
+	TotalRevenue   int32                      `json:"total_revenue"`
 }
 
 func (q *Queries) ListEvents(ctx context.Context) ([]ListEventsRow, error) {
@@ -305,6 +314,9 @@ func (q *Queries) ListEvents(ctx context.Context) ([]ListEventsRow, error) {
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.OrganizerName,
+		&i.OrganizerEmail,
+		&i.TicketsSold,
+		&i.TotalRevenue,
 		); err != nil {
 			return nil, err
 		}
@@ -407,8 +419,16 @@ func (q *Queries) ListEventsByStatus(ctx context.Context, status EventStatus) ([
 }
 
 const listOrganizerEvent = `-- name: ListOrganizerEvent :one
-SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at FROM events 
-WHERE id = $1 AND organizer_id = $2
+SELECT e.id, e.organizer_id, e.title, e.slug, e.description, e.venue, e.city, e.start_date, e.end_date, e.start_time, e.end_time, e.cover_image_url, e.status, e.sales_start_date, e.sales_end_date, e.capacity_range, e.created_at, e.updated_at, u.full_name as organizer_name, u.email as organizer_email, COALESCE(t.tickets_sold, 0)::int as tickets_sold, COALESCE(t.total_revenue, 0)::int as total_revenue
+FROM events e
+INNER JOIN users u ON e.organizer_id = u.id
+LEFT JOIN (
+    SELECT o.event_id, SUM(o.quantity) AS tickets_sold, SUM(o.total_amount) AS total_revenue
+    FROM orders o
+    WHERE o.payment_status = 'paid'
+    GROUP BY o.event_id
+) t ON t.event_id = e.id
+WHERE e.id = $1 AND e.organizer_id = $2
 `
 
 type ListOrganizerEventParams struct {
@@ -416,9 +436,9 @@ type ListOrganizerEventParams struct {
 	OrganizerID uuid.UUID `json:"organizer_id"`
 }
 
-func (q *Queries) ListOrganizerEvent(ctx context.Context, arg ListOrganizerEventParams) (Event, error) {
+func (q *Queries) ListOrganizerEvent(ctx context.Context, arg ListOrganizerEventParams) (ListOrganizerEventsRow, error) {
 	row := q.db.QueryRow(ctx, listOrganizerEvent, arg.ID, arg.OrganizerID)
-	var i Event
+	var i ListOrganizerEventsRow
 	err := row.Scan(
 		&i.ID,
 		&i.OrganizerID,
@@ -438,25 +458,62 @@ func (q *Queries) ListOrganizerEvent(ctx context.Context, arg ListOrganizerEvent
 		&i.CapacityRange,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.OrganizerName,
+		&i.OrganizerEmail,
+		&i.TicketsSold,
+		&i.TotalRevenue,
 	)
 	return i, err
 }
 
+type ListOrganizerEventsRow struct {
+	ID             uuid.UUID                  `json:"id"`
+	OrganizerID    uuid.UUID                  `json:"organizer_id"`
+	Title          string                     `json:"title"`
+	Slug           string                     `json:"slug"`
+	Description    string                     `json:"description"`
+	Venue          string                     `json:"venue"`
+	City           string                     `json:"city"`
+	StartDate      time.Time                  `json:"start_date"`
+	EndDate        *time.Time                 `json:"end_date"`
+	StartTime      *string                    `json:"start_time"`
+	EndTime        *string                    `json:"end_time"`
+	CoverImageUrl  string                     `json:"cover_image_url"`
+	Status         EventStatus                `json:"status"`
+	SalesStartDate *time.Time                 `json:"sales_start_date"`
+	SalesEndDate   *time.Time                 `json:"sales_end_date"`
+	CapacityRange  *pgtype.Range[pgtype.Int4] `json:"capacity_range"`
+	CreatedAt      pgtype.Timestamp           `json:"created_at"`
+	UpdatedAt      pgtype.Timestamp           `json:"updated_at"`
+	OrganizerName  string                     `json:"organizer_name"`
+	OrganizerEmail string                     `json:"organizer_email"`
+	TicketsSold    int32                      `json:"tickets_sold"`
+	TotalRevenue   int32                      `json:"total_revenue"`
+}
+
 const listOrganizerEvents = `-- name: ListOrganizerEvents :many
-SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at FROM events 
-WHERE organizer_id = $1
-ORDER BY start_date DESC, start_time DESC
+SELECT e.id, e.organizer_id, e.title, e.slug, e.description, e.venue, e.city, e.start_date, e.end_date, e.start_time, e.end_time, e.cover_image_url, e.status, e.sales_start_date, e.sales_end_date, e.capacity_range, e.created_at, e.updated_at, u.full_name as organizer_name, u.email as organizer_email, COALESCE(t.tickets_sold, 0)::int as tickets_sold, COALESCE(t.total_revenue, 0)::int as total_revenue
+FROM events e
+INNER JOIN users u ON e.organizer_id = u.id
+LEFT JOIN (
+    SELECT o.event_id, SUM(o.quantity) AS tickets_sold, SUM(o.total_amount) AS total_revenue
+    FROM orders o
+    WHERE o.payment_status = 'paid'
+    GROUP BY o.event_id
+) t ON t.event_id = e.id
+WHERE e.organizer_id = $1
+ORDER BY e.start_date DESC, e.start_time DESC
 `
 
-func (q *Queries) ListOrganizerEvents(ctx context.Context, organizerID uuid.UUID) ([]Event, error) {
+func (q *Queries) ListOrganizerEvents(ctx context.Context, organizerID uuid.UUID) ([]ListOrganizerEventsRow, error) {
 	rows, err := q.db.Query(ctx, listOrganizerEvents, organizerID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Event{}
+	items := []ListOrganizerEventsRow{}
 	for rows.Next() {
-		var i Event
+		var i ListOrganizerEventsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.OrganizerID,
@@ -476,6 +533,10 @@ func (q *Queries) ListOrganizerEvents(ctx context.Context, organizerID uuid.UUID
 			&i.CapacityRange,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.OrganizerName,
+			&i.OrganizerEmail,
+			&i.TicketsSold,
+			&i.TotalRevenue,
 		); err != nil {
 			return nil, err
 		}
@@ -514,14 +575,14 @@ type PartialEventUpdateParams struct {
 	OrganizerID    uuid.UUID                  `json:"organizer_id"`
 	Title          *string                    `json:"title"`
 	Slug           *string                    `json:"slug"`
-	Description    *string                    `json:"description"`
-	Venue          *string                    `json:"venue"`
+	Description    string                     `json:"description"`
+	Venue          string                     `json:"venue"`
 	City           *string                    `json:"city"`
 	StartDate      *time.Time                 `json:"start_date"`
 	EndDate        *time.Time                 `json:"end_date"`
 	StartTime      *string                    `json:"start_time"`
 	EndTime        *string                    `json:"end_time"`
-	CoverImageUrl  *string                    `json:"cover_image_url"`
+	CoverImageUrl  string                     `json:"cover_image_url"`
 	Status         *EventStatus               `json:"status"`
 	SalesStartDate *time.Time                 `json:"sales_start_date"`
 	SalesEndDate   *time.Time                 `json:"sales_end_date"`

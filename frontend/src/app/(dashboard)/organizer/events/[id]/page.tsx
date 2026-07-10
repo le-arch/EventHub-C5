@@ -19,6 +19,8 @@ import {
   Eye,
   EyeOff,
   Share2,
+  TrendingUp,
+  QrCode,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -333,7 +335,7 @@ export default function EditEventPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <Button variant="ghost" onClick={() => router.push('/organizer/events')} className="flex items-center gap-2">
           <ArrowLeft className="h-4 w-4" />
-          Back to Events
+      
         </Button>
       </div>
 
@@ -397,7 +399,7 @@ export default function EditEventPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -432,9 +434,26 @@ export default function EditEventPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">
-                  {localTicketTypes.reduce((sum, t) => sum + (t.quantitySold || 0), 0)}
+                  {event.ticketStats?.totalSold ?? localTicketTypes.reduce((sum, t) => sum + (t.quantitySold || 0), 0)}
                 </p>
                 <p className="text-xs text-muted-foreground">tickets sold</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <TrendingUp className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">
+                  {event.ticketStats?.totalRevenue != null
+                    ? `${Number(event.ticketStats.totalRevenue).toLocaleString()} XAF`
+                    : '—'}
+                </p>
+                <p className="text-xs text-muted-foreground">total revenue</p>
               </div>
             </div>
           </CardContent>
@@ -456,6 +475,43 @@ export default function EditEventPage() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Quick action links to sub-pages */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Button
+          variant="outline"
+          className="h-auto py-4 flex items-center gap-3 border-border/80 hover:border-blue-300 hover:bg-blue-50/50"
+          onClick={() => router.push(`/organizer/attendees/${eventId}`)}
+        >
+          <Users className="h-5 w-5 text-blue-600" />
+          <div className="text-left">
+            <p className="font-semibold text-sm">Attendees</p>
+            <p className="text-xs text-muted-foreground">View and manage attendees</p>
+          </div>
+        </Button>
+        <Button
+          variant="outline"
+          className="h-auto py-4 flex items-center gap-3 border-border/80 hover:border-emerald-300 hover:bg-emerald-50/50"
+          onClick={() => router.push(`/organizer/analytics/${eventId}`)}
+        >
+          <TrendingUp className="h-5 w-5 text-emerald-600" />
+          <div className="text-left">
+            <p className="font-semibold text-sm">Analytics</p>
+            <p className="text-xs text-muted-foreground">Sales, tickets & check-in stats</p>
+          </div>
+        </Button>
+        <Button
+          variant="outline"
+          className="h-auto py-4 flex items-center gap-3 border-border/80 hover:border-purple-300 hover:bg-purple-50/50"
+          onClick={() => router.push(`/organizer/checkin/${eventId}`)}
+        >
+          <QrCode className="h-5 w-5 text-purple-600" />
+          <div className="text-left">
+            <p className="font-semibold text-sm">Check-in</p>
+            <p className="text-xs text-muted-foreground">Scan QR codes at the door</p>
+          </div>
+        </Button>
       </div>
 
       {/* Custom Tabs Section - Replacing shadcn Tabs */}
@@ -511,7 +567,7 @@ export default function EditEventPage() {
 
           {activeTab === 'tickets' && (
             <TicketTypesTab
-              ticketForm={ticketForm}
+              ticketForm={ticketForm as any}
               fields={fields}
               append={append}
               remove={remove}

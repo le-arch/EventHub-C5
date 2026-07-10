@@ -14,6 +14,17 @@ import (
 	"github.com/le-arch/EventHub-C5/internal/utils"
 )
 
+type UpdateProfileRequest struct {
+	FullName string `json:"fullName"`
+	Email    string `json:"email"`
+	Phone    string `json:"phone"`
+}
+
+type ChangePasswordRequest struct {
+	CurrentPassword string `json:"current_password"`
+	NewPassword     string `json:"new_password"`
+}
+
 func (h *EventHubHandler) handleRegister(c *gin.Context) {
 	//bind the incoming JSON request to the RegisterRequest struct
 	var req models.RegisterRequest
@@ -153,7 +164,7 @@ func (h *EventHubHandler) handleVerifyEmail(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"message":       "User registered successfully",
 		"token":         token,
-		"refresh_token": refreshToken,
+		"refreshToken":  refreshToken,
 		"user":          response,
 	})
 }
@@ -370,6 +381,104 @@ func (h *EventHubHandler) handlePasswrordReset(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Password reset successful"})
 }
 
+func (h *EventHubHandler) handleUpdateProfile(c *gin.Context) {
+	claims, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	authClaims := claims.(*auth.Claims)
+
+	var req UpdateProfileRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	updated, err := h.querier.UpdateUserProfile(c, repo.UpdateUserProfileParams{
+		ID:       authClaims.ID,
+		FullName: req.FullName,
+		Email:    req.Email,
+		Phone:    req.Phone,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update profile: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Profile updated",
+		"user": utils.RegisterResponse{
+			ID:              updated.ID,
+			FullName:        updated.FullName,
+			Email:           updated.Email,
+			Phone:           updated.Phone,
+			Role:            updated.Role,
+			IsEmailVerified: updated.IsEmailVerified,
+			IsActive:        updated.IsActive,
+			CreatedAt:       utils.FormatDateTime(updated.CreatedAt),
+		},
+	})
+}
+
+func (h *EventHubHandler) handleChangePassword(c *gin.Context) {
+	claims, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	authClaims := claims.(*auth.Claims)
+
+	var req ChangePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := h.querier.GetUserByID(c, authClaims.ID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	if err := auth.VerifyPassword(user.PasswordHash, req.CurrentPassword); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "current password is incorrect"})
+		return
+	}
+
+	newHash, err := auth.HashPassword(req.NewPassword)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to hash password"})
+		return
+	}
+
+	if err := h.querier.UpdateUserPassword(c, repo.UpdateUserPasswordParams{
+		Email:        user.Email,
+		PasswordHash: newHash,
+	}); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update password"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Password changed successfully"})
+}
+
+func (h *EventHubHandler) handleDeleteAccount(c *gin.Context) {
+	claims, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	authClaims := claims.(*auth.Claims)
+
+	if err := h.querier.DeleteUser(c, authClaims.ID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete account"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Account deleted"})
+}
+
 func (h *EventHubHandler) handleGetCurrentUser(c *gin.Context) {
 	claims, exists := c.Get("user")
 	if !exists {
@@ -377,7 +486,30 @@ func (h *EventHubHandler) handleGetCurrentUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"user": claims})
+	authClaims, ok := claims.(*auth.Claims)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token claims"})
+		return
+	}
+
+	user, err := h.querier.GetUserByID(c, authClaims.ID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"user": utils.RegisterResponse{
+			ID:              user.ID,
+			FullName:        user.FullName,
+			Email:           user.Email,
+			Phone:           user.Phone,
+			Role:            user.Role,
+			IsEmailVerified: user.IsEmailVerified,
+			IsActive:        user.IsActive,
+			CreatedAt:       utils.FormatDateTime(user.CreatedAt),
+		},
+	})
 }
 
 func (h *EventHubHandler) handleResendOTP(c *gin.Context) {

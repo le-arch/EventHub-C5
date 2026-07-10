@@ -31,6 +31,7 @@ import {
   CreditCard,
   Smartphone,
   ShieldAlert,
+  DollarSign,
 } from 'lucide-react'
 
 // shadcn/ui components
@@ -98,6 +99,8 @@ export default function AdminTransactionsPage() {
   const [methodFilter, setMethodFilter] = useState<string>('all')
   const [transactionToRefund, setTransactionToRefund] = useState<Transaction | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [transactionToMarkPaid, setTransactionToMarkPaid] = useState<Transaction | null>(null)
+  const [isMarkingPaid, setIsMarkingPaid] = useState(false)
   
   // Pagination state
   const [page, setPage] = useState(1)
@@ -155,6 +158,26 @@ export default function AdminTransactionsPage() {
     } finally {
       setIsProcessing(false)
       setTransactionToRefund(null)
+    }
+  }
+
+  /**
+   * Mark a pending transaction as paid
+   */
+  const handleMarkPaid = async () => {
+    if (!transactionToMarkPaid) return
+
+    setIsMarkingPaid(true)
+    try {
+      const orderId = (transactionToMarkPaid as any).orderId || (transactionToMarkPaid as any).id
+      await api.put(`/admin/orders/${orderId}/mark-paid`)
+      toast.success(`Payment confirmed for ${transactionToMarkPaid.attendeeName}`)
+      fetchTransactions()
+    } catch (error) {
+      toast.error('Failed to mark transaction as paid')
+    } finally {
+      setIsMarkingPaid(false)
+      setTransactionToMarkPaid(null)
     }
   }
 
@@ -422,7 +445,7 @@ export default function AdminTransactionsPage() {
                       </TableCell>
                       <TableCell className="py-3.5">{getStatusBadge(txStatus)}</TableCell>
                       <TableCell className="py-3.5">
-                        {txStatus === 'paid' && (
+                        {(txStatus === 'paid' || txStatus === 'pending') && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="hover:bg-muted/30 h-8 w-8 rounded-lg">
@@ -430,13 +453,24 @@ export default function AdminTransactionsPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="bg-card border border-border font-medium shadow-sm rounded-xl">
-                              <DropdownMenuItem
-                                onClick={() => setTransactionToRefund(transaction)}
-                                className="text-rose-600 focus:text-rose-700 focus:bg-rose-50 cursor-pointer py-1.5 text-xs font-semibold"
-                              >
-                                <RefreshCw className="h-3.5 w-3.5 mr-2 text-rose-500" />
-                                Refund Payment
-                              </DropdownMenuItem>
+                              {txStatus === 'pending' && (
+                                <DropdownMenuItem
+                                  onClick={() => setTransactionToMarkPaid(transaction)}
+                                  className="text-emerald-600 focus:text-emerald-700 focus:bg-emerald-50 cursor-pointer py-1.5 text-xs font-semibold"
+                                >
+                                  <DollarSign className="h-3.5 w-3.5 mr-2 text-emerald-500" />
+                                  Mark as Paid
+                                </DropdownMenuItem>
+                              )}
+                              {txStatus === 'paid' && (
+                                <DropdownMenuItem
+                                  onClick={() => setTransactionToRefund(transaction)}
+                                  className="text-rose-600 focus:text-rose-700 focus:bg-rose-50 cursor-pointer py-1.5 text-xs font-semibold"
+                                >
+                                  <RefreshCw className="h-3.5 w-3.5 mr-2 text-rose-500" />
+                                  Refund Payment
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         )}
@@ -520,6 +554,48 @@ export default function AdminTransactionsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Mark as Paid Confirmation Dialog */}
+      <ConfirmationDialog
+        open={!!transactionToMarkPaid}
+        onOpenChange={() => setTransactionToMarkPaid(null)}
+        onConfirm={handleMarkPaid}
+        title="Confirm Payment"
+        description={`Mark the pending order from ${transactionToMarkPaid?.attendeeName} as paid? This will allow check-in.`}
+        confirmText="Confirm Payment"
+        cancelText="Cancel"
+        variant="info"
+        isLoading={isMarkingPaid}
+      >
+        <div className="mt-3 p-4 bg-emerald-50/50 rounded-xl border border-emerald-200 text-foreground text-sm font-medium">
+          <div className="flex items-center gap-2 text-emerald-900 font-bold mb-3 text-xs uppercase tracking-wider">
+            <DollarSign className="h-4 w-4 text-emerald-600 shrink-0" />
+            <span>Payment confirmation is irreversible</span>
+          </div>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between items-center py-1 border-b border-emerald-200/40">
+              <span className="text-muted-foreground">Order:</span>
+              <code className="font-mono font-semibold text-foreground bg-card border border-border px-1 py-0.5 rounded">
+                {transactionToMarkPaid?.id?.slice(0, 12)}...
+              </code>
+            </div>
+            <div className="flex justify-between items-center py-1 border-b border-emerald-200/40">
+              <span className="text-muted-foreground">Attendee:</span>
+              <span className="font-semibold text-foreground">{transactionToMarkPaid?.attendeeName}</span>
+            </div>
+            <div className="flex justify-between items-center py-1 border-b border-emerald-200/40">
+              <span className="text-muted-foreground">Amount:</span>
+              <span className="font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded">
+                {formatCurrency(transactionToMarkPaid?.amount || 0)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-1">
+              <span className="text-muted-foreground">Event:</span>
+              <span className="font-semibold text-foreground max-w-[180px] truncate">{transactionToMarkPaid?.eventTitle}</span>
+            </div>
+          </div>
+        </div>
+      </ConfirmationDialog>
 
       {/* Refund Management Portal Interstitial Dialog */}
       <ConfirmationDialog

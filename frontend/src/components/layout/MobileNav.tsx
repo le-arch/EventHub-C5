@@ -13,6 +13,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Calendar, Users, BarChart3, Settings, Home, Ticket, QrCode } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useEventStore } from '@/store/eventStore'
 
 interface MobileNavItem {
   label: string
@@ -20,14 +21,6 @@ interface MobileNavItem {
   icon: React.ElementType
   requiresAuth?: boolean
 }
-
-const organizerNavItems: MobileNavItem[] = [
-  { label: 'Events', href: '/organizer/events', icon: Calendar, requiresAuth: true },
-  { label: 'Attendees', href: '/organizer/attendees', icon: Users, requiresAuth: true },
-  { label: 'Scanner', href: '/organizer/checkin', icon: QrCode, requiresAuth: true },
-  { label: 'Analytics', href: '/organizer/analytics', icon: BarChart3, requiresAuth: true },
-  { label: 'Settings', href: '/organizer/settings', icon: Settings, requiresAuth: true },
-]
 
 const adminNavItems: MobileNavItem[] = [
   { label: 'Users', href: '/admin/users', icon: Users, requiresAuth: true },
@@ -49,6 +42,16 @@ interface MobileNavProps {
 
 export function MobileNav({ userRole, isAuthenticated = false }: MobileNavProps) {
   const pathname = usePathname()
+  const currentEvent = useEventStore((s) => s.currentEvent)
+  const eventId = currentEvent?.id
+
+  const organizerNavItems: MobileNavItem[] = [
+    { label: 'Events', href: '/organizer/events', icon: Calendar, requiresAuth: true },
+    { label: 'Attendees', href: eventId ? `/organizer/attendees/${eventId}` : '/organizer/events', icon: Users, requiresAuth: true },
+    { label: 'Scanner', href: eventId ? `/organizer/checkin/${eventId}` : '/organizer/events', icon: QrCode, requiresAuth: true },
+    { label: 'Analytics', href: eventId ? `/organizer/analytics/${eventId}` : '/organizer/events', icon: BarChart3, requiresAuth: true },
+    { label: 'Settings', href: '/organizer/settings', icon: Settings, requiresAuth: true },
+  ]
 
   // Select nav items based on user role
   let navItems: MobileNavItem[] = []

@@ -16,7 +16,7 @@
 
 'use client'
 
-import { useState, useEffect, useDeferredValue } from 'react'
+import { useState, useEffect, useDeferredValue, useCallback } from 'react'
 import Link from 'next/link'
 import {
   Search,
@@ -72,93 +72,120 @@ import { ConfirmationDialog } from '@/components/common/ConfirmationDialog'
 import { Pagination } from '@/components/common/Pagination'
 
 // Stores & Utilities
-import { useEventStore, type Event } from '@/store/eventStore'
 import { useAuthStore, type User } from '@/store/authStore'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 import { formatDate, formatCurrency } from '@/lib/utils'
 
-// Extended Event type for admin view
-interface AdminEvent extends Event {
+interface AdminEvent {
+  id: string
+  title: string
+  slug: string
+  status: string
+  venue: string
+  city: string
+  startDate: string
+  startTime: string
   organizerId: string
   organizerName: string
   organizerEmail: string
   ticketsSold: number
   totalRevenue: number
+  capacityRange?: { lower: number; upper: number }
+  ticketStats?: { totalSold: number; totalRevenue: number }
 }
 
 export default function AdminEventsPage() {
-  // Store actions and state
-  const { 
-    events, 
-    isLoading, 
-    fetchEvents, 
-    totalCount,
-    page,
-    pageSize,
-    setPage,
-    setPageSize,
-    searchTerm,
-    statusFilter,
-    setSearchTerm,
-    setStatusFilter,
-  } = useEventStore()
-  
-  // Auth store for user info (admin)
   const { user: adminUser } = useAuthStore()
-  
-  const [localEvents, setLocalEvents] = useState<AdminEvent[]>([])
-  const [eventToCancel, setEventToCancel] = useState<Event | null>(null)
+
+  const [events, setEvents] = useState<AdminEvent[]>([])
+  const [loading, setLoading] = useState(true)
+  const [totalCount, setTotalCount] = useState(0)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [eventToCancel, setEventToCancel] = useState<AdminEvent | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [totalPages, setTotalPages] = useState(1)
-  
-  // Use deferred value for search optimization
+
   const deferredSearchTerm = useDeferredValue(searchTerm)
 
-  // Fetch events when page, pageSize, search, or status filter changes
-  useEffect(() => {
-    fetchEvents()
-  }, [page, pageSize, deferredSearchTerm, statusFilter, fetchEvents])
+  const fetchAdminEvents = useCallback(async () => {
+    setLoading(true)
+    try {
+      const response = await api.get('/Organization/events')
+      const data = Array.isArray(response.data) ? response.data : []
 
-  // Calculate total pages when totalCount changes
+      // Client-side search filter
+      const mapped: AdminEvent[] = data.map((e: any) => ({
+        id: e.id,
+        title: e.title || '',
+        slug: e.slug || '',
+        status: e.status || '',
+        venue: e.venue || '',
+        city: e.city || '',
+        startDate: e.startDate || '',
+        startTime: e.startTime || '',
+        organizerId: e.organizerId || '',
+        organizerName: e.organizerName || 'Unknown',
+        organizerEmail: e.organizerEmail || '',
+        ticketsSold: e.ticketStats?.totalSold ?? 0,
+        totalRevenue: e.ticketStats?.totalRevenue ?? 0,
+        capacityRange: e.capacityRange,
+      }))
+
+      let filtered = mapped
+      if (deferredSearchTerm) {
+        const q = deferredSearchTerm.toLowerCase()
+        filtered = mapped.filter(
+          (e) =>
+            e.title.toLowerCase().includes(q) ||
+            e.organizerName.toLowerCase().includes(q) ||
+            e.organizerEmail.toLowerCase().includes(q)
+        )
+      }
+      if (statusFilter !== 'all') {
+        filtered = filtered.filter((e) => e.status === statusFilter)
+      }
+
+      setTotalCount(filtered.length)
+      setTotalPages(Math.ceil(filtered.length / pageSize) || 1)
+
+      const start = (page - 1) * pageSize
+      const paginated = filtered.slice(start, start + pageSize)
+      setEvents(paginated)
+    } catch {
+      toast.error('Failed to load events')
+    } finally {
+      setLoading(false)
+    }
+  }, [page, pageSize, deferredSearchTerm, statusFilter])
+
+  useEffect(() => {
+    fetchAdminEvents()
+  }, [fetchAdminEvents])
+
   useEffect(() => {
     setTotalPages(Math.ceil(totalCount / pageSize) || 1)
   }, [totalCount, pageSize])
 
-  useEffect(() => {
-    const mappedEvents: AdminEvent[] = events.map((event) => ({
-      ...event,
-      organizerId: (event as any).organizerId || '',
-      organizerName: (event as any).organizerName || 'Unknown Organizer',
-      organizerEmail: (event as any).organizerEmail || 'No email provided',
-      ticketsSold: event.ticketStats?.totalSold || 0,
-      totalRevenue: event.ticketStats?.totalRevenue || 0,
-    }))
-    setLocalEvents(mappedEvents)
-  }, [events])
-
-  /**
-   * Cancel an event via admin API
-   */
   const handleCancelEvent = async () => {
     if (!eventToCancel) return
     
     setIsProcessing(true)
     try {
       await api.put(`/admin/events/${eventToCancel.id}/cancel`)
-      toast.success(`✅ "${eventToCancel.title}" cancelled successfully`)
-      await fetchEvents()
-    } catch (error) {
-      toast.error('❌ Failed to cancel event')
+      toast.success(`"${eventToCancel.title}" cancelled successfully`)
+      await fetchAdminEvents()
+    } catch {
+      toast.error('Failed to cancel event')
     } finally {
       setIsProcessing(false)
       setEventToCancel(null)
     }
   }
 
-  /**
-   * Reset search and filters
-   */
   const handleResetFilters = () => {
     setSearchTerm('')
     setStatusFilter('all')
@@ -204,7 +231,7 @@ export default function AdminEventsPage() {
   }
 
   // Loading skeleton
-  if (isLoading && events.length === 0) {
+  if (loading && events.length === 0) {
     return (
       <div className="space-y-6 max-w-7xl mx-auto p-4 bg-[#fcfaff] min-h-screen">
         <Skeleton className="h-6 w-64 bg-purple-200/50" />
@@ -326,7 +353,7 @@ export default function AdminEventsPage() {
       {/* Dynamic Count Tracker Info Layer */}
       <div className="text-sm text-foreground flex items-center gap-2 px-1 font-semibold">
         <CalendarDays className="h-4 w-4 text-purple-600" />
-        Showing <span className="text-purple-700 font-black">{localEvents.length}</span> out of <span className="text-foreground font-black">{totalCount}</span> functional system queries
+        Showing <span className="text-purple-700 font-black">{events.length}</span> out of <span className="text-foreground font-black">{totalCount}</span> functional system queries
       </div>
 
       {/* Main Core Architecture Spreadsheet Table */}
@@ -347,7 +374,7 @@ export default function AdminEventsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {localEvents.length === 0 ? (
+                {events.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-16 bg-card">
                       <div className="flex flex-col items-center gap-3">
@@ -373,7 +400,7 @@ export default function AdminEventsPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  localEvents.map((event) => (
+                  events.map((event) => (
                     <TableRow 
                       key={event.id} 
                       className="hover:bg-purple-50/50 border-b border-purple-100/60 transition-colors"
@@ -421,7 +448,7 @@ export default function AdminEventsPage() {
                       </TableCell>
                       <TableCell className="py-4">
                         <span className="font-extrabold text-foreground bg-muted/30 px-2.5 py-1 rounded-lg border border-border text-sm">
-                          {event.ticketsSold.toLocaleString()}
+                          {(event.ticketsSold ?? 0).toLocaleString()}
                         </span>
                       </TableCell>
                       <TableCell className="py-4">
@@ -491,7 +518,7 @@ export default function AdminEventsPage() {
           <CardContent className="pt-5 pb-5">
             <div className="text-center">
               <CalendarDays className="h-7 w-7 text-purple-700 mx-auto mb-2" />
-              <p className="text-3xl font-black text-foreground tracking-tight">{localEvents.length}</p>
+              <p className="text-3xl font-black text-foreground tracking-tight">{events.length}</p>
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Total Query Rows</p>
             </div>
           </CardContent>
@@ -501,7 +528,7 @@ export default function AdminEventsPage() {
             <div className="text-center">
               <CheckCircle className="h-7 w-7 text-emerald-700 mx-auto mb-2" />
               <p className="text-3xl font-black text-emerald-700 tracking-tight">
-                {localEvents.filter(e => e.status === 'published').length}
+                {events.filter(e => e.status === 'published').length}
               </p>
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Live Broadcasts </p>
             </div>
@@ -512,7 +539,7 @@ export default function AdminEventsPage() {
             <div className="text-center">
               <Ticket className="h-7 w-7 text-blue-700 mx-auto mb-2" />
               <p className="text-3xl font-black text-blue-900 tracking-tight">
-                {localEvents.reduce((sum, e) => sum + e.ticketsSold, 0).toLocaleString()}
+                {events.reduce((sum, e) => sum + e.ticketsSold, 0).toLocaleString()}
               </p>
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Receipt Indexes </p>
             </div>
@@ -523,7 +550,7 @@ export default function AdminEventsPage() {
             <div className="text-center">
               <DollarSign className="h-7 w-7 text-amber-700 mx-auto mb-2" />
               <p className="text-3xl font-black text-amber-900 tracking-tight">
-                {formatCurrency(localEvents.reduce((sum, e) => sum + e.totalRevenue, 0))}
+                {formatCurrency(events.reduce((sum, e) => sum + e.totalRevenue, 0))}
               </p>
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Combined Ledger </p>
             </div>

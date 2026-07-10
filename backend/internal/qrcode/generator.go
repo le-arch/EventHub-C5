@@ -4,12 +4,26 @@ package qrcode
 import (
 	"context"
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 
 	"github.com/skip2/go-qrcode"
 )
+
+const manualCodeChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+// GenerateManualCode creates an 8-character human-readable code (e.g. A7K2-M9P1).
+func GenerateManualCode() string {
+	b := make([]byte, 8)
+	for i := range b {
+		n, _ := rand.Int(rand.Reader, big.NewInt(int64(len(manualCodeChars))))
+		b[i] = manualCodeChars[n.Int64()]
+	}
+	return string(b[:4]) + "-" + string(b[4:])
+}
 
 // MinioUploader is an interface to upload files to MinIO.
 type MinioUploader interface {
