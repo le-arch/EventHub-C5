@@ -38,7 +38,7 @@ func (h *EventHubHandler) handleCheckin(c *gin.Context) {
 
 	//  Verify payment status (only paid tickets can be checked in)
 	if order.PaymentStatus != repo.PaymentStatusPaid {
-		c.JSON(http.StatusForbidden, gin.H{"error": "ticket not paid"})
+		c.JSON(http.StatusPaymentRequired, gin.H{"error": "ticket not paid"})
 		return
 	}
 

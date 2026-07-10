@@ -37,6 +37,14 @@ func (h *EventHubHandler) handleRegister(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Email already exists"})
 		return
 	}
+
+	//check if the phone number already exists in the database to prevent duplicate registrations
+	_, err = h.querier.GetUserByPhone(c, req.Phone)
+	if err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Phone number already exists"})
+		return
+	}
+
 	//hash the password before storing it in the database
 	var hashedPassword, e = auth.HashPassword(req.PasswordHash)
 	if e != nil {
@@ -97,6 +105,20 @@ func (h *EventHubHandler) handleVerifyEmail(c *gin.Context) {
 		return
 	}
 
+	//check if the email already exists in the database before creating the user
+	_, err = h.querier.GetUserByEmail(c, pendingMap["email"].(string))
+	if err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "An account with this email already exists"})
+		return
+	}
+
+	//check if the phone number already exists in the database before creating the user
+	_, err = h.querier.GetUserByPhone(c, pendingMap["phone"].(string))
+	if err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "An account with this phone number already exists"})
+		return
+	}
+
 	verified := true
 
 	//create the user in the database
@@ -110,7 +132,7 @@ func (h *EventHubHandler) handleVerifyEmail(c *gin.Context) {
 	})
 	//handle any errors that occur during user creation
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user: " + err.Error()})
+		c.JSON(http.StatusConflict, gin.H{"error": "Failed to create user. The email or phone number may already be registered."})
 		return
 	}
 

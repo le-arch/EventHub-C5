@@ -175,6 +175,29 @@ func (q *Queries) GetUserByIDForAdmin(ctx context.Context, id uuid.UUID) (GetUse
 	return i, err
 }
 
+const getUserByPhone = `-- name: GetUserByPhone :one
+SELECT id, email, phone, password_hash, full_name, role, is_email_verified, is_active, created_at, updated_at FROM users 
+WHERE phone = $1
+`
+
+func (q *Queries) GetUserByPhone(ctx context.Context, phone string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByPhone, phone)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Phone,
+		&i.PasswordHash,
+		&i.FullName,
+		&i.Role,
+		&i.IsEmailVerified,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateUserActiveStatus = `-- name: UpdateUserActiveStatus :exec
 UPDATE users 
 SET is_active = $2 

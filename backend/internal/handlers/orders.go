@@ -121,9 +121,22 @@ if deviceInfo != "" {
 
 	// Update order with transaction ID
 	txID := momoResp.TransactionID
+	paymentStatus := repo.PaymentStatusPending
+
+	if h.momoClient.IsSandbox() {
+		paymentStatus = repo.PaymentStatusPaid
+		_, err := h.querier.DecrementTicketQuantity(c, repo.DecrementTicketQuantityParams{
+			ID:                order.TicketTypeID,
+			QuantityAvailable: order.Quantity,
+		})
+		if err != nil {
+			log.Printf("Failed to decrement ticket quantity in sandbox mode: %v", err)
+		}
+	}
+
 	_ = h.querier.UpdateOrderPayment(c, repo.UpdateOrderPaymentParams{
 		ID:            order.ID,
-		PaymentStatus: repo.PaymentStatusPending,
+		PaymentStatus: paymentStatus,
 		TransactionID: &txID,
 	})
 
@@ -150,7 +163,7 @@ if deviceInfo != "" {
 		Quantity:       order.Quantity,
 		UnitPrice:      order.UnitPrice,
 		TotalAmount:    order.TotalAmount,
-		PaymentStatus:  string(order.PaymentStatus),
+		PaymentStatus:  string(paymentStatus),
 		TransactionID:  &txID,
 		QRCodeHash:     order.QrCodeHash,
 		QRCodeImageURL: qrImageURL,

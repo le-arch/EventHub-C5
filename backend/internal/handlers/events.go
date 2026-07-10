@@ -359,6 +359,13 @@ func parseDatePtr(s *string) *time.Time {
     return &t
 }
 
+func derefStr(s *string) string {
+    if s == nil {
+        return ""
+    }
+    return *s
+}
+
 func (h *EventHubHandler) handleUpdateEvent(c *gin.Context) {
 	// Get authenticated organizer id
 	organizerID, err := utils.ExtractOrganizerID(c)
@@ -397,12 +404,12 @@ func (h *EventHubHandler) handleUpdateEvent(c *gin.Context) {
         OrganizerID: organizerID,
         Title:       req.Title,
         Slug:        req.Slug,
-        Description: req.Description,
-        Venue:       req.Venue,
+        Description: derefStr(req.Description),
+        Venue:       derefStr(req.Venue),
         City:        req.City,
         StartTime:   req.StartTime,
         EndTime:     req.EndTime,
-        CoverImageUrl: req.CoverImageUrl,
+        CoverImageUrl: derefStr(req.CoverImageUrl),
         Status:      req.Status,
         StartDate:   parseDatePtr(req.StartDate),
         EndDate:     parseDatePtr(req.EndDate),
@@ -701,7 +708,7 @@ func (h *EventHubHandler) handleUpdateTicketType(c *gin.Context) {
         ID:      ticketID,
         EventID: eventID,
         Name:    req.Name,
-        Description: req.Description,
+        Description: derefStr(req.Description),
         Price:       req.Price,
         QuantityAvailable: req.QuantityAvailable,
         IsActive:    req.IsActive,
