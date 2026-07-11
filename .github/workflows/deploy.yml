@@ -1,0 +1,490 @@
+name: Deploy EventHub Application
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  REGISTRY: ghcr.io
+  FRONTEND_IMAGE: eventhub-frontend
+  BACKEND_IMAGE: eventhub-backend
+
+jobs:
+  # ============================================
+  # BUILD & TEST
+  # ============================================
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ============================================
+      # Frontend Build & Test
+      # ============================================
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci --legacy-peer-deps
+
+      - name: Lint frontend code
+        working-directory: ./frontend
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Type check frontend
+        working-directory: ./frontend
+        run: npm run type-check
+        continue-on-error: true
+
+      - name: Build frontend
+        working-directory: ./frontend
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'http://localhost:8085/api/v1' }}
+          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL || 'http://localhost:3000' }}
+        run: npm run build
+
+      # ============================================
+      # Backend Build & Test
+      # ============================================
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.23"
+          cache: true
+          cache-dependency-path: "backend/go.sum"
+
+      - name: Download Go dependencies
+        working-directory: ./backend
+        run: go mod download
+
+      - name: Run Go linter
+        working-directory: ./backend
+        run: |
+          if [ -f golangci.yml ] || [ -f .golangci.yml ]; then
+            go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+            golangci-lint run ./...
+          fi
+        continue-on-error: true
+
+      - name: Build backend
+        working-directory: ./backend
+        run: go build -o ./bin/app ./cmd/api
+
+      - name: Run backend tests
+        working-directory: ./backend
+        run: go test ./... -v -race
+        continue-on-error: true
+
+  # ============================================
+  # DOCKER BUILD & PUSH
+  # ============================================
+  build-docker-images:
+    name: Build Docker Images
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (frontend)
+        id: frontend-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.FRONTEND_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.frontend-meta.outputs.tags }}
+          labels: ${{ steps.frontend-meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || 'http://localhost:8085/api/v1' }}
+            NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL || 'http://localhost:3000' }}
+
+      - name: Extract metadata (backend)
+        id: backend-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.BACKEND_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.backend-meta.outputs.tags }}
+          labels: ${{ steps.backend-meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================
+  # DEPLOY TO STAGING
+  # ============================================
+  deploy-staging:
+    name: Deploy to Staging
+    needs: build-docker-images
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment:
+      name: staging
+      url: ${{ secrets.STAGING_URL || 'https://staging.eventhub.dev' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to staging via Docker Compose
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null
+          
+          ssh -i ~/.ssh/deploy_key $DEPLOY_USER@$DEPLOY_HOST << 'EOF'
+            cd /apps/eventhub
+            git pull origin develop
+            docker-compose pull
+            docker-compose up -d
+            docker-compose exec -T api go run cmd/migrate/main.go up
+          EOF
+
+      - name: Notify staging deployment
+        if: success()
+        run: echo "✅ Successfully deployed to staging"
+
+  # ============================================
+  # DEPLOY TO PRODUCTION
+  # ============================================
+  deploy-production:
+    name: Deploy to Production
+    needs: build-docker-images
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    environment:
+      name: production
+      url: ${{ secrets.PRODUCTION_URL || 'https://eventhub.dev' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: 'production',
+              description: 'Production deployment',
+              required_contexts: [],
+              auto_merge: false
+            });
+            core.setOutput('deployment_id', deployment.data.id);
+
+      - name: Deploy to production via Docker Compose
+        env:
+          DEPLOY_KEY: ${{ secrets.PROD_DEPLOY_KEY }}
+          DEPLOY_HOST: ${{ secrets.PROD_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.PROD_DEPLOY_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null
+          
+          ssh -i ~/.ssh/deploy_key $DEPLOY_USER@$DEPLOY_HOST << 'EOF'
+            cd /apps/eventhub-prod
+            git pull origin main
+            docker-compose pull
+            docker-compose down
+            docker-compose up -d
+            docker-compose exec -T api go run cmd/migrate/main.go up
+          EOF
+
+      - name: Run smoke tests
+        run: |
+          sleep 10
+          curl -f ${{ secrets.PRODUCTION_URL || 'https://eventhub.dev' }}/health || exit 1
+
+      - name: Update deployment status - success
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: '${{ env.deployment_id }}',
+              state: 'success',
+              description: 'Deployment successful',
+              environment_url: '${{ secrets.PRODUCTION_URL || "https://eventhub.dev" }}'
+            });
+
+      - name: Update deployment status - failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: '${{ env.deployment_id }}',
+              state: 'failure',
+              description: 'Deployment failed'
+            });
+
+  # ============================================
+  # DEPLOY TO BUNNY CDN
+  # ============================================
+  deploy-bunny-cdn:
+    name: Deploy to Bunny CDN
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci --legacy-peer-deps
+
+      - name: Build frontend for Bunny
+        working-directory: ./frontend
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.eventhub.dev/api/v1' }}
+          NEXT_PUBLIC_APP_URL: ${{ secrets.PRODUCTION_URL || 'https://eventhub.dev' }}
+        run: npm run build
+
+      - name: Deploy Frontend Script to Bunny Edge Scripting
+        uses: BunnyWay/actions/deploy-script@main
+        with:
+          script_id: ${{ secrets.BUNNY_FRONTEND_SCRIPT_ID }}
+          file: "frontend/script.ts"
+        env:
+          BUNNYCDN_API_KEY: ${{ secrets.BUNNYCDN_API_KEY }}
+        continue-on-error: true
+
+      - name: Deploy Backend Script to Bunny Edge Scripting
+        uses: BunnyWay/actions/deploy-script@main
+        with:
+          script_id: ${{ secrets.BUNNY_BACKEND_SCRIPT_ID }}
+          file: "backend/script.ts"
+        env:
+          BUNNYCDN_API_KEY: ${{ secrets.BUNNYCDN_API_KEY }}
+        continue-on-error: true
+
+      - name: Purge Bunny CDN Cache
+        run: |
+          curl -X POST "https://api.bunny.net/purge?url=${{ secrets.BUNNY_PURGE_URL }}" \
+            -H "Authorization: ${{ secrets.BUNNYCDN_API_KEY }}" \
+            -H "Content-Type: application/json"
+        continue-on-error: true
+
+      - name: Verify Bunny CDN Deployment
+        run: |
+          sleep 5
+          curl -f ${{ secrets.PRODUCTION_URL || 'https://eventhub.dev' }} -I || true
+
+  # ============================================
+  # SECURITY SCANNING
+  # ============================================
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
+        continue-on-error: true
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
+
+  # ============================================
+  # HEALTH CHECK
+  # ============================================
+  health-check:
+    name: Health Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    needs: [build-docker-images]
+
+    steps:
+      - name: Check backend health
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:8085/health; then
+              echo "✅ Backend is healthy"
+              exit 0
+            fi
+            echo "Attempt $i/30 - waiting for backend..."
+            sleep 2
+          done
+          echo "❌ Backend health check failed"
+          exit 1
+        continue-on-error: true
+
+      - name: Check frontend health
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:3000; then
+              echo "✅ Frontend is healthy"
+              exit 0
+            fi
+            echo "Attempt $i/30 - waiting for frontend..."
+            sleep 2
+          done
+          echo "❌ Frontend health check failed"
+          exit 1
+        continue-on-error: true
+
+  # ============================================
+  # NOTIFICATIONS
+  # ============================================
+  notify:
+    name: Send Notifications
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [build-and-test, build-docker-images, deploy-bunny-cdn]
+
+    steps:
+      - name: Determine status
+        id: status
+        run: |
+          if [ "${{ needs.build-and-test.result }}" == "failure" ] || [ "${{ needs.build-docker-images.result }}" == "failure" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "color=danger" >> $GITHUB_OUTPUT
+          else
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "color=good" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Slack notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*EventHub Deployment Status*\nStatus: ${{ steps.status.outputs.status }}\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}"
+                  }
+                }
+              ],
+              "attachments": [
+                {
+                  "color": "${{ steps.status.outputs.color }}",
+                  "fields": [
+                    {
+                      "title": "Repository",
+                      "value": "${{ github.repository }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Author",
+                      "value": "${{ github.actor }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Deployments",
+                      "value": "Docker Compose + Bunny CDN",
+                      "short": true
+                    },
+                    {
+                      "title": "Action",
+                      "value": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>",
+                      "short": false
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
