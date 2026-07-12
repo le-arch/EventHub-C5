@@ -163,8 +163,7 @@ func (h *EventHubHandler) handleUploadImage(c *gin.Context) {
     }
     defer src.Close()
 
-    // Upload to MinIO
-    url, err := h.MinioClient.UploadEventImage(src, file)
+    url, err := h.Storage.UploadEventImage(src, file)
     if err != nil {
         log.Printf("MinIO upload error: %v", err)
         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload image"})

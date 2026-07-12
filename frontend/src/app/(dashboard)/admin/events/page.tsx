@@ -16,8 +16,10 @@
 
 'use client'
 
-import { useState, useEffect, useDeferredValue, useCallback } from 'react'
+import { useState, useEffect, useDeferredValue, useCallback, useMemo } from 'react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import {
   Search,
   Filter,
@@ -33,6 +35,9 @@ import {
   DollarSign,
   CheckCircle,
   FileText,
+  BarChart3,
+  Sparkles,
+  TrendingUp,
 } from 'lucide-react'
 
 // shadcn/ui components
@@ -271,34 +276,93 @@ export default function AdminEventsPage() {
     )
   }
 
+  const statusChartData = useMemo(() => {
+    const counts: Record<string, number> = {}
+    const statusColors: Record<string, string> = { published: '#10B981', draft: '#F59E0B', cancelled: '#EF4444', completed: '#3B82F6' }
+    const allEvents = Array.isArray(events) ? events : []
+    allEvents.forEach(e => { counts[e.status] = (counts[e.status] || 0) + 1 })
+    return Object.entries(counts).map(([status, count]) => ({ name: status.charAt(0).toUpperCase() + status.slice(1), value: count, fill: statusColors[status] || '#888' }))
+  }, [events])
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 bg-[#fcfaff] min-h-screen text-foreground">
       {/* Breadcrumb Section */}
-      <Breadcrumb 
-        items={[
-          { label: 'Admin', href: '/admin/users' },
-          { label: 'Events', href: '#', isActive: true },
-        ]}
-        showHome
-      />
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+        <Breadcrumb 
+          items={[
+            { label: 'Admin', href: '/admin/users' },
+            { label: 'Events', href: '#', isActive: true },
+          ]}
+          showHome
+        />
+      </motion.div>
 
       {/* Main Feature Dashboard Jumbotron Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600 p-6 rounded-2xl shadow-md text-white border border-purple-800">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 80, damping: 15 }}
+        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600 p-6 rounded-2xl shadow-md text-white border border-purple-800"
+      >
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-md border border-white/20 shadow-inner">
-            <CalendarDays className="h-8 w-8 text-white" />
-          </div>
+          <motion.div
+            animate={{ rotate: [0, -8, 8, -8, 0], scale: [1, 1.05, 1.05, 1.05, 1] }}
+            transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
+            className="p-3 bg-white/20 rounded-xl backdrop-blur-md border border-white/20 shadow-inner"
+          >
+            <Sparkles className="h-8 w-8 text-white" />
+          </motion.div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight">Event Management <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600" > 📅</span> </h1>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight">Event Management</h1>
             <p className="text-purple-100 text-sm font-medium mt-0.5">
               Supervise, review performance metrics, and moderate production events platform-wide.
             </p>
           </div>
         </div>
-        <div className="text-purple-950 text-sm font-bold bg-card px-4 py-2.5 rounded-xl shadow-md border border-purple-200">
-          Total Base: <span className="text-purple-700 font-extrabold text-base ml-1">{totalCount}</span> metrics accounts
-        </div>
-      </div>
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 120, damping: 10, delay: 0.3 }}
+          className="text-purple-950 text-sm font-bold bg-white/90 backdrop-blur px-4 py-2.5 rounded-xl shadow-md border border-purple-200"
+        >
+          Total: <span className="text-purple-700 font-extrabold text-base ml-1">{totalCount}</span> events
+        </motion.div>
+      </motion.div>
+
+      {/* Status Chart */}
+      {statusChartData.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Card className="border-2 border-purple-100 bg-card shadow-sm overflow-hidden">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart3 className="h-5 w-5 text-purple-600" />
+                <h3 className="font-semibold text-sm text-foreground">Event Status Distribution</h3>
+              </div>
+              <div className="h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={statusChartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    />
+                    <Bar dataKey="value" radius={[6, 6, 0, 0]} animationBegin={300} animationDuration={1000}>
+                      {statusChartData.map((entry, i) => (
+                        <Cell key={i} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Filter and Search Layout Grid */}
       <Card className="border-2 border-purple-100 bg-card shadow-sm">
@@ -400,10 +464,13 @@ export default function AdminEventsPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  events.map((event) => (
-                    <TableRow 
-                      key={event.id} 
-                      className="hover:bg-purple-50/50 border-b border-purple-100/60 transition-colors"
+                  events.map((event, index) => (
+                    <motion.tr
+                      key={event.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.03, type: 'spring', stiffness: 80, damping: 15 }}
+                      className="hover:bg-purple-50/50 border-b border-purple-100/60 transition-colors group"
                     >
                       <TableCell className="py-4">
                         <div>
@@ -487,7 +554,7 @@ export default function AdminEventsPage() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
-                    </TableRow>
+                    </motion.tr>
                   ))
                 )}
               </TableBody>
@@ -513,50 +580,41 @@ export default function AdminEventsPage() {
       )}
 
       {/* High-Contrast Bottom Aggregated KPI Cards Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-2 border-purple-200 bg-card shadow-sm rounded-xl">
-          <CardContent className="pt-5 pb-5">
-            <div className="text-center">
-              <CalendarDays className="h-7 w-7 text-purple-700 mx-auto mb-2" />
-              <p className="text-3xl font-black text-foreground tracking-tight">{events.length}</p>
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Total Query Rows</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-2 border-emerald-300 bg-card shadow-sm rounded-xl">
-          <CardContent className="pt-5 pb-5">
-            <div className="text-center">
-              <CheckCircle className="h-7 w-7 text-emerald-700 mx-auto mb-2" />
-              <p className="text-3xl font-black text-emerald-700 tracking-tight">
-                {events.filter(e => e.status === 'published').length}
-              </p>
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Live Broadcasts </p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-2 border-blue-300 bg-card shadow-sm rounded-xl">
-          <CardContent className="pt-5 pb-5">
-            <div className="text-center">
-              <Ticket className="h-7 w-7 text-blue-700 mx-auto mb-2" />
-              <p className="text-3xl font-black text-blue-900 tracking-tight">
-                {events.reduce((sum, e) => sum + e.ticketsSold, 0).toLocaleString()}
-              </p>
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Receipt Indexes </p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-2 border-amber-300 bg-card shadow-sm rounded-xl">
-          <CardContent className="pt-5 pb-5">
-            <div className="text-center">
-              <DollarSign className="h-7 w-7 text-amber-700 mx-auto mb-2" />
-              <p className="text-3xl font-black text-amber-900 tracking-tight">
-                {formatCurrency(events.reduce((sum, e) => sum + e.totalRevenue, 0))}
-              </p>
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">Combined Ledger </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1 } } }}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
+        {[
+          { icon: CalendarDays, label: 'Total Query Rows', value: events.length, border: 'border-purple-200', textColor: 'text-purple-700', iconColor: 'text-purple-700' },
+          { icon: CheckCircle, label: 'Live Broadcasts', value: events.filter(e => e.status === 'published').length, border: 'border-emerald-300', textColor: 'text-emerald-700', iconColor: 'text-emerald-700' },
+          { icon: Ticket, label: 'Receipt Indexes', value: events.reduce((sum, e) => sum + e.ticketsSold, 0).toLocaleString(), border: 'border-blue-300', textColor: 'text-blue-900', iconColor: 'text-blue-700' },
+          { icon: DollarSign, label: 'Combined Ledger', value: formatCurrency(events.reduce((sum, e) => sum + e.totalRevenue, 0)), border: 'border-amber-300', textColor: 'text-amber-900', iconColor: 'text-amber-700' },
+        ].map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 80, damping: 12 } } }}
+            whileHover={{ scale: 1.03, y: -3 }}
+          >
+            <Card className={`border-2 ${stat.border} bg-card shadow-sm rounded-xl hover:shadow-lg transition-all duration-300`}>
+              <CardContent className="pt-5 pb-5">
+                <div className="text-center">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 12, delay: 0.2 + i * 0.1 }}
+                  >
+                    <stat.icon className={`h-7 w-7 ${stat.iconColor} mx-auto mb-2`} />
+                  </motion.div>
+                  <p className="text-3xl font-black text-foreground tracking-tight">{stat.value}</p>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">{stat.label}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </motion.div>
 
       {/* Structured Confirmation Dialog Box for Platform Moderation */}
       <ConfirmationDialog

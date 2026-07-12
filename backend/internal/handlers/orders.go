@@ -128,7 +128,7 @@ if deviceInfo != "" {
 
 	// Generate QR image (sync – can be async)
 	qrImageURL, _ := qrcode.GenerateAndUpload(c.Request.Context(),
-		order.ID.String(), req.AttendeeName, qrHash, h.MinioClient)
+		order.ID.String(), req.AttendeeName, qrHash, h.Storage)
 	if qrImageURL != "" {
     err := h.querier.UpdateOrderQRImage(c, repo.UpdateOrderQRImageParams{
         ID:             order.ID,

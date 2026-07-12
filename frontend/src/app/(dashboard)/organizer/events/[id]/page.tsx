@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { motion } from 'framer-motion'
 import { z } from 'zod'
 import {
   Plus,
@@ -21,6 +22,8 @@ import {
   Share2,
   TrendingUp,
   QrCode,
+  BarChart3,
+  Sparkles,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -52,7 +55,7 @@ import { TicketTypesTab, type TicketFormValues } from '@/components/events/Ticke
 
 import { useEventStore, type Event, type TicketType } from '@/store/eventStore'
 import { toast } from 'sonner'
-import { formatDate, formatTime } from '@/lib/utils'
+import { formatDate, formatTime, formatCurrency } from '@/lib/utils'
 import api, { apiClient } from '@/lib/api'
 
 const CAMEROON_CITIES = [
@@ -332,20 +335,31 @@ export default function EditEventPage() {
         showHome
       />
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <Button variant="ghost" onClick={() => router.push('/organizer/events')} className="flex items-center gap-2">
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+      >
+        <Button variant="ghost" onClick={() => router.push('/organizer/events')} className="flex items-center gap-2 hover:bg-muted/50">
           <ArrowLeft className="h-4 w-4" />
-      
         </Button>
-      </div>
+      </motion.div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <motion.div
+        initial={{ opacity: 0, y: -15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 80, damping: 15 }}
+        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+      >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Calendar className="h-6 w-6 text-primary" />
-          </div>
+          <motion.div
+            animate={{ rotate: [0, -5, 5, -5, 0] }}
+            transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
+            className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100"
+          >
+            <Sparkles className="h-6 w-6 text-indigo-600" />
+          </motion.div>
           <div>
-            <h1 className="text-2xl font-bold">Edit Event</h1>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">Edit Event</h1>
             <p className="text-muted-foreground mt-1">
               Update your event details and manage ticket types
             </p>
@@ -373,10 +387,15 @@ export default function EditEventPage() {
             </Button>
           )}
         </div>
-      </div>
+      </motion.div>
+      <div className="h-px bg-gradient-to-r from-transparent via-indigo-200 to-transparent my-2" />
 
       {isPublished && (
-        <div className="flex items-center gap-2 text-sm">
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="flex items-center gap-2 text-sm bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3"
+        >
           <span className="text-muted-foreground">Public URL:</span>
           <a
             href={`/e/${eventId}`}
@@ -396,125 +415,81 @@ export default function EditEventPage() {
           >
             <Share2 className="h-3.5 w-3.5" />
           </button>
-        </div>
+        </motion.div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Calendar className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{formatDate(event.startDate)}</p>
-                <p className="text-xs text-muted-foreground">at {formatTime(event.startTime)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <MapPin className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold">{event.venue}</p>
-                <p className="text-xs text-muted-foreground">{event.city}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Ticket className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">
-                  {event.ticketStats?.totalSold ?? localTicketTypes.reduce((sum, t) => sum + (t.quantitySold || 0), 0)}
-                </p>
-                <p className="text-xs text-muted-foreground">tickets sold</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">
-                  {event.ticketStats?.totalRevenue != null
-                    ? `${Number(event.ticketStats.totalRevenue).toLocaleString()} XAF`
-                    : '—'}
-                </p>
-                <p className="text-xs text-muted-foreground">total revenue</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">
-                  {event.capacityRange
-                    ? `${event.capacityRange.lower} – ${event.capacityRange.upper}`
-                    : '∞'}
-                </p>
-                <p className="text-xs text-muted-foreground">capacity range</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}
+        className="grid grid-cols-1 sm:grid-cols-5 gap-4"
+      >
+        {[
+          { icon: Calendar, label: formatDate(event.startDate), sub: `at ${formatTime(event.startTime)}`, color: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50', iconColor: 'text-blue-600' },
+          { icon: MapPin, label: event.venue, sub: event.city, color: 'from-purple-500 to-pink-500', bg: 'bg-purple-50', iconColor: 'text-purple-600' },
+          { icon: Ticket, label: String(event.ticketStats?.totalSold ?? localTicketTypes.reduce((sum, t) => sum + (t.quantitySold || 0), 0)), sub: 'tickets sold', color: 'from-emerald-500 to-teal-500', bg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
+          { icon: TrendingUp, label: event.ticketStats?.totalRevenue != null ? `${Number(event.ticketStats.totalRevenue).toLocaleString()} XAF` : '—', sub: 'total revenue', color: 'from-amber-500 to-orange-500', bg: 'bg-amber-50', iconColor: 'text-amber-600' },
+          { icon: Users, label: event.capacityRange ? `${event.capacityRange.lower}–${event.capacityRange.upper}` : '∞', sub: 'capacity range', color: 'from-rose-500 to-red-500', bg: 'bg-rose-50', iconColor: 'text-rose-600' },
+        ].map((item, i) => (
+          <motion.div
+            key={item.sub}
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 80, damping: 12 } } }}
+            whileHover={{ scale: 1.03, y: -2 }}
+          >
+            <Card className="overflow-hidden border-border/60 hover:shadow-lg transition-all duration-300 group">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2.5 rounded-xl ${item.bg} group-hover:scale-110 transition-transform duration-300`}>
+                    <item.icon className={`h-5 w-5 ${item.iconColor}`} />
+                  </div>
+                  <div>
+                    <p className={`text-xl font-bold bg-gradient-to-r ${item.color} bg-clip-text text-transparent`}>{item.label}</p>
+                    <p className="text-xs text-muted-foreground">{item.sub}</p>
+                  </div>
+                </div>
+              </CardContent>
+              <div className="h-0.5 bg-gradient-to-r from-transparent via-current opacity-10 group-hover:opacity-25 transition-opacity" />
+            </Card>
+          </motion.div>
+        ))}
+      </motion.div>
 
       {/* Quick action links to sub-pages */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Button
-          variant="outline"
-          className="h-auto py-4 flex items-center gap-3 border-border/80 hover:border-blue-300 hover:bg-blue-50/50"
-          onClick={() => router.push(`/organizer/attendees/${eventId}`)}
-        >
-          <Users className="h-5 w-5 text-blue-600" />
-          <div className="text-left">
-            <p className="font-semibold text-sm">Attendees</p>
-            <p className="text-xs text-muted-foreground">View and manage attendees</p>
-          </div>
-        </Button>
-        <Button
-          variant="outline"
-          className="h-auto py-4 flex items-center gap-3 border-border/80 hover:border-emerald-300 hover:bg-emerald-50/50"
-          onClick={() => router.push(`/organizer/analytics/${eventId}`)}
-        >
-          <TrendingUp className="h-5 w-5 text-emerald-600" />
-          <div className="text-left">
-            <p className="font-semibold text-sm">Analytics</p>
-            <p className="text-xs text-muted-foreground">Sales, tickets & check-in stats</p>
-          </div>
-        </Button>
-        <Button
-          variant="outline"
-          className="h-auto py-4 flex items-center gap-3 border-border/80 hover:border-purple-300 hover:bg-purple-50/50"
-          onClick={() => router.push(`/organizer/checkin/${eventId}`)}
-        >
-          <QrCode className="h-5 w-5 text-purple-600" />
-          <div className="text-left">
-            <p className="font-semibold text-sm">Check-in</p>
-            <p className="text-xs text-muted-foreground">Scan QR codes at the door</p>
-          </div>
-        </Button>
-      </div>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
+        className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+      >
+        {[
+          { icon: Users, label: 'Attendees', desc: 'View and manage attendees', bg: 'bg-blue-50', iconColor: 'text-blue-600', href: `/organizer/attendees/${eventId}` },
+          { icon: BarChart3, label: 'Analytics', desc: 'Sales, tickets & check-in stats', bg: 'bg-emerald-50', iconColor: 'text-emerald-600', href: `/organizer/analytics/${eventId}` },
+          { icon: QrCode, label: 'Check-in', desc: 'Scan QR codes at the door', bg: 'bg-purple-50', iconColor: 'text-purple-600', href: `/organizer/checkin/${eventId}` },
+        ].map((item) => (
+          <motion.div
+            key={item.label}
+            variants={{ hidden: { opacity: 0, y: 15 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 80, damping: 12 } } }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Button
+              variant="outline"
+              className="h-auto py-4 w-full flex items-center gap-3 border-border/60 hover:shadow-md transition-all duration-300"
+              onClick={() => router.push(item.href)}
+            >
+              <div className={`p-2 rounded-lg ${item.bg}`}>
+                <item.icon className={`h-5 w-5 ${item.iconColor}`} />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-sm">{item.label}</p>
+                <p className="text-xs text-muted-foreground">{item.desc}</p>
+              </div>
+            </Button>
+          </motion.div>
+        ))}
+      </motion.div>
 
-      {/* Custom Tabs Section - Replacing shadcn Tabs */}
+      {/* Custom Tabs Section */}
       <div className="space-y-6">
         {/* Tab Triggers */}
         <div className="w-full bg-card rounded-xl shadow-sm border border-border/60 overflow-hidden">

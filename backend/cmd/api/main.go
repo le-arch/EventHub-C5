@@ -33,11 +33,11 @@ type DBConfig struct {
 }
 
 type MinioConfig struct{
-	Endpoint string `conf:"env:MINIO_ENDPOINT,required"`
-	AccessKey string `conf:"env:MINIO_ACCESS_KEY,required"`
-	SecretKey string `conf:"env:MINIO_SECRET_KEY,required"`
-	Bucket string `conf:"env:MINIO_BUCKET,required"`
-	UseSSL bool `conf:"env:MINIO_USE_SSL,required"`
+	Endpoint string `conf:"env:MINIO_ENDPOINT"`
+	AccessKey string `conf:"env:MINIO_ACCESS_KEY"`
+	SecretKey string `conf:"env:MINIO_SECRET_KEY"`
+	Bucket string `conf:"env:MINIO_BUCKET"`
+	UseSSL bool `conf:"env:MINIO_USE_SSL"`
 }
 
 // Config holds the application configuration. This struct is populated from the .env in the current directory.
@@ -117,10 +117,20 @@ func run() error {
 
 	otpHandler.StartCleanupRoutine(10 * time.Minute)
 
-	// We create a new http handler using the database querier.
-	minioClient, err := storage.NewMinioClient(config.Minio.Endpoint, config.Minio.AccessKey, config.Minio.SecretKey,config.Minio.Bucket, config.Minio.UseSSL)
-	if err != nil {
-		log.Fatal("Failed to create MinIO client:", err)
+	// Initialize storage — try MinIO first, fall back to local filesystem.
+	var imgStorage storage.Storage
+	if config.Minio.Endpoint != "" {
+		minioClient, err := storage.NewMinioClient(config.Minio.Endpoint, config.Minio.AccessKey, config.Minio.SecretKey, config.Minio.Bucket, config.Minio.UseSSL)
+		if err != nil {
+			log.Printf("WARNING: MinIO unavailable (%v), falling back to local storage", err)
+			imgStorage = storage.NewLocalStorage("./uploads")
+		} else {
+			log.Println("Using MinIO storage at", config.Minio.Endpoint)
+			imgStorage = minioClient
+		}
+	} else {
+		log.Println("No MinIO endpoint configured, using local filesystem storage")
+		imgStorage = storage.NewLocalStorage("./uploads")
 	}
 
 	paymentClient := payment.NewWebhookHandler(querier, config.Payment.momoSecret)
@@ -133,7 +143,7 @@ func run() error {
 	}
 	momoClient := payment.NewClient(momoCfg)
 
-	handler := handlers.NewEventHubHandler(querier, otpHandler, revocationStore, config.JWTSecret, config.FrontendOrigin, config.GmailUser, config.GmailPassword,config.qrSecret, paymentClient, minioClient, momoClient).WireHttpHandler()
+	handler := handlers.NewEventHubHandler(querier, otpHandler, revocationStore, config.JWTSecret, config.FrontendOrigin, config.GmailUser, config.GmailPassword,config.qrSecret, paymentClient, imgStorage, momoClient).WireHttpHandler()
 
 	
 	// And finally we start the HTTP server on the configured port.

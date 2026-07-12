@@ -19,13 +19,13 @@ import (
 	frontendOrigin string
 	gmailUser string
 	gmailPassword string
-	MinioClient *storage.MinioClient
+	Storage storage.Storage
 	payment *payment.WebhookHandler
 	momoClient *payment.Client
 	qrSecret	string
 }
 
-func NewEventHubHandler(querier repo.Querier, otpHandler *auth.OTPHandler, revocationStore *auth.RevocationStore, jwtSecret, frontendOrigin, gmailUser, gmailPassword, qrSecret string,  payment *payment.WebhookHandler,  minioClient *storage.MinioClient, momoClient *payment.Client ) *EventHubHandler {
+func NewEventHubHandler(querier repo.Querier, otpHandler *auth.OTPHandler, revocationStore *auth.RevocationStore, jwtSecret, frontendOrigin, gmailUser, gmailPassword, qrSecret string,  payment *payment.WebhookHandler,  imgStorage storage.Storage, momoClient *payment.Client ) *EventHubHandler {
 	return &EventHubHandler{
 		querier: querier,
 		otpHandler: otpHandler,
@@ -35,7 +35,7 @@ func NewEventHubHandler(querier repo.Querier, otpHandler *auth.OTPHandler, revoc
 		gmailUser: gmailUser,
 		gmailPassword: gmailPassword,
 		qrSecret: qrSecret,
-		MinioClient: minioClient,
+		Storage: imgStorage,
 		payment: payment,
 		momoClient: momoClient,
 	}
@@ -53,6 +53,9 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	r.Use(middleware.RecoveryMiddleware())
 
 	r.GET("/health", HealthCheck)
+
+	// Serve uploaded files (local storage fallback)
+	r.Static("/uploads", "./uploads")
 	r.POST("/api/v1/auth/register", h.handleRegister)
 	r.POST("/api/v1/auth/verify-otp", h.handleVerifyEmail)
 	r.POST("/api/v1/auth/login", h.handleLogin)
