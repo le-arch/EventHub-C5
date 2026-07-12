@@ -24,11 +24,12 @@ import (
 
 // DBConfig holds the database configuration. This struct is populated from the .env in the current directory.
 type DBConfig struct {
-	DBUser      string `conf:"env:DB_USER,required"`
-	DBPassword  string `conf:"env:DB_PASSWORD,required,mask"`
-	DBHost      string `conf:"env:DB_HOST,required"`
-	DBPort      uint16 `conf:"env:DB_PORT,required"`
-	DBName      string `conf:"env:DB_Name,required"`
+	DatabaseURL string `conf:"env:DATABASE_URL"`
+	DBUser      string `conf:"env:DB_USER"`
+	DBPassword  string `conf:"env:DB_PASSWORD,mask"`
+	DBHost      string `conf:"env:DB_HOST"`
+	DBPort      uint16 `conf:"env:DB_PORT"`
+	DBName      string `conf:"env:DB_Name"`
 	TLSDisabled bool   `conf:"env:DB_TLS_DISABLED"`
 }
 
@@ -177,7 +178,12 @@ func LoadConfig(cfg *Config) error {
 }
 
 // getPostgresConnectionURL constructs the PostgreSQL connection URL from the provided configuration.
+// If DATABASE_URL is set, it is used directly (overrides individual fields).
 func getPostgresConnectionURL(config DBConfig) string {
+	if config.DatabaseURL != "" {
+		return config.DatabaseURL
+	}
+
 	queryValues := url.Values{}
 	if config.TLSDisabled {
 		queryValues.Add("sslmode", "disable")
