@@ -9,19 +9,27 @@ import (
 )
 
 func CorsMiddleware(frontendOrigin string) gin.HandlerFunc {
-	// CORS middleware configuration to allow requests from the frontend origin
-	// This enables secure cross-origin communication between frontend and backend
-	// Supports both local development (localhost) and GitHub Codespace domains
-	
 	allowedOrigins := []string{
-		frontendOrigin,
 		"http://localhost:3000",
 		"http://localhost:3001",
 		"http://localhost:3002",
 		"http://localhost:5173",
-	
+		"https://event-hub-c5.vercel.app",
 	}
-	
+	if frontendOrigin != "" {
+		// Avoid duplicates
+		dup := false
+		for _, o := range allowedOrigins {
+			if o == frontendOrigin {
+				dup = true
+				break
+			}
+		}
+		if !dup {
+			allowedOrigins = append(allowedOrigins, frontendOrigin)
+		}
+	}
+
 	return cors.New(cors.Config{
 		AllowOrigins:     allowedOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"},
