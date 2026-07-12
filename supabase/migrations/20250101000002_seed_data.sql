@@ -69,7 +69,8 @@ VALUES
     NULL,
     NULL,
     '[50,200]'
-  );
+  )
+ON CONFLICT (id) DO NOTHING;
 
 -- Ticket Types
 INSERT INTO ticket_types (id, event_id, name, description, price, quantity_available, quantity_sold, is_active)
@@ -81,7 +82,8 @@ VALUES
   ('b2222222-2222-2222-2222-222222222221', 'a2222222-2222-2222-2222-222222222222', 'Standard', 'General admission to all festival days', 3000, 200, 1, TRUE),
   ('b2222222-2222-2222-2222-222222222222', 'a2222222-2222-2222-2222-222222222222', 'Premium', 'Premium access with VIP zone and complimentary drinks', 8000, 100, 0, TRUE),
   -- Yaoundé Business Conference
-  ('b3333333-3333-3333-3333-333333333331', 'a3333333-3333-3333-3333-333333333333', 'General', 'General admission', 2000, 150, 0, TRUE);
+  ('b3333333-3333-3333-3333-333333333331', 'a3333333-3333-3333-3333-333333333333', 'General', 'General admission', 2000, 150, 0, TRUE)
+ON CONFLICT (id) DO NOTHING;
 
 -- Orders (paid and checked-in attendees)
 INSERT INTO orders (id, event_id, ticket_type_id, attendee_name, attendee_phone, attendee_email, quantity, unit_price, total_amount, payment_status, payment_method, transaction_id, payment_received_at, payment_webhook_received, qr_code_hash, qr_code_image_url, qr_code_plaintext, manual_code, is_used, used_at, checked_in_by, platform_fee)
@@ -137,9 +139,11 @@ VALUES
     CURRENT_TIMESTAMP - INTERVAL '1 day', TRUE,
     'hash-david-mbah', '', 'david-mbah-qr', 'D4V1-MBH1',
     TRUE, CURRENT_TIMESTAMP, '11111111-1111-1111-1111-111111111111', 300
-  );
+  )
+ON CONFLICT (id) DO NOTHING;
 
 -- Admin log: seed data imported
 INSERT INTO admin_logs (admin_id, action, target_type, target_id, details)
 VALUES
-  ('22222222-2222-2222-2222-222222222222', 'seed_data_imported', 'system', NULL, '{"description": "Initial seed data imported for development"}');
+  ('22222222-2222-2222-2222-222222222222', 'seed_data_imported', 'system', NULL, '{"description": "Initial seed data imported for development"}')
+ON CONFLICT (id) DO NOTHING;
