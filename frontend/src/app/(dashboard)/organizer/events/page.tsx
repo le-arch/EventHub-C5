@@ -14,9 +14,10 @@
  */
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus,
   Search,
@@ -37,6 +38,9 @@ import {
   DollarSign,
   ArrowRight,
   Share2,
+  Sparkles,
+  BarChart3,
+  PartyPopper,
 } from 'lucide-react'
 import Image from 'next/image'
 
@@ -62,6 +66,34 @@ import { Pagination } from '@/components/common/Pagination'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 import { formatDate, formatCurrency } from '@/lib/utils'
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 },
+  },
+}
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 30, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { type: 'spring' as const, stiffness: 100, damping: 15 },
+  },
+}
+
+const statVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.1, type: 'spring' as const, stiffness: 80, damping: 12 },
+  }),
+}
 
 interface Event {
   id: string
@@ -240,23 +272,74 @@ export default function EventsDashboardPage() {
       </div>
 
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-2 border-b border-slate-100">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 80, damping: 15 }}
+        className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-4"
+      >
         <div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent flex items-center gap-3">
-            <Calendar className="h-8 w-8 text-indigo-600" />
-            My Events
-          </h1>
-          <p className="text-muted-foreground mt-1.5 text-sm md:text-base">
+          <div className="flex items-center gap-3 mb-1">
+            <motion.div
+              animate={{ rotate: [0, -5, 5, -5, 0] }}
+              transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
+            >
+              <Sparkles className="h-6 w-6 text-amber-500" />
+            </motion.div>
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent flex items-center gap-3">
+              My Events
+            </h1>
+          </div>
+          <p className="text-muted-foreground mt-1.5 text-sm md:text-base ml-0">
             Manage your lineup, view precise ticketing velocity, and manage attendance checks.
           </p>
         </div>
         <Link href="/organizer/create" className="w-full md:w-auto">
-          <Button className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 active:scale-98 transition-transform text-white shadow-md shadow-indigo-100 px-5 py-6 rounded-xl font-medium flex items-center justify-center gap-2">
-            <Plus className="h-5 w-5" />
-            Create New Event
-          </Button>
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+            <Button className="w-full md:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 active:scale-98 transition-all text-white shadow-lg shadow-indigo-200/50 px-6 py-6 rounded-xl font-medium flex items-center justify-center gap-2">
+              <Plus className="h-5 w-5" />
+              Create New Event
+            </Button>
+          </motion.div>
         </Link>
-      </div>
+      </motion.div>
+      <div className="h-px bg-gradient-to-r from-transparent via-indigo-200 to-transparent mb-2" />
+
+      {/* Stats Summary */}
+      {events.length > 0 && (
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+        >
+          {[
+            { label: 'Total Events', value: totalCount, icon: Calendar, color: 'from-indigo-500 to-purple-600', bg: 'bg-indigo-50', textColor: 'text-indigo-700' },
+            { label: 'Tickets Sold', value: events.reduce((s, e) => s + e.ticketStats.totalSold, 0), icon: Ticket, color: 'from-emerald-500 to-teal-600', bg: 'bg-emerald-50', textColor: 'text-emerald-700' },
+            { label: 'Total Revenue', value: formatCurrency(events.reduce((s, e) => s + e.ticketStats.totalRevenue, 0)), icon: TrendingUp, color: 'from-amber-500 to-orange-600', bg: 'bg-amber-50', textColor: 'text-amber-700' },
+            { label: 'Published', value: events.filter(e => e.status === 'published').length, icon: CheckCircle, color: 'from-blue-500 to-cyan-600', bg: 'bg-blue-50', textColor: 'text-blue-700' },
+          ].map((stat, i) => (
+            <motion.div
+              key={stat.label}
+              custom={i}
+              variants={statVariants}
+              className="relative overflow-hidden rounded-2xl border border-border/60 bg-card p-5 shadow-sm hover:shadow-md transition-all duration-300 group"
+            >
+              <div className="flex items-start justify-between">
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{stat.label}</p>
+                  <p className={`text-2xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
+                    {stat.value}
+                  </p>
+                </div>
+                <div className={`p-2.5 rounded-xl ${stat.bg} group-hover:scale-110 transition-transform duration-300`}>
+                  <stat.icon className={`h-5 w-5 ${stat.textColor}`} />
+                </div>
+              </div>
+              <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-transparent via-current opacity-20 group-hover:opacity-40 transition-opacity" />
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
 
       {/* Search and Filters Context */}
       <div className="space-y-4">
@@ -288,36 +371,57 @@ export default function EventsDashboardPage() {
 
       {/* Grid Content / Empty States */}
       {events.length === 0 ? (
-        <Card className="border-dashed border-2 border-border bg-muted/50/30 rounded-2xl p-12 text-center shadow-none">
-          <CardContent className="p-0">
-            <div className="flex flex-col items-center max-w-sm mx-auto space-y-4">
-              <div className="w-16 h-16 bg-card border border-slate-100 rounded-2xl shadow-sm flex items-center justify-center text-indigo-500">
-                <Calendar className="h-8 w-8" />
-              </div>
-              <h3 className="font-semibold text-xl text-foreground">
-                No events found
-              </h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                {debouncedSearch
-                  ? `We couldn't find matches for "${debouncedSearch}". Refine your keywords or browse the catalog.`
-                  : "Get started by publishing your very first public or private event sequence."}
-              </p>
-              {!debouncedSearch && (
-                <Link href="/organizer/create">
-                  <Button className="mt-2 bg-slate-600 hover:bg-slate-800 rounded-xl px-5">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Your First Event
-                  </Button>
-                </Link>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 80, damping: 12 }}
+        >
+          <Card className="border-dashed border-2 border-border bg-muted/50/30 rounded-2xl p-12 text-center shadow-none">
+            <CardContent className="p-0">
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="flex flex-col items-center max-w-sm mx-auto space-y-4"
+              >
+                <motion.div
+                  animate={{ rotate: [0, -10, 10, -10, 0], scale: [1, 1.1, 1.1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                  className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 border border-indigo-200 rounded-2xl shadow-sm flex items-center justify-center"
+                >
+                  <PartyPopper className="h-8 w-8 text-indigo-500" />
+                </motion.div>
+                <h3 className="font-semibold text-xl text-foreground">
+                  {debouncedSearch ? 'No events found' : 'Create your first event'}
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  {debouncedSearch
+                    ? `We couldn't find matches for "${debouncedSearch}". Refine your keywords or browse the catalog.`
+                    : "Get started by publishing your very first public or private event sequence."}
+                </p>
+                {!debouncedSearch && (
+                  <Link href="/organizer/create">
+                    <Button className="mt-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl px-6 shadow-md hover:shadow-lg transition-all">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Your First Event
+                    </Button>
+                  </Link>
+                )}
+              </motion.div>
+            </CardContent>
+          </Card>
+        </motion.div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
             {events.map((event) => (
-              <Card key={event.id} className="group overflow-hidden border border-slate-100 bg-card hover:border-border/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-2xl flex flex-col">
+              <motion.div key={event.id} variants={cardVariants} whileHover={{ scale: 1.02 }} className="group">
+              <Card className="overflow-hidden border border-slate-100 bg-card hover:border-border/80 shadow-sm hover:shadow-xl transition-all duration-300 rounded-2xl flex flex-col h-full">
                 
                 {/* Media Anchor Block */}
                 <div className="relative h-44 bg-muted/30 overflow-hidden">
@@ -459,8 +563,9 @@ export default function EventsDashboardPage() {
                   </Link>
                 </CardFooter>
               </Card>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           {/* Pagination Block */}
           {totalPages > 1 && (

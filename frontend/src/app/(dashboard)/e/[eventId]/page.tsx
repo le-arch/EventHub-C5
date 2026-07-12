@@ -13,8 +13,9 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
-import { Calendar, MapPin, Clock, Ticket, Users, CheckCircle, Shield, ChevronRight, ArrowLeft } from 'lucide-react'
+import { Calendar, MapPin, Clock, Ticket, Users, CheckCircle, Shield, ChevronRight, ArrowLeft, Sparkles, PartyPopper } from 'lucide-react'
 
 // Components
 import { Button } from '@/components/ui/button'
@@ -172,9 +173,18 @@ export default function PublicEventPage() {
   // Render Step 1: Attendee Name Input Identity Entry
   if (step === 'name') {
     return (
-      <div className="min-h-screen bg-muted/50 text-foreground pb-12">
-          {event.coverImageUrl && (
-          <div className="relative h-48 md:h-64 w-full overflow-hidden border-b-2 border-purple-100">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="min-h-screen bg-gradient-to-b from-purple-50/30 to-white text-foreground pb-12"
+      >
+        {event.coverImageUrl && (
+          <motion.div
+            initial={{ scale: 1.05, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            className="relative h-48 md:h-64 w-full overflow-hidden border-b-2 border-purple-100"
+          >
             <Image
               src={event.coverImageUrl}
               alt={event.title}
@@ -183,20 +193,55 @@ export default function PublicEventPage() {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-900/20 to-transparent" />
-          </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/30 to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4">
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="flex items-center gap-2"
+              >
+                <motion.div
+                  animate={{ rotate: [0, -5, 5, -5, 0] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                >
+                  <Sparkles className="h-5 w-5 text-yellow-300" />
+                </motion.div>
+                <span className="text-white/90 text-sm font-medium">{event.organizerName}</span>
+              </motion.div>
+            </div>
+          </motion.div>
         )}
 
         <div className="container mx-auto px-4 py-6 max-w-2xl">
-          {isEventPast && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-900 rounded-xl text-sm font-bold flex items-center gap-2">
-               This registration framework marks an archive record for a historical past event.
-            </div>
-          )}
+          <AnimatePresence>
+            {isEventPast && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-4 p-3 bg-red-50 border border-red-200 text-red-900 rounded-xl text-sm font-bold flex items-center gap-2"
+              >
+                This event has already taken place.
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-950 mb-3">{event.title}</h1>
+          <motion.h1
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 80 }}
+            className="text-2xl md:text-3xl font-black tracking-tight bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-500 bg-clip-text text-transparent mb-3"
+          >
+            {event.title}
+          </motion.h1>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-foreground font-semibold text-sm bg-card p-4 rounded-xl border border-purple-100 shadow-sm mb-6">
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-foreground font-semibold text-sm bg-white p-4 rounded-xl border border-purple-100 shadow-sm mb-6"
+          >
             <div className="flex items-center gap-2.5">
               <Calendar className="h-4 w-4 text-purple-600 shrink-0" />
               <span>
@@ -211,7 +256,7 @@ export default function PublicEventPage() {
                 {event.endTime && ` - ${formatTime(event.endTime)}`}
               </span>
             </div>
-            <div className="flex items-center gap-2.5 sm:col-span-2 border-t border-slate-50 pt-2 mt-1">
+            <div className="flex items-center gap-2.5 sm:col-span-2 border-t border-purple-50 pt-2 mt-1">
               <MapPin className="h-4 w-4 text-purple-600 shrink-0" />
               <span className="truncate">{event.venue || 'TBA'}, {event.city}</span>
             </div>
@@ -222,7 +267,7 @@ export default function PublicEventPage() {
                 <span>Hosting Bracket: {event.capacityRange.lower} – {event.capacityRange.upper} seats</span>
               </div>
             )}
-          </div>
+          </motion.div>
 
           <Separator className="my-6 bg-purple-100" />
 
@@ -233,16 +278,25 @@ export default function PublicEventPage() {
             />
           </div>
         </div>
-      </div>
+      </motion.div>
     )
   }
 
   // Render Step 2: Interactive Ticket Selection Array Panel
   if (step === 'ticket') {
     return (
-      <div className="min-h-screen bg-muted/50 text-foreground pb-12">
+      <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="min-h-screen bg-gradient-to-b from-purple-50/30 to-white text-foreground pb-12"
+      >
         {event.coverImageUrl && (
-          <div className="relative h-36 md:h-44 w-full overflow-hidden border-b-2 border-purple-100">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="relative h-36 md:h-44 w-full overflow-hidden border-b-2 border-purple-100"
+          >
             <Image
               src={event.coverImageUrl}
               alt={event.title}
@@ -250,24 +304,35 @@ export default function PublicEventPage() {
               unoptimized
               className="object-cover opacity-80 filter blur-[1px]"
             />
-            <div className="absolute inset-0 bg-slate-950/70" />
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-900/80 to-indigo-900/80" />
             <div className="absolute inset-0 flex items-center justify-center px-4">
-              <h1 className="text-white text-lg md:text-xl font-black tracking-tight text-center max-w-xl line-clamp-2">
+              <motion.h1
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-white text-lg md:text-xl font-black tracking-tight text-center max-w-xl line-clamp-2"
+              >
                 {event.title}
-              </h1>
+              </motion.h1>
             </div>
-          </div>
+          </motion.div>
         )}
 
         <div className="container mx-auto px-4 py-6 max-w-2xl">
-          <div className="mb-6 bg-gradient-to-r from-purple-900 to-indigo-950 text-white p-5 rounded-2xl shadow-sm border border-slate-950">
-            <h2 className="text-xl md:text-2xl font-black tracking-tight">
-              Welcome, <span className="text-purple-200">{attendeeName}</span>! 👋
+          <motion.div
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 80 }}
+            className="mb-6 bg-gradient-to-r from-purple-700 via-indigo-700 to-blue-700 text-white p-5 rounded-2xl shadow-lg border border-purple-500/30"
+          >
+            <h2 className="text-xl md:text-2xl font-black tracking-tight flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-yellow-300" />
+              Welcome, <span className="text-purple-200">{attendeeName}</span>!
             </h2>
             <p className="text-purple-100/80 text-xs md:text-sm font-medium mt-1">
-              Select your required programmatic credential option and inventory count parameters below to continue checkout.
+              Select your ticket type and quantity below to continue checkout.
             </p>
-          </div>
+          </motion.div>
 
           <div className="bg-card rounded-2xl border-2 border-purple-100 p-2 shadow-sm">
             <TicketSelector
@@ -285,7 +350,6 @@ export default function PublicEventPage() {
             Return to Client Information Step
           </Button>
         </div>
-
         {/* Payment Processing Interstitial Modal Panel */}
         {showPaymentModal && selectedTicket && (
           <PaymentModal
@@ -298,7 +362,8 @@ export default function PublicEventPage() {
             onSuccess={handlePaymentSuccess}
           />
         )}
-      </div>
+      </motion.div>
+      </>
     )
   }
 
