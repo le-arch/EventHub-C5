@@ -136,14 +136,14 @@ export default function EditEventPage() {
 
   const handleCoverUploadAction = async (file: File): Promise<string> => {
     try {
-      const response = await apiClient.upload<{ url: string }>(
-        '/events/upload-image',
-        file,
-        'image'
-      )
-      return response.data.url
+      const formData = new FormData()
+      formData.append('image', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      if (!res.ok) throw new Error('upload failed')
+      const data = await res.json()
+      return data.url
     } catch (error) {
-      toast.error('Failed to upload image asset')
+      toast.error('Failed to upload image')
       throw error
     }
   }
