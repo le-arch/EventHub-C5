@@ -76,6 +76,7 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 	r.GET("/api/v1/orders/:id/status", auth.OptionalAuthMiddleware(h.jwtSecret), h.handleGetOrderStatus)
 	r.GET("/api/v1/orders/:id/details", auth.OptionalAuthMiddleware(h.jwtSecret), h.handleGetOrderDetails)
 
+	r.GET("/api/v1/events", h.handleListPublicEvents)
 	r.GET("/api/v1/events/public/:id", h.handleGetPublicEvent)
 	r.GET("/api/v1/events/public/:id/ticket-types", h.handleListTicketTypes)
 	r.GET("/api/v1/events/:id/ticket-types", auth.OptionalAuthMiddleware(h.jwtSecret), h.handleListTicketTypes)

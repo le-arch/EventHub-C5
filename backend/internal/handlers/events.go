@@ -356,6 +356,43 @@ func (h *EventHubHandler) handleEventDetails(c *gin.Context) {
     c.JSON(http.StatusOK, response)
 }
 
+func (h *EventHubHandler) handleListPublicEvents(c *gin.Context) {
+	events, err := h.querier.ListPublishedEvents(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load events"})
+		return
+	}
+
+	response := make([]utils.EventResponse, 0, len(events))
+	for _, event := range events {
+		response = append(response, utils.EventResponse{
+			ID:             event.ID,
+			OrganizerName:  event.OrganizerName,
+			OrganizerEmail: event.OrganizerEmail,
+			Title:          event.Title,
+			Slug:           event.Slug,
+			Description:    event.Description,
+			Venue:          event.Venue,
+			City:           event.City,
+			StartDate:      utils.FormatDate(event.StartDate),
+			EndDate:        utils.FormatDatePtr(event.EndDate),
+			StartTime:      utils.FormatTime(event.StartTime),
+			EndTime:        utils.FormatTime(event.EndTime),
+			CoverImageUrl:  event.CoverImageUrl,
+			Status:         event.Status,
+			SalesStartDate: utils.FormatDatePtr(event.SalesStartDate),
+			SalesEndDate:   utils.FormatDatePtr(event.SalesEndDate),
+			CapacityRange:  utils.FromDBRange(event.CapacityRange),
+			TicketStats: utils.TicketStatsResponse{
+				TotalSold:    event.TicketsSold,
+				TotalRevenue: event.TotalRevenue,
+			},
+			UpdatedAt: utils.FormatDateTime(event.UpdatedAt),
+		})
+	}
+	c.JSON(http.StatusOK, response)
+}
+
 func (h *EventHubHandler) handleGetPublicEvent(c *gin.Context) {
     eventID := c.Param("id")
     id, err := uuid.Parse(eventID)

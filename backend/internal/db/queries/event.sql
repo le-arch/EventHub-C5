@@ -74,6 +74,23 @@ SELECT * FROM events
 WHERE status = $1
 ORDER BY start_date ASC, start_time ASC;
 
+-- name: ListPublishedEvents :many
+SELECT e.*, u.full_name as organizer_name, u.email as organizer_email,
+       COALESCE(t.tickets_sold, 0)::int as tickets_sold,
+       COALESCE(t.total_revenue, 0)::int as total_revenue
+FROM events e
+INNER JOIN users u ON e.organizer_id = u.id
+LEFT JOIN (
+    SELECT o.event_id,
+           SUM(o.quantity) AS tickets_sold,
+           SUM(o.total_amount) AS total_revenue
+    FROM orders o
+    WHERE o.payment_status = 'paid'
+    GROUP BY o.event_id
+) t ON t.event_id = e.id
+WHERE e.status = 'published'
+ORDER BY e.start_date ASC, e.start_time ASC;
+
 -- name: UpdateEvent :one
 UPDATE events
 SET title = $2, slug = $3, description = $4, venue = $5, city = $6, start_date = $7, end_date = $8, start_time = $9, end_time = $10, cover_image_url = $11, status = $12, sales_start_date = $13, sales_end_date = $14, updated_at = CURRENT_TIMESTAMP

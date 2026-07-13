@@ -374,12 +374,14 @@ func (q *Queries) ListEventsByCity(ctx context.Context, city string) ([]Event, e
 }
 
 const listEventsByStatus = `-- name: ListEventsByStatus :many
-SELECT id, organizer_id, title, slug, description, venue, city, start_date, end_date, start_time, end_time, cover_image_url, status, sales_start_date, sales_end_date, capacity_range, created_at, updated_at FROM events 
+SELECT * FROM events 
 WHERE status = $1
-ORDER BY start_date ASC, start_time ASC
+ORDER BY start_date ASC, start_time ASC;
 `
 
 func (q *Queries) ListEventsByStatus(ctx context.Context, status EventStatus) ([]Event, error) {
+
+
 	rows, err := q.db.Query(ctx, listEventsByStatus, status)
 	if err != nil {
 		return nil, err
@@ -407,6 +409,63 @@ func (q *Queries) ListEventsByStatus(ctx context.Context, status EventStatus) ([
 			&i.CapacityRange,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPublishedEvents = `-- name: ListPublishedEvents :many
+SELECT e.id, e.organizer_id, e.title, e.slug, e.description, e.venue, e.city, e.start_date, e.end_date, e.start_time, e.end_time, e.cover_image_url, e.status, e.sales_start_date, e.sales_end_date, e.capacity_range, e.created_at, e.updated_at, u.full_name as organizer_name, u.email as organizer_email, COALESCE(t.tickets_sold, 0)::int as tickets_sold, COALESCE(t.total_revenue, 0)::int as total_revenue
+FROM events e
+INNER JOIN users u ON e.organizer_id = u.id
+LEFT JOIN (
+    SELECT o.event_id, SUM(o.quantity) AS tickets_sold, SUM(o.total_amount) AS total_revenue
+    FROM orders o
+    WHERE o.payment_status = 'paid'
+    GROUP BY o.event_id
+) t ON t.event_id = e.id
+WHERE e.status = 'published'
+ORDER BY e.start_date ASC, e.start_time ASC
+`
+
+func (q *Queries) ListPublishedEvents(ctx context.Context) ([]ListEventsRow, error) {
+	rows, err := q.db.Query(ctx, listPublishedEvents)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListEventsRow{}
+	for rows.Next() {
+		var i ListEventsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrganizerID,
+			&i.Title,
+			&i.Slug,
+			&i.Description,
+			&i.Venue,
+			&i.City,
+			&i.StartDate,
+			&i.EndDate,
+			&i.StartTime,
+			&i.EndTime,
+			&i.CoverImageUrl,
+			&i.Status,
+			&i.SalesStartDate,
+			&i.SalesEndDate,
+			&i.CapacityRange,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.OrganizerName,
+			&i.OrganizerEmail,
+			&i.TicketsSold,
+			&i.TotalRevenue,
 		); err != nil {
 			return nil, err
 		}
