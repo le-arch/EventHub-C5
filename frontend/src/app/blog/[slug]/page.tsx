@@ -336,7 +336,7 @@ export default function BlogPostPage() {
           <BookOpen className="h-16 w-16 text-muted-foreground/30" />
         </div>
 
-        {/* Main Article Content Node  */}
+        {/* Main Article Content Node */}
         <article 
           className="prose prose-slate max-w-none mb-10 prose-headings:font-extrabold prose-headings:tracking-tight prose-headings:text-foreground prose-h2:text-xl sm:prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-p:text-muted-foreground prose-p:text-sm sm:prose-p:text-base prose-p:leading-relaxed prose-a:text-purple-600 prose-a:font-semibold hover:prose-a:text-purple-700 prose-strong:text-foreground prose-li:text-muted-foreground prose-li:text-sm sm:prose-li:text-base prose-ul:list-disc prose-ul:pl-5 space-y-2"
           dangerouslySetInnerHTML={{ __html: post.content }}
