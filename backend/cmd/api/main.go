@@ -17,6 +17,7 @@ import (
 
 	"github.com/le-arch/EventHub-C5/internal/auth"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
+	"github.com/le-arch/EventHub-C5/internal/email"
 	"github.com/le-arch/EventHub-C5/internal/handlers"
 	"github.com/le-arch/EventHub-C5/internal/handlers/storage"
 	"github.com/le-arch/EventHub-C5/internal/payment"
@@ -42,6 +43,11 @@ type MinioConfig struct{
 }
 
 // Config holds the application configuration. This struct is populated from the .env in the current directory.
+type SupabaseEmailConfig struct {
+	ProjectRef     string `conf:"env:SUPABASE_PROJECT_REF"`
+	ServiceRoleKey string `conf:"env:SUPABASE_SERVICE_ROLE_KEY"`
+}
+
 type Config struct {
 	ListenPort     uint16 `conf:"env:LISTEN_PORT,required"`
 	MigrationsPath string `conf:"env:MIGRATIONS_PATH,required"`
@@ -54,6 +60,7 @@ type Config struct {
 	Minio          MinioConfig
 	Payment        PaymentConfig
 	Momo           MomoConfig
+	SupabaseEmail  SupabaseEmailConfig
 }
 
 type PaymentConfig struct {
@@ -144,7 +151,22 @@ func run() error {
 	}
 	momoClient := payment.NewClient(momoCfg)
 
-	handler := handlers.NewEventHubHandler(querier, otpHandler, revocationStore, config.JWTSecret, config.FrontendOrigin, config.GmailUser, config.GmailPassword,config.qrSecret, paymentClient, imgStorage, momoClient).WireHttpHandler()
+	// Set up email sender: SMTP primary, Supabase Auth Admin API fallback.
+	smtpSender := email.NewSMTPSender(config.GmailUser, config.GmailPassword)
+	var secondary email.Sender
+	if config.SupabaseEmail.ProjectRef != "" && config.SupabaseEmail.ServiceRoleKey != "" {
+		secondary = email.NewSupabaseSender(email.SupabaseConfig{
+			ProjectRef:     config.SupabaseEmail.ProjectRef,
+			ServiceRoleKey: config.SupabaseEmail.ServiceRoleKey,
+		})
+		log.Printf("Supabase email fallback configured for project %s", config.SupabaseEmail.ProjectRef)
+	} else {
+		secondary = smtpSender // no fallback
+	}
+	emailSender := email.NewFallbackSender(smtpSender, secondary)
+	otpHandler.SetEmailSender(emailSender)
+
+	handler := handlers.NewEventHubHandler(querier, otpHandler, revocationStore, config.JWTSecret, config.FrontendOrigin, config.qrSecret, paymentClient, imgStorage, momoClient, emailSender).WireHttpHandler()
 
 	
 	// Use Render's PORT env var if set, otherwise fall back to LISTEN_PORT.

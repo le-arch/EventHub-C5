@@ -15,6 +15,8 @@ import (
 	"math/big"
 	"sync"
 	"time"
+
+	"github.com/le-arch/EventHub-C5/internal/email"
 )
 
 // OTPConfig holds OTP configuration
@@ -42,11 +44,16 @@ type OTPRecord struct {
 // OTPHandler handles OTP operations with in-memory storage
 // In production, this should use Redis or a database table
 type OTPHandler struct {
-	config  *OTPConfig
-	storage map[string]*OTPRecord // email -> OTPRecord
+	config      *OTPConfig
+	storage     map[string]*OTPRecord // email -> OTPRecord
 	pendingUsers map[string]interface{} // email -> user data for pending verification
 	resetStorage map[string]*OTPRecord // email -> OTPRecord for password reset
-	mu      sync.RWMutex
+	mu          sync.RWMutex
+	emailSender email.Sender
+}
+
+func (h *OTPHandler) SetEmailSender(s email.Sender) {
+	h.emailSender = s
 }
 
 // NewOTPHandler creates a new OTP handler instance

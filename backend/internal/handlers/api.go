@@ -7,34 +7,33 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/le-arch/EventHub-C5/internal/auth"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
+	"github.com/le-arch/EventHub-C5/internal/email"
 	"github.com/le-arch/EventHub-C5/internal/handlers/storage"
 	"github.com/le-arch/EventHub-C5/internal/middleware"
 	"github.com/le-arch/EventHub-C5/internal/payment"
 )
 
- type EventHubHandler struct {
-	querier repo.Querier
-	otpHandler *auth.OTPHandler
+type EventHubHandler struct {
+	querier        repo.Querier
+	otpHandler     *auth.OTPHandler
 	revocationStore *auth.RevocationStore
-	jwtSecret string
+	jwtSecret      string
 	frontendOrigin string
-	gmailUser string
-	gmailPassword string
-	Storage storage.Storage
-	payment *payment.WebhookHandler
-	momoClient *payment.Client
-	qrSecret	string
+	emailSender    email.Sender
+	Storage        storage.Storage
+	payment        *payment.WebhookHandler
+	momoClient     *payment.Client
+	qrSecret       string
 }
 
-func NewEventHubHandler(querier repo.Querier, otpHandler *auth.OTPHandler, revocationStore *auth.RevocationStore, jwtSecret, frontendOrigin, gmailUser, gmailPassword, qrSecret string,  payment *payment.WebhookHandler,  imgStorage storage.Storage, momoClient *payment.Client ) *EventHubHandler {
+func NewEventHubHandler(querier repo.Querier, otpHandler *auth.OTPHandler, revocationStore *auth.RevocationStore, jwtSecret, frontendOrigin, qrSecret string, payment *payment.WebhookHandler, imgStorage storage.Storage, momoClient *payment.Client, emailSender email.Sender) *EventHubHandler {
 	return &EventHubHandler{
 		querier: querier,
 		otpHandler: otpHandler,
 		revocationStore: revocationStore,
 		jwtSecret: jwtSecret,
 		frontendOrigin: frontendOrigin,
-		gmailUser: gmailUser,
-		gmailPassword: gmailPassword,
+		emailSender: emailSender,
 		qrSecret: qrSecret,
 		Storage: imgStorage,
 		payment: payment,
