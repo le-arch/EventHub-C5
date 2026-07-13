@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/le-arch/EventHub-C5/internal/auth"
 	"github.com/le-arch/EventHub-C5/internal/db/repo"
-	"github.com/le-arch/EventHub-C5/internal/email"
 	"github.com/le-arch/EventHub-C5/internal/models"
 	"github.com/le-arch/EventHub-C5/internal/utils"
 )
@@ -70,7 +69,7 @@ func (h *EventHubHandler) handleRegister(c *gin.Context) {
 	}
 
 	go func() {
-		if err := h.otpHandler.SendOtpEmail(h.gmailUser, h.gmailPassword, req.Email, "", PendingData); err != nil {
+		if err := h.otpHandler.SendOtpEmail(req.Email, "", PendingData); err != nil {
 			log.Printf("Failed to send OTP email to %s: %v", req.Email, err)
 		}
 	}()
@@ -86,7 +85,7 @@ func (h *EventHubHandler) handleVerifyEmail(c *gin.Context) {
 		return
 	}
 
-	pendingData, ok, err := h.otpHandler.VerifyEmail(h.gmailUser, h.gmailPassword, req.Email, req.Otp)
+	pendingData, ok, err := h.otpHandler.VerifyEmail(req.Email, req.Otp)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -335,7 +334,7 @@ func (h *EventHubHandler) handleForgotPassword(c *gin.Context) {
 	}
 
 	// Send the generated OTP to the user's email address using the email utility function, ensuring that the user receives the OTP needed to reset their password securely
-	err = email.SendOTP(h.gmailUser, h.gmailPassword, req.Email, otpCode)
+	err = h.emailSender.SendOTP(req.Email, otpCode)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send OTP email"})
 		return
@@ -534,7 +533,7 @@ func (h *EventHubHandler) handleResendOTP(c *gin.Context) {
 		return
 	}
 
-	err = email.SendOTP(h.gmailUser, h.gmailPassword, req.Email, newOTP)
+	err = h.emailSender.SendOTP(req.Email, newOTP)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send OTP email"})
 		return

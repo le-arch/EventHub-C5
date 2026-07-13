@@ -1,10 +1,6 @@
-// email sending logic for sending OTPs and other notifications to users
+// email sending abstraction
 package email
 
-import "fmt"
-
-func SendOTP(senderEmail, appPassword, to, otp string) error {
-	subject := "Your OTP Code for EventHub"
-	body := fmt.Sprintf("Your OTP code is: %s. It will expire in 10 minutes.", otp)
-	return EmailTemplate(senderEmail, appPassword, to, subject, body)
+type Sender interface {
+	SendOTP(to, otp string) error
 }
