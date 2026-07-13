@@ -147,8 +147,14 @@ func run() error {
 	handler := handlers.NewEventHubHandler(querier, otpHandler, revocationStore, config.JWTSecret, config.FrontendOrigin, config.GmailUser, config.GmailPassword,config.qrSecret, paymentClient, imgStorage, momoClient).WireHttpHandler()
 
 	
-	// And finally we start the HTTP server on the configured port.
-	err = http.ListenAndServe(fmt.Sprintf(":%d", config.ListenPort), handler)
+	// Use Render's PORT env var if set, otherwise fall back to LISTEN_PORT.
+	addr := os.Getenv("PORT")
+	if addr == "" {
+		addr = fmt.Sprintf(":%d", config.ListenPort)
+	} else {
+		addr = ":" + addr
+	}
+	err = http.ListenAndServe(addr, handler)
 	if err != nil {
 		fmt.Println("Error starting server:", err)
 	}

@@ -13,6 +13,7 @@
 
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/react'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
@@ -132,6 +133,9 @@ export default function RootLayout({
           <AuthProvider>
             {/* Main application content */}
             {children}
+
+            {/* Vercel Analytics */}
+            <Analytics />
             
             {/* Toast notifications */}
             <Toaster 
