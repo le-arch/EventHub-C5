@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -51,6 +52,11 @@ func (h *EventHubHandler) WireHttpHandler() http.Handler {
 
 	
 	r.Use(middleware.RecoveryMiddleware())
+
+	r.NoRoute(func(c *gin.Context) {
+		log.Printf("404: %s %s (origin: %s)", c.Request.Method, c.Request.URL.Path, c.GetHeader("Origin"))
+		c.JSON(http.StatusNotFound, gin.H{"error": "route not found"})
+	})
 
 	r.GET("/health", HealthCheck)
 
