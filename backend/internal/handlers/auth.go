@@ -3,6 +3,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -68,13 +69,12 @@ func (h *EventHubHandler) handleRegister(c *gin.Context) {
 		"is_email_verified": false,
 	}
 
-	err = h.otpHandler.SendOtpEmail(h.gmailUser, h.gmailPassword, req.Email, "", PendingData)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send OTP email"})
-		return
-	}
+	go func() {
+		if err := h.otpHandler.SendOtpEmail(h.gmailUser, h.gmailPassword, req.Email, "", PendingData); err != nil {
+			log.Printf("Failed to send OTP email to %s: %v", req.Email, err)
+		}
+	}()
 
-	//send the response back to the client
 	c.JSON(http.StatusOK, gin.H{"message": "verify your email to complete registration"})
 }
 
