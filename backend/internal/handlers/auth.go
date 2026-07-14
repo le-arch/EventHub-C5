@@ -333,12 +333,11 @@ func (h *EventHubHandler) handleForgotPassword(c *gin.Context) {
 		return
 	}
 
-	// Send the generated OTP to the user's email address using the email utility function, ensuring that the user receives the OTP needed to reset their password securely
-	err = h.emailSender.SendOTP(req.Email, otpCode)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send OTP email"})
-		return
-	}
+	go func() {
+		if err := h.emailSender.SendOTP(req.Email, otpCode); err != nil {
+			log.Printf("Failed to send password reset OTP to %s: %v", req.Email, err)
+		}
+	}()
 
 	c.JSON(http.StatusOK, gin.H{"message": "Password reset otp sent successfully"})
 }
@@ -526,18 +525,17 @@ func (h *EventHubHandler) handleResendOTP(c *gin.Context) {
 		return
 	}
 
-	//Generate new otp (invalidates old one automatically by overwriting it)
 	newOTP, err := h.otpHandler.GenerateOTP(req.Email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate new OTP"})
 		return
 	}
 
-	err = h.emailSender.SendOTP(req.Email, newOTP)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send OTP email"})
-		return
-	}
+	go func() {
+		if err := h.emailSender.SendOTP(req.Email, newOTP); err != nil {
+			log.Printf("Failed to resend OTP to %s: %v", req.Email, err)
+		}
+	}()
 
 	c.JSON(http.StatusOK, gin.H{"message": "A new OTP has been sent to your email"})
 }

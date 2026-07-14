@@ -102,19 +102,6 @@ api.interceptors.response.use(
       }
     }
     
-    // Handle other errors with user-friendly messages
-    if (error.response?.status === 403) {
-      toast.error('You do not have permission to perform this action')
-    } else if (error.response?.status === 404) {
-      toast.error('Resource not found')
-    } else if (error.response?.status === 500) {
-      toast.error('Server error. Please try again later.')
-    } else if (error.code === 'ECONNABORTED') {
-      toast.error('Request timeout. Please try again.')
-    } else if (!error.response) {
-      toast.error('Network error. Please check your connection.')
-    }
-    
     return Promise.reject(error)
   }
 )
