@@ -21,9 +21,8 @@ type Querier interface {
 	DeleteTicketType(ctx context.Context, arg DeleteTicketTypeParams) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	GetAllUsers(ctx context.Context, role UserRole) ([]User, error)
-	GetEventAnalytics(ctx context.Context, eventID uuid.UUID) (GetEventAnalyticsRow, error)
 	GetDailySales(ctx context.Context, eventID uuid.UUID) ([]GetDailySalesRow, error)
-	GetTicketTypeBreakdown(ctx context.Context, eventID uuid.UUID) ([]GetTicketTypeBreakdownRow, error)
+	GetEventAnalytics(ctx context.Context, eventID uuid.UUID) (GetEventAnalyticsRow, error)
 	GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
 	GetEventByIDPublic(ctx context.Context, id uuid.UUID) (Event, error)
 	GetEventBySlugPublic(ctx context.Context, slug string) (GetEventBySlugPublicRow, error)
@@ -33,6 +32,7 @@ type Querier interface {
 	GetOrderByQRHash(ctx context.Context, qrCodeHash string) (Order, error)
 	GetOrderByTransactionID(ctx context.Context, transactionID *string) (Order, error)
 	GetPlatformAnalytics(ctx context.Context) (GetPlatformAnalyticsRow, error)
+	GetTicketTypeBreakdown(ctx context.Context, eventID uuid.UUID) ([]GetTicketTypeBreakdownRow, error)
 	GetTicketTypeByID(ctx context.Context, id uuid.UUID) (TicketType, error)
 	GetTicketTypesByEvent(ctx context.Context, eventID uuid.UUID) ([]TicketType, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
@@ -46,10 +46,10 @@ type Querier interface {
 	ListEvents(ctx context.Context) ([]ListEventsRow, error)
 	ListEventsByCity(ctx context.Context, city string) ([]Event, error)
 	ListEventsByStatus(ctx context.Context, status EventStatus) ([]Event, error)
-	ListPublishedEvents(ctx context.Context) ([]ListEventsRow, error)
 	ListOrderByEvent(ctx context.Context, eventID uuid.UUID) ([]Order, error)
-	ListOrganizerEvent(ctx context.Context, arg ListOrganizerEventParams) (ListOrganizerEventsRow, error)
+	ListOrganizerEvent(ctx context.Context, arg ListOrganizerEventParams) (ListOrganizerEventRow, error)
 	ListOrganizerEvents(ctx context.Context, organizerID uuid.UUID) ([]ListOrganizerEventsRow, error)
+	ListPublishedEvents(ctx context.Context) ([]ListPublishedEventsRow, error)
 	MarkOrderUsed(ctx context.Context, id uuid.UUID) error
 	PartialEventUpdate(ctx context.Context, arg PartialEventUpdateParams) (Event, error)
 	UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event, error)

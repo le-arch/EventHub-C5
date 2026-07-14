@@ -1,6 +1,6 @@
 version: "2"
 sql:
-- schema: "./migrations"
+- schema: "./schema.sql"
   queries: "./queries"
   engine: "postgresql"
   gen:
@@ -67,5 +67,3 @@ sql:
           go_type:
             type: "string"
             pointer: true
-        
-        

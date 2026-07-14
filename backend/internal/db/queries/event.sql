@@ -75,7 +75,13 @@ WHERE status = $1
 ORDER BY start_date ASC, start_time ASC;
 
 -- name: ListPublishedEvents :many
-SELECT e.*, u.full_name as organizer_name, u.email as organizer_email,
+SELECT e.id, e.organizer_id, e.title, e.slug,
+       COALESCE(e.description, '') as description,
+       e.venue, e.city, e.start_date, e.end_date, e.start_time, e.end_time,
+       COALESCE(e.cover_image_url, '') as cover_image_url,
+       e.status, e.sales_start_date, e.sales_end_date, e.capacity_range,
+       e.created_at, e.updated_at,
+       u.full_name as organizer_name, u.email as organizer_email,
        COALESCE(t.tickets_sold, 0)::int as tickets_sold,
        COALESCE(t.total_revenue, 0)::int as total_revenue
 FROM events e

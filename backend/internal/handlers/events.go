@@ -921,7 +921,7 @@ func (h *EventHubHandler) handleGetEventAnalytics(c *gin.Context) {
 	if err == nil {
 		for _, s := range salesData {
 			dailySales = append(dailySales, gin.H{
-				"date":    s.SaleDate.Time.Format("2006-01-02"),
+				"date":    s.SaleDate.Format("2006-01-02"),
 				"tickets": s.Tickets,
 				"revenue": s.Revenue,
 			})

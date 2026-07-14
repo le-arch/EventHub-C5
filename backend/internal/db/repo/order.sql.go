@@ -8,6 +8,7 @@ package repo
 import (
 	"context"
 	"net/netip"
+	"time"
 
 	uuid "github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -114,6 +115,40 @@ func (q *Queries) DecrementTicketQuantity(ctx context.Context, arg DecrementTick
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const getDailySales = `-- name: GetDailySales :many
+SELECT DATE(o.created_at) AS sale_date, COUNT(*)::int AS tickets, SUM(o.total_amount)::int AS revenue
+FROM orders o
+WHERE o.event_id = $1 AND o.payment_status = 'paid'
+GROUP BY DATE(o.created_at)
+ORDER BY sale_date
+`
+
+type GetDailySalesRow struct {
+	SaleDate time.Time `json:"sale_date"`
+	Tickets  int32     `json:"tickets"`
+	Revenue  int32     `json:"revenue"`
+}
+
+func (q *Queries) GetDailySales(ctx context.Context, eventID uuid.UUID) ([]GetDailySalesRow, error) {
+	rows, err := q.db.Query(ctx, getDailySales, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetDailySalesRow{}
+	for rows.Next() {
+		var i GetDailySalesRow
+		if err := rows.Scan(&i.SaleDate, &i.Tickets, &i.Revenue); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getEventAnalytics = `-- name: GetEventAnalytics :one
@@ -326,6 +361,40 @@ func (q *Queries) GetPlatformAnalytics(ctx context.Context) (GetPlatformAnalytic
 		&i.TotalCheckedIn,
 	)
 	return i, err
+}
+
+const getTicketTypeBreakdown = `-- name: GetTicketTypeBreakdown :many
+SELECT tt.name, COUNT(*)::int AS sold, SUM(o.total_amount)::int AS revenue
+FROM orders o
+JOIN ticket_types tt ON o.ticket_type_id = tt.id
+WHERE o.event_id = $1 AND o.payment_status = 'paid'
+GROUP BY tt.name
+`
+
+type GetTicketTypeBreakdownRow struct {
+	Name    string `json:"name"`
+	Sold    int32  `json:"sold"`
+	Revenue int32  `json:"revenue"`
+}
+
+func (q *Queries) GetTicketTypeBreakdown(ctx context.Context, eventID uuid.UUID) ([]GetTicketTypeBreakdownRow, error) {
+	rows, err := q.db.Query(ctx, getTicketTypeBreakdown, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetTicketTypeBreakdownRow{}
+	for rows.Next() {
+		var i GetTicketTypeBreakdownRow
+		if err := rows.Scan(&i.Name, &i.Sold, &i.Revenue); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const insertWebhookLog = `-- name: InsertWebhookLog :one
@@ -642,72 +711,4 @@ type UpdateOrderQRImageParams struct {
 func (q *Queries) UpdateOrderQRImage(ctx context.Context, arg UpdateOrderQRImageParams) error {
 	_, err := q.db.Exec(ctx, updateOrderQRImage, arg.ID, arg.QrCodeImageUrl)
 	return err
-}
-
-const getDailySales = `-- name: GetDailySales :many
-SELECT DATE(o.created_at) AS sale_date, COUNT(*)::int AS tickets, SUM(o.total_amount)::int AS revenue
-FROM orders o
-WHERE o.event_id = $1 AND o.payment_status = 'paid'
-GROUP BY DATE(o.created_at)
-ORDER BY sale_date
-`
-
-type GetDailySalesRow struct {
-	SaleDate pgtype.Date `json:"sale_date"`
-	Tickets  int32       `json:"tickets"`
-	Revenue  int32       `json:"revenue"`
-}
-
-func (q *Queries) GetDailySales(ctx context.Context, eventID uuid.UUID) ([]GetDailySalesRow, error) {
-	rows, err := q.db.Query(ctx, getDailySales, eventID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GetDailySalesRow{}
-	for rows.Next() {
-		var i GetDailySalesRow
-		if err := rows.Scan(&i.SaleDate, &i.Tickets, &i.Revenue); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getTicketTypeBreakdown = `-- name: GetTicketTypeBreakdown :many
-SELECT tt.name, COUNT(*)::int AS sold, SUM(o.total_amount)::int AS revenue
-FROM orders o
-JOIN ticket_types tt ON o.ticket_type_id = tt.id
-WHERE o.event_id = $1 AND o.payment_status = 'paid'
-GROUP BY tt.name
-`
-
-type GetTicketTypeBreakdownRow struct {
-	Name    string `json:"name"`
-	Sold    int32  `json:"sold"`
-	Revenue int32  `json:"revenue"`
-}
-
-func (q *Queries) GetTicketTypeBreakdown(ctx context.Context, eventID uuid.UUID) ([]GetTicketTypeBreakdownRow, error) {
-	rows, err := q.db.Query(ctx, getTicketTypeBreakdown, eventID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GetTicketTypeBreakdownRow{}
-	for rows.Next() {
-		var i GetTicketTypeBreakdownRow
-		if err := rows.Scan(&i.Name, &i.Sold, &i.Revenue); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
